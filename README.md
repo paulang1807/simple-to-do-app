@@ -1,1 +1,439 @@
-# simple-to-do-app
+# Daily Task Manager
+
+A personal daily task tracker with nested subtasks, rich context, recurring tasks, and work summaries. All data is stored as plain JSON files on your own disk — no cloud account, no database.
+
+![Demo walkthrough](docs/demo.gif)
+
+---
+
+## Table of Contents
+
+1. [What It Does](#what-it-does)
+2. [Setup](#setup)
+3. [Interface Overview](#interface-overview)
+4. [Features](#features)
+   - [Adding Tasks & Subtasks](#adding-tasks--subtasks)
+   - [Task Status: Done / Partial / Pending](#task-status-done--partial--pending)
+   - [Important Tasks](#important-tasks)
+   - [Recurring Tasks](#recurring-tasks)
+   - [Moving Tasks to the Next Day](#moving-tasks-to-the-next-day)
+   - [Collapsing & Expanding Subtasks](#collapsing--expanding-subtasks)
+   - [Drag and Drop Reordering](#drag-and-drop-reordering)
+   - [Moving Subtasks Between Parents](#moving-subtasks-between-parents)
+   - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
+   - [Monthly Tabs](#monthly-tabs)
+   - [Work Summary](#work-summary)
+   - [Export & Import](#export--import)
+5. [Data Storage](#data-storage)
+6. [Project Structure](#project-structure)
+
+---
+
+## What It Does
+
+Daily Task Manager helps you track what you work on each day. You can:
+
+- Create tasks with unlimited nesting levels
+- Mark tasks as done, partially done, or pending
+- Flag important tasks and recurring tasks
+- Roll incomplete tasks forward to the next day with a single click
+- Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides) and files to any task
+- Browse tasks by month using tabs
+- Generate summaries of work done over a week, month, quarter, or year
+
+---
+
+## Setup
+
+### Prerequisites
+
+- [uv](https://github.com/astral-sh/uv) — a fast Python package manager
+- Python 3.11 or later (managed automatically by uv)
+
+### Install uv (if not already installed)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### Clone and run
+
+```bash
+git clone <your-repo-url>
+cd todo-app
+uv run server.py
+```
+
+The server prints the exact URL to open:
+
+```
+  Daily Task Manager is running!
+  Open this URL in your browser:
+
+      http://localhost:3456
+```
+
+**If port 3456 is already in use**, the server automatically picks the next available port and tells you:
+
+```
+  Port 3456 is in use — using port 3457 instead.
+
+  Daily Task Manager is running!
+  Open this URL in your browser:
+
+      http://localhost:3457
+```
+
+Always use the URL printed in the terminal — it will always be correct.
+
+#### Specify a port manually (optional)
+
+```bash
+uv run server.py --port 8080
+# or
+uv run server.py -p 8080
+```
+
+That's it. No `npm install`, no build step, no database setup. The `data/` folder is created automatically on first run.
+
+---
+
+## Interface Overview
+
+![Main view](docs/01-main-view.png)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  📋 Daily Tasks          ⬇ Export  ⬆ Import  📊 Summarize      │  ← Header
+├─────────────────────────────────────────────────────────────────┤
+│  April 2026  │  May 2026  │  ...                                │  ← Month tabs
+├──────────────┬──────────────────────────────────────────────────┤
+│              │  Friday, April 24, 2026  TODAY                   │
+│  1 Wed       │  ⏩ Move to Apr 25   ⊟ Collapse All  ⊞ Expand All│
+│  2 Thu       ├──────────────────────────────────────────────────┤
+│  ...         │  ☐  Task A                                       │
+│● 24 Fri ●   │  ▾ ☐  Task B (with subtasks)                    │
+│  25 Sat      │      ☐  Subtask B1                               │
+│  ...         │      ☐  Subtask B2                               │
+│              ├──────────────────────────────────────────────────┤
+│              │  + Add a task…                              [Add] │
+└──────────────┴──────────────────────────────────────────────────┘
+```
+
+| Area | Purpose |
+|---|---|
+| **Header** | App title, Export/Import data, open Summarize modal |
+| **Month tabs** | Switch between months; each tab covers one calendar month |
+| **Day sidebar** | All days of the active month; blue dot = has tasks; ● = today |
+| **Task area** | Tasks for the selected day, action buttons in the header row |
+| **Context panel** | Slides in from the right when you click 📎 on a task |
+
+---
+
+## Features
+
+### Adding Tasks & Subtasks
+
+![Hover to reveal action buttons](docs/02-task-actions.png)
+
+**Add a top-level task:**
+- Type in the `+ Add a task…` input at the bottom and press **Enter** or click **Add**
+
+**Add a subtask:**
+- Hover over any task row to reveal action buttons
+- Click **⤷** to open a subtask input directly below that task
+- Press **Enter** to save, **Esc** to cancel
+- Or press **Enter** while the task text field is focused — this also opens the subtask input
+
+Tasks can be nested to any depth. Each level is indented with a vertical guide line.
+
+---
+
+### Task Status: Done / Partial / Pending
+
+![Task status badges](docs/04-task-statuses.png)
+
+Every task has one of three statuses, shown with a badge and a left border:
+
+| Status | How to set | Badge |
+|---|---|---|
+| **Pending** | Default state | (none) |
+| **Done** | Click the checkbox ✓ | `Done` (green) |
+| **Partial** | Hover → click **◑** button | `Partial` (amber) |
+
+**Marking a task done cascades to all subtasks** — every descendant is marked done automatically.
+
+**Parent indicators when collapsed:** a subtask count badge shows `✓ done · ◑ partial · ○ incomplete · ⭐ important` counts across all descendants (only non-zero values shown). See [Collapsing & Expanding Subtasks](#collapsing--expanding-subtasks) for details.
+
+---
+
+### Important Tasks
+
+Mark any task as important by hovering the row and clicking the **★** button.
+
+| State | Visual |
+|---|---|
+| Important | ★ button turns amber, `⭐ Important` badge appears, amber left border on the row |
+| Not important | ★ button is grey, no badge |
+
+When collapsed, a parent task shows `⭐ Has important` if any descendant is marked important.
+
+---
+
+### Recurring Tasks
+
+![Recurring task badge](docs/06-recurring.png)
+
+A recurring task automatically rolls forward to the next day every time you move tasks — even if it was marked done. It keeps repeating until you explicitly close it.
+
+**To make a task recurring:** hover the row → click **🔁**
+- The button turns blue and a `🔁 Recurring` badge appears
+
+**To stop recurrence:** click the **⏹** button that appears next to 🔁
+- The badge changes to `⏹ Closed` and the task stops rolling forward
+
+**Behaviour on move:**
+- A fresh pending copy is created on the next day
+- The original (possibly done) copy is kept on the current day as a record
+
+---
+
+### Moving Tasks to the Next Day
+
+Click **⏩ Move to [next date]** in the day header to roll incomplete work forward.
+
+The rules applied to each task:
+
+| Task state | Current day | Next day |
+|---|---|---|
+| **Done** (all subtasks done) | Kept as-is | Nothing moved |
+| **Partial** (leaf task) | Kept as record | Copy moved forward |
+| **Pending** (leaf task) | Removed | Moved forward |
+| **Mixed subtasks** | Record kept with done/partial subtasks only | Copy with pending/partial subtasks only |
+| **Recurring** (any status) | Kept as-is | Fresh pending copy always created |
+
+This means partially-completed work is never silently dropped — the current day always retains a record of what was done.
+
+---
+
+### Collapsing & Expanding Subtasks
+
+![Collapsed task indicators](docs/05-collapsed-indicators.png)
+
+Any task with subtasks shows a **▾ chevron** to the left of its checkbox.
+
+| Action | How |
+|---|---|
+| Collapse one task | Click **▾** on that task (chevron rotates to indicate collapsed) |
+| Expand one task | Click the rotated chevron again |
+| Collapse all tasks | Click **⊟ Collapse All** in the day header |
+| Expand all tasks | Click **⊞ Expand All** in the day header |
+
+While collapsed, the parent row shows a subtask count badge summarising all descendants:
+
+| Symbol | Meaning |
+|---|---|
+| ✓ N | N subtasks marked **done** |
+| ◑ N | N subtasks marked **partial** |
+| ○ N | N subtasks **incomplete** (pending) |
+| ⭐ N | N subtasks marked **important** |
+
+Only non-zero counts are shown, so a task with 2 done and 1 incomplete displays `✓ 2 · ○ 1`.
+
+---
+
+### Drag and Drop Reordering
+
+Hover any task row to reveal the **⠿ drag handle** on the left. Drag it to reorder tasks.
+
+**Drop zones** (determined by where your cursor is within the target row):
+
+| Cursor position | Effect |
+|---|---|
+| Top 30% of row | Insert **before** the target |
+| Bottom 30% of row | Insert **after** the target |
+| Middle 40% of row | Make the dragged task a **child** of the target (shown with dashed purple outline and `↳ drop as child` hint) |
+
+Reordering works at every nesting level. The "drop as child" zone lets you nest a task under a different parent in one drag.
+
+---
+
+### Moving Subtasks Between Parents
+
+Using the same drag-and-drop system, you can move a subtask to a completely different parent:
+
+1. Grab the **⠿** handle on a subtask
+2. Drag it over any other task
+3. Drop on the **middle zone** (dashed outline) to make it a child of that task
+4. Or drop on the **top/bottom edge** to place it as a sibling at the target's level
+
+You can also **promote** a subtask to a top-level task by dropping it on the top or bottom edge of a top-level task.
+
+---
+
+### Context: Notes, Links & Attachments
+
+![Context panel](docs/07-context-panel.png)
+
+Every task has a context panel for capturing supporting information. Open it by hovering the row and clicking **📎** (or clicking the `📎 Context` badge).
+
+The panel slides in from the right and shows:
+
+#### Notes
+Free-form text notes. Click **+ Add Note** to create one. Notes auto-save on blur. Click **Delete** to remove a note.
+
+#### Links
+Attach URLs categorised by type:
+
+| Type | Icon |
+|---|---|
+| Jira | 🔵 |
+| Slack | 💬 |
+| Google Docs | 📄 |
+| Google Sheets | 📊 |
+| Google Slides | 📽️ |
+| Other | 🔗 |
+
+Click **+ Add Link**, select the type, enter an optional label and the URL, then click **Save**.
+
+To **edit an existing link**, hover the link card and click **✏️** — an inline form opens pre-filled with the current type, label, and URL. Make changes and click **Save**, or **Cancel** to discard.
+
+To **delete a link**, click **🗑** on the link card.
+
+#### Attachments
+Click **📎 Attach File** to attach one or more files. File name and size are recorded. The `📎 Context` badge appears on the task row whenever any context exists.
+
+Context (notes, links, attachments) is included in work summaries.
+
+---
+
+### Monthly Tabs
+
+The tab bar at the top shows one tab per month that has data, plus the current month.
+
+- Click a tab to switch months
+- The day sidebar updates to show all days for that month
+- Days with tasks have a **blue dot**
+- Today is highlighted in blue with a **●** marker
+
+Switching to a month loads its data file from disk on demand.
+
+---
+
+### Work Summary
+
+![Work summary output](docs/11-summary-result.png)
+
+Click **📊 Summarize** in the header to open the summary modal.
+
+**Period options:**
+
+| Period | Coverage |
+|---|---|
+| This Week | Monday → today |
+| This Month | 1st of month → today |
+| This Quarter | Start of current quarter → today |
+| This Year | Jan 1 → today |
+| Custom Range | Any date range you choose |
+
+Click **Generate** to produce the report. The output shows:
+
+- Total done / partial / pending counts for the period
+- A breakdown by day
+- Each task with its status icon (✅ ◑ ⏳)
+- Any context (notes, links, attachments) attached to each task indented below
+
+This makes it easy to write status updates, retrospectives, or performance reviews.
+
+---
+
+### Export & Import
+
+**Export:** Click **⬇ Export** to download all your task data as a single JSON file (`tasks-backup-YYYY-MM-DD.json`). Use this as a backup or to move data between machines.
+
+**Import:** Click **⬆ Import**, select a previously exported JSON file. The data is merged into your current data and saved to disk.
+
+---
+
+## Data Storage
+
+Each month's tasks are stored in a separate JSON file under the `data/` directory:
+
+```
+todo-app/
+└── data/
+    ├── 2026-04.json
+    ├── 2026-05.json
+    └── ...
+```
+
+Each file contains a map of date strings to day objects:
+
+```json
+{
+  "2026-04-24": {
+    "tasks": [
+      {
+        "id": "abc123",
+        "text": "My task",
+        "status": "pending",
+        "important": false,
+        "recurring": false,
+        "closed": false,
+        "children": [],
+        "context": {
+          "notes": [],
+          "links": [],
+          "attachments": []
+        }
+      }
+    ]
+  }
+}
+```
+
+The `data/` directory is excluded from git (via `.gitignore`), so your personal tasks are never committed. Each person who clones the repo starts with a blank slate.
+
+---
+
+## Project Structure
+
+```
+todo-app/
+├── index.html       # The entire front-end — one self-contained HTML file
+├── server.py        # Minimal Python HTTP server (no dependencies)
+├── .gitignore       # Excludes data/ and other non-source files
+├── README.md        # This file
+└── data/            # Auto-created on first run; gitignored
+    └── YYYY-MM.json # One file per month
+```
+
+**`server.py`** handles three routes:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/` | Serve `index.html` |
+| `GET` | `/months` | List months that have data files |
+| `GET` | `/data/YYYY-MM` | Load a month's task data |
+| `PUT` | `/data/YYYY-MM` | Save a month's task data |
+
+**`index.html`** contains all JavaScript and CSS inline — no build tools, no npm, no bundler required.
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|---|---|
+| `Enter` (in task input) | Save task / add another |
+| `Enter` (in task text field) | Open subtask input below |
+| `Esc` (in subtask input) | Close subtask input |
+
+---
+
+## Tips
+
+- **Daily workflow:** At the end of each day click **⏩ Move to [tomorrow]** to carry forward any incomplete work. Partial tasks leave a record behind so you never lose track of what was started.
+- **Recurring checklist items** (e.g. daily standup, DQ checks): Mark them 🔁 Recurring and they roll forward automatically every day until closed.
+- **End-of-week/month summaries:** Use 📊 Summarize → "This Week" or "This Month" to quickly compile what was accomplished, including any Jira/Slack/Doc links you attached.
+- **Backup regularly:** Use ⬇ Export to save a JSON snapshot. You can re-import it at any time.

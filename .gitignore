@@ -1,0 +1,16 @@
+# Task data — each user's data stays local, never committed
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp

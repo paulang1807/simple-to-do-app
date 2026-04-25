@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daily Task Manager</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232636;
+    --surface3: #2d3148;
+    --border: #3a3f5c;
+    --accent: #6c8ef5;
+    --accent2: #9b6cf5;
+    --success: #4caf88;
+    --warn: #f0a04b;
+    --danger: #e05c5c;
+    --text: #e2e6f3;
+    --text2: #9aa3c2;
+    --text3: #5a6180;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Layout ── */
+  #app { display: flex; flex-direction: column; height: 100vh; }
+  #header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  #header h1 { font-size: 18px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  #header .spacer { flex: 1; }
+
+  /* ── Month Tabs ── */
+  #month-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; scrollbar-width: thin; }
+  .month-tab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; white-space: nowrap; font-size: 13px; transition: all 0.15s; }
+  .month-tab:hover { border-color: var(--accent); color: var(--text); }
+  .month-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+  /* ── Main content ── */
+  #main { display: flex; flex: 1; overflow: hidden; }
+  #day-list { width: 200px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid var(--border); padding: 12px 8px; }
+  .day-item { padding: 8px 12px; border-radius: var(--radius); cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
+  .day-item:hover { background: var(--surface2); color: var(--text); }
+  .day-item.active { background: var(--surface3); color: var(--text); font-weight: 600; }
+  .day-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .day-item.has-tasks .dot { background: var(--accent); }
+  .day-item.today-marker { color: var(--accent); }
+  #task-area { flex: 1; overflow-y: auto; padding: 20px; }
+  #context-panel { width: 340px; flex-shrink: 0; border-left: 1px solid var(--border); overflow-y: auto; display: none; flex-direction: column; }
+  #context-panel.open { display: flex; }
+
+  /* ── Day header ── */
+  .day-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .day-header h2 { font-size: 22px; font-weight: 700; }
+  .day-header .today-badge { font-size: 11px; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-warn { background: var(--warn); color: #1a1200; }
+  .btn-warn:hover { filter: brightness(1.1); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-icon { padding: 5px; border-radius: 6px; background: transparent; border: none; cursor: pointer; color: var(--text3); transition: all 0.15s; display: inline-flex; align-items: center; }
+  .btn-icon:hover { color: var(--text); background: var(--surface2); }
+
+  /* ── Task tree ── */
+  .task-list { display: flex; flex-direction: column; gap: 4px; }
+  .task-block { display: flex; flex-direction: column; }
+  .task-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius); border: 1px solid transparent; transition: all 0.15s; background: var(--surface); }
+  .task-row:hover { border-color: var(--border); }
+  .task-row.selected { border-color: var(--accent); background: rgba(108,142,245,0.08); }
+  .task-children { margin-left: 28px; margin-top: 4px; display: flex; flex-direction: column; gap: 4px; border-left: 2px solid var(--border); padding-left: 12px; }
+
+  .task-checkbox { flex-shrink: 0; }
+  .cb-wrap { width: 20px; height: 20px; position: relative; cursor: pointer; }
+  .cb-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .cb-box { width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border); background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .cb-wrap:hover .cb-box { border-color: var(--accent); }
+  .cb-wrap input:checked + .cb-box { background: var(--success); border-color: var(--success); }
+  .cb-wrap input:checked + .cb-box::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+  .cb-partial .cb-box { background: var(--warn); border-color: var(--warn); }
+  .cb-partial .cb-box::after { content: '–'; color: #fff; font-size: 14px; font-weight: 700; }
+
+  .task-text { flex: 1; font-size: 14px; outline: none; background: transparent; border: none; color: var(--text); min-width: 0; }
+  .task-text.done { text-decoration: line-through; color: var(--text3); }
+  .task-text:focus { color: var(--accent); }
+
+  .task-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+  .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+  .badge-done { background: rgba(76,175,136,0.2); color: var(--success); }
+  .badge-partial { background: rgba(240,160,75,0.2); color: var(--warn); }
+  .badge-ctx { background: rgba(108,142,245,0.2); color: var(--accent); cursor: pointer; }
+  .badge-ctx:hover { background: rgba(108,142,245,0.4); }
+  .badge-recurring { background: rgba(108,142,245,0.15); color: var(--accent2); }
+  .badge-closed { background: rgba(90,97,128,0.2); color: var(--text3); }
+  .badge-subtask-counts { background: rgba(90,97,128,0.15); color: var(--text2); gap: 4px; }
+  .badge-important { background: rgba(240,160,75,0.15); color: var(--warn); }
+  .task-row.important { border-left: 3px solid var(--warn); }
+  .star-btn { font-size: 15px; }
+  .star-btn.on { color: var(--warn); }
+
+  .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
+  .task-row:hover .task-actions { opacity: 1; }
+
+  /* ── Collapse toggle ── */
+  .collapse-btn { cursor: pointer; color: var(--text2); font-size: 15px; width: 20px; flex-shrink: 0; transition: transform 0.15s, color 0.15s; user-select: none; display: flex; align-items: center; justify-content: center; }
+  .collapse-btn:hover { color: var(--text); }
+  .collapse-btn.collapsed { transform: rotate(-90deg); }
+  .task-children.hidden { display: none; }
+
+  /* ── Drag and drop ── */
+  .drag-handle { cursor: grab; color: var(--text3); font-size: 14px; padding: 0 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; user-select: none; }
+  .task-row:hover .drag-handle { opacity: 1; }
+  .task-block.dragging { opacity: 0.35; }
+  .task-block.drag-over-top { border-top: 2px solid var(--accent); }
+  .task-block.drag-over-bottom { border-bottom: 2px solid var(--accent); }
+  .task-block.drag-over-child .task-row { outline: 2px dashed var(--accent2); background: rgba(155,108,245,0.08); }
+  .drag-zone-hint { font-size: 10px; color: var(--accent2); margin-left: 4px; opacity: 0; transition: opacity 0.1s; pointer-events: none; }
+  .task-block.drag-over-child .drag-zone-hint { opacity: 1; }
+
+  .add-task-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-top: 8px; }
+  .add-task-input { flex: 1; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); padding: 7px 12px; color: var(--text); font-size: 14px; outline: none; }
+  .add-task-input:focus { border-color: var(--accent); border-style: solid; }
+  .add-task-input::placeholder { color: var(--text3); }
+
+  /* ── Context Panel ── */
+  #cp-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  #cp-header h3 { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #cp-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+  .cp-section { display: flex; flex-direction: column; gap: 8px; }
+  .cp-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); }
+  .note-card { background: var(--surface2); border-radius: var(--radius); padding: 10px; border: 1px solid var(--border); }
+  .note-card textarea { width: 100%; background: transparent; border: none; color: var(--text); font-size: 13px; resize: vertical; outline: none; min-height: 60px; font-family: inherit; line-height: 1.5; }
+  .note-card .note-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 6px; }
+  .link-card { background: var(--surface2); border-radius: var(--radius); padding: 8px 10px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .link-icon { font-size: 16px; flex-shrink: 0; }
+  .link-info { flex: 1; min-width: 0; }
+  .link-label { font-size: 12px; font-weight: 600; color: var(--text); }
+  .link-url { font-size: 11px; color: var(--accent); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .link-url:hover { text-decoration: underline; }
+  .attach-card { background: var(--surface2); border-radius: var(--radius); padding: 8px 10px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .attach-icon { font-size: 18px; }
+  .attach-name { flex: 1; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attach-size { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+
+  /* add / edit link forms */
+  .add-link-form { display: flex; flex-direction: column; gap: 6px; background: var(--surface2); border-radius: var(--radius); padding: 10px; border: 1px solid var(--border); }
+  .add-link-form input { background: var(--surface3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; outline: none; }
+  .add-link-form input:focus { border-color: var(--accent); }
+  .add-link-form select { background: var(--surface3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; outline: none; }
+  .link-edit-form { display: flex; flex-direction: column; gap: 6px; background: var(--surface2); border-radius: var(--radius); padding: 10px; border: 1px solid var(--accent); margin-top: 4px; }
+  .link-edit-form input, .link-edit-form select { background: var(--surface3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; outline: none; }
+  .link-edit-form input:focus, .link-edit-form select:focus { border-color: var(--accent); }
+
+  /* ── Summary Modal ── */
+  #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; }
+  #modal-overlay.open { display: flex; }
+  #modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); width: 680px; max-width: 95vw; max-height: 85vh; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+  #modal-head { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  #modal-head h2 { flex: 1; font-size: 18px; }
+  #modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .summary-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .summary-controls select { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 12px; color: var(--text); font-size: 13px; outline: none; }
+  .summary-output { background: var(--surface2); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); font-size: 14px; line-height: 1.7; white-space: pre-wrap; min-height: 200px; color: var(--text); }
+  .summary-output .s-head { color: var(--accent); font-weight: 700; font-size: 15px; }
+  .summary-output .s-sub { color: var(--accent2); font-weight: 600; }
+  .summary-output .s-done { color: var(--success); }
+  .summary-output .s-partial { color: var(--warn); }
+  .summary-output .s-pending { color: var(--text3); }
+
+
+  /* ── Empty state ── */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Scrollbars ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Animations ── */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.2s ease; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div id="header">
+    <h1>📋 Daily Tasks</h1>
+    <div class="spacer"></div>
+    <span id="save-toast" style="font-size:12px;color:var(--success);opacity:0;transition:opacity 0.4s;">✓ Saved</span>
+    <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Export all data as JSON">⬇ Export</button>
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="Import data from JSON backup">⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importData(this)"></label>
+    <button class="btn btn-secondary btn-sm" onclick="openSummaryModal()">📊 Summarize</button>
+  </div>
+
+  <!-- Month Tabs -->
+  <div id="month-tabs"></div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="day-list"></div>
+    <div id="task-area"></div>
+    <div id="context-panel">
+      <div id="cp-header">
+        <h3 id="cp-title">Context</h3>
+        <button class="btn-icon" onclick="closeContextPanel()" title="Close">✕</button>
+      </div>
+      <div id="cp-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Modal -->
+<div id="modal-overlay" onclick="if(event.target===this)closeSummaryModal()">
+  <div id="modal">
+    <div id="modal-head">
+      <h2>📊 Work Summary</h2>
+      <button class="btn-icon" onclick="closeSummaryModal()">✕</button>
+    </div>
+    <div id="modal-body">
+      <div class="summary-controls">
+        <select id="sum-period">
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="quarter">This Quarter</option>
+          <option value="year">This Year</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        <span id="sum-custom" style="display:none;gap:8px;align-items:center;display:none;">
+          <input type="date" id="sum-from" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
+          <span>to</span>
+          <input type="date" id="sum-to" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
+        </span>
+        <button class="btn btn-primary btn-sm" onclick="generateSummary()">Generate</button>
+      </div>
+      <div class="summary-output" id="sum-output">Select a period and click Generate.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// Storage — one JSON file per month via server API
+// data/YYYY-MM.json  { "YYYY-MM-DD": { tasks: [...] }, ... }
+// ─────────────────────────────────────────
+
+// Cache of already-loaded months so we don't re-fetch on every render
+const _loadedMonths = new Set();
+
+async function loadMonth(month) {
+  if (_loadedMonths.has(month)) return;
+  try {
+    const res = await fetch(`/data/${month}`);
+    if (!res.ok) return;
+    const days = await res.json();
+    Object.assign(state.days, days);
+    _loadedMonths.add(month);
+  } catch(e) { console.warn('loadMonth failed:', month, e); }
+}
+
+async function saveMonth(month) {
+  // Collect only days belonging to this month
+  const payload = {};
+  Object.keys(state.days).forEach(k => { if (k.startsWith(month)) payload[k] = state.days[k]; });
+  try {
+    await fetch(`/data/${month}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload, null, 2),
+    });
+  } catch(e) { console.warn('saveMonth failed:', month, e); }
+  showSaveToast();
+}
+
+async function loadKnownMonths() {
+  try {
+    const res = await fetch('/months');
+    return res.ok ? await res.json() : [];
+  } catch { return []; }
+}
+
+function showSaveToast() {
+  const toast = document.getElementById('save-toast');
+  if (toast) { toast.style.opacity = '1'; clearTimeout(toast._t); toast._t = setTimeout(() => toast.style.opacity = '0', 1500); }
+}
+
+// saveData saves only the currently active month (where edits happen)
+async function saveData() {
+  await saveMonth(state.activeMonth);
+}
+
+function exportData() {
+  const json = JSON.stringify(state.days, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tasks-backup-${todayKey()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (typeof parsed !== 'object') throw new Error('Invalid format');
+      // Merge imported days into state and save each affected month
+      const months = new Set();
+      Object.keys(parsed).forEach(k => { state.days[k] = parsed[k]; months.add(k.slice(0,7)); });
+      for (const m of months) await saveMonth(m);
+      render();
+    } catch { alert('Invalid backup file.'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// state.days = { "2026-04-23": { tasks: [...] } }
+// task = { id, text, status: 'pending'|'done'|'partial', children: [], context: { notes:[], links:[], attachments:[] } }
+const state = {
+  days: {},
+  activeMonth: null,
+  activeDay: null,
+  contextTaskId: null,
+  contextDayKey: null,
+};
+
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function nextDayKey(key) {
+  const d = new Date(key + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function monthOf(key) { return key.slice(0, 7); }
+
+function getMonths() {
+  const ms = new Set();
+  const today = todayKey();
+  ms.add(monthOf(today));
+  Object.keys(state.days).forEach(k => ms.add(monthOf(k)));
+  // Also include months known from server (loaded at init)
+  (state.knownMonths || []).forEach(m => ms.add(m));
+  return Array.from(ms).sort();
+}
+
+function getDaysInMonth(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const count = new Date(y, m, 0).getDate();
+  const days = [];
+  for (let d = 1; d <= count; d++) {
+    days.push(`${ym}-${String(d).padStart(2,'0')}`);
+  }
+  return days;
+}
+
+function ensureDay(key) {
+  if (!state.days[key]) state.days[key] = { tasks: [] };
+  return state.days[key];
+}
+
+function makeTask(text) {
+  return { id: uid(), text, status: 'pending', important: false, recurring: false, closed: false, children: [], context: { notes: [], links: [], attachments: [] } };
+}
+
+// Find task by id recursively in a list
+function findTask(tasks, id) {
+  for (const t of tasks) {
+    if (t.id === id) return t;
+    const found = findTask(t.children, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+// Remove task by id recursively, return new list
+function removeTask(tasks, id) {
+  return tasks.filter(t => t.id !== id).map(t => ({ ...t, children: removeTask(t.children, id) }));
+}
+
+// Deep clone a task (for copy operations)
+function cloneTask(task) {
+  return JSON.parse(JSON.stringify({ ...task, id: uid(), children: task.children.map(c => ({ ...cloneTask(c) })) }));
+}
+
+// Mark all children done
+function markAllDone(task) {
+  task.status = 'done';
+  task.children.forEach(c => markAllDone(c));
+}
+
+// Compute aggregate status of children
+function computeParentStatus(task) {
+  if (task.children.length === 0) return task.status;
+  const statuses = task.children.map(c => computeParentStatus(c));
+  if (statuses.every(s => s === 'done')) return 'done';
+  if (statuses.some(s => s === 'done' || s === 'partial')) return 'partial';
+  return 'pending';
+}
+
+// ─────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────
+async function init() {
+  const today = todayKey();
+  state.activeMonth = monthOf(today);
+  state.activeDay = today;
+  // Load list of all months with data from server, then load current month
+  state.knownMonths = await loadKnownMonths();
+  await loadMonth(state.activeMonth);
+  ensureDay(today);
+  render();
+}
+
+// ─────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────
+function render() {
+  renderMonthTabs();
+  renderDayList();
+  renderTaskArea();
+}
+
+function renderMonthTabs() {
+  const months = getMonths();
+  const el = document.getElementById('month-tabs');
+  el.innerHTML = months.map(m => {
+    const [y, mo] = m.split('-').map(Number);
+    const label = new Date(y, mo - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+    return `<button class="month-tab ${m === state.activeMonth ? 'active' : ''}" onclick="selectMonth('${m}')">${label}</button>`;
+  }).join('');
+}
+
+function renderDayList() {
+  const days = getDaysInMonth(state.activeMonth);
+  const today = todayKey();
+  const el = document.getElementById('day-list');
+  el.innerHTML = days.map(key => {
+    const hasTasks = state.days[key] && state.days[key].tasks.length > 0;
+    const isToday = key === today;
+    const d = new Date(key + 'T00:00:00');
+    const label = d.toLocaleString('default', { weekday: 'short', day: 'numeric' });
+    return `<div class="day-item ${key === state.activeDay ? 'active' : ''} ${hasTasks ? 'has-tasks' : ''} ${isToday ? 'today-marker' : ''}" onclick="selectDay('${key}')">
+      <span class="dot"></span>
+      <span>${label}${isToday ? ' ●' : ''}</span>
+    </div>`;
+  }).join('');
+  // scroll active into view
+  setTimeout(() => {
+    const active = el.querySelector('.day-item.active');
+    if (active) active.scrollIntoView({ block: 'nearest' });
+  }, 0);
+}
+
+function renderTaskArea() {
+  const key = state.activeDay;
+  const dayData = state.days[key];
+  const today = todayKey();
+  const d = new Date(key + 'T00:00:00');
+  const dateLabel = d.toLocaleString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const isToday = key === today;
+  const isPast = key < today;
+
+  const tasks = dayData ? dayData.tasks : [];
+  const hasIncomplete = tasks.some(t => hasIncompleteDeep(t));
+  const nextDay = nextDayKey(key);
+
+  let html = `<div class="day-header fade-in">
+    <h2>${dateLabel}</h2>
+    ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
+    <div class="spacer"></div>
+    ${(isPast || isToday) && hasIncomplete ? `<button class="btn btn-warn btn-sm" onclick="moveToNextDay('${key}')" title="Move incomplete tasks to ${fmtDay(nextDay)}">⏩ Move to ${fmtDay(nextDay)}</button>` : ''}
+    <button class="btn btn-secondary btn-sm" onclick="collapseAll()" title="Collapse all tasks">⊟ Collapse All</button>
+    <button class="btn btn-secondary btn-sm" onclick="expandAll()" title="Expand all tasks">⊞ Expand All</button>
+  </div>`;
+
+  html += `<div class="task-list fade-in" id="tl-${key}">`;
+  if (tasks.length === 0) {
+    html += `<div class="empty-state"><div class="icon">📝</div><p>No tasks yet. Add one below!</p></div>`;
+  } else {
+    tasks.forEach(t => { html += renderTaskBlock(t, 0); });
+  }
+  html += `</div>`;
+
+  html += `<div class="add-task-row" style="margin-top:12px;">
+    <input class="add-task-input" id="new-task-input" placeholder="+ Add a task… (press Enter)" onkeydown="handleAddTask(event, '${key}', null)" />
+    <button class="btn btn-primary btn-sm" onclick="addTaskFromInput('${key}', null)">Add</button>
+  </div>`;
+
+  document.getElementById('task-area').innerHTML = html;
+}
+
+function hasIncompleteDeep(task) {
+  if (task.status !== 'done') return true;
+  return task.children.some(c => hasIncompleteDeep(c));
+}
+
+function fmtDay(key) {
+  const d = new Date(key + 'T00:00:00');
+  return d.toLocaleString('default', { month: 'short', day: 'numeric' });
+}
+
+function countDescendants(task) {
+  let done = 0, partial = 0, pending = 0, important = 0;
+  const walk = (children) => {
+    for (const c of children) {
+      if (c.status === 'done') done++;
+      else if (c.status === 'partial') partial++;
+      else pending++;
+      if (c.important) important++;
+      walk(c.children);
+    }
+  };
+  walk(task.children);
+  return { done, partial, pending, important };
+}
+
+function renderTaskBlock(task, depth) {
+  const isDone = task.status === 'done';
+  const isPartial = task.status === 'partial';
+  const hasCtx = task.context && (task.context.notes.length + task.context.links.length + task.context.attachments.length) > 0;
+  const isSelected = state.contextTaskId === task.id;
+
+  const cbClass = isPartial ? 'cb-partial' : '';
+  const textClass = isDone ? 'done' : '';
+
+  const isRecurring = !!task.recurring;
+  const isClosed = !!task.closed;
+  const isImportant = !!task.important;
+  const isCollapsed = _collapsed.has(task.id);
+
+  let badges = '';
+  if (isImportant) badges += `<span class="badge badge-important">⭐ Important</span>`;
+  if (isDone) badges += `<span class="badge badge-done">Done</span>`;
+  if (isPartial) badges += `<span class="badge badge-partial">Partial</span>`;
+  if (isRecurring && !isClosed) badges += `<span class="badge badge-recurring">🔁 Recurring</span>`;
+  if (isRecurring && isClosed) badges += `<span class="badge badge-closed">⏹ Closed</span>`;
+  if (isCollapsed && task.children.length > 0) {
+    const { done, partial, pending, important } = countDescendants(task);
+    const parts = [];
+    if (done)      parts.push(`<span title="Done subtasks">✓ ${done}</span>`);
+    if (partial)   parts.push(`<span title="Partial subtasks">◑ ${partial}</span>`);
+    if (pending)   parts.push(`<span title="Incomplete subtasks">○ ${pending}</span>`);
+    if (important) parts.push(`<span title="Important subtasks">⭐ ${important}</span>`);
+    badges += `<span class="badge badge-subtask-counts" title="Subtask counts">${parts.join(' · ')}</span>`;
+  }
+  if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" title="View context">📎 Context</span>`;
+
+  let html = `<div class="task-block" id="tb-${task.id}" draggable="true"
+    data-id="${task.id}" data-day="${state.activeDay}"
+    ondragstart="onDragStart(event,'${task.id}')"
+    ondragend="onDragEnd(event)"
+    ondragover="onDragOver(event)"
+    ondragleave="onDragLeave(event)"
+    ondrop="onDrop(event,'${task.id}')">
+    <div class="task-row ${isSelected ? 'selected' : ''} ${isImportant ? 'important' : ''}" id="tr-${task.id}">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      ${task.children && task.children.length > 0
+        ? `<span class="collapse-btn ${isCollapsed ? 'collapsed' : ''}" onclick="toggleCollapse('${task.id}')" title="${isCollapsed ? 'Expand subtasks' : 'Collapse subtasks'}">▾</span>`
+        : `<span style="width:16px;flex-shrink:0;"></span>`}
+      <div class="task-checkbox">
+        <label class="cb-wrap ${cbClass}">
+          <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleTask('${state.activeDay}','${task.id}',this.checked)" />
+          <span class="cb-box"></span>
+        </label>
+      </div>
+      <input class="task-text ${textClass}" value="${escHtml(task.text)}" onblur="updateTaskText('${state.activeDay}','${task.id}',this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();focusAddSubtask('${task.id}')}" title="Press Enter to add subtask" />
+      <span class="drag-zone-hint">↳ drop as child</span>
+      <div class="task-badges">${badges}</div>
+      <div class="task-actions">
+        <button class="btn-icon btn-sm star-btn ${isImportant ? 'on' : ''}" onclick="toggleImportant('${state.activeDay}','${task.id}')" title="${isImportant ? 'Unmark important' : 'Mark as important'}">★</button>
+        <button class="btn-icon btn-sm" onclick="openContext('${state.activeDay}','${task.id}')" title="Context">📎</button>
+        <button class="btn-icon btn-sm" onclick="togglePartial('${state.activeDay}','${task.id}')" title="Mark partial">◑</button>
+        <button class="btn-icon btn-sm" onclick="toggleRecurring('${state.activeDay}','${task.id}')" title="${isRecurring ? 'Disable recurring' : 'Make recurring'}" style="${isRecurring ? 'color:var(--accent)' : ''}">🔁</button>
+        ${isRecurring && !isClosed ? `<button class="btn-icon btn-sm" onclick="closeRecurring('${state.activeDay}','${task.id}')" title="Close recurring (stop repeating)" style="color:var(--warn)">⏹</button>` : ''}
+        <button class="btn-icon btn-sm" onclick="addSubtask('${state.activeDay}','${task.id}')" title="Add subtask">⤷</button>
+        <button class="btn-icon btn-sm" onclick="deleteTask('${state.activeDay}','${task.id}')" title="Delete" style="color:var(--danger)">🗑</button>
+      </div>
+    </div>`;
+
+  if (task.children && task.children.length > 0) {
+    html += `<div class="task-children ${isCollapsed ? 'hidden' : ''}">`;
+    task.children.forEach(c => { html += renderTaskBlock(c, depth + 1); });
+    html += `</div>`;
+  }
+
+  // subtask add row placeholder (hidden, shown on demand)
+  html += `<div id="add-sub-${task.id}" style="display:none;" class="add-task-row" style="margin-left:28px;">
+    <input class="add-task-input" id="sub-input-${task.id}" placeholder="+ Add subtask…" onkeydown="handleAddTask(event,'${state.activeDay}','${task.id}')" style="font-size:13px;" />
+    <button class="btn btn-secondary btn-sm" onclick="addTaskFromInput('${state.activeDay}','${task.id}')">Add</button>
+    <button class="btn-icon" onclick="hideSubtaskInput('${task.id}')">✕</button>
+  </div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+// ─────────────────────────────────────────
+// Drag and Drop
+// ─────────────────────────────────────────
+let _dragId = null; // id of task being dragged
+const _collapsed = new Set(); // task ids whose children are collapsed
+
+function toggleCollapse(taskId) {
+  if (_collapsed.has(taskId)) _collapsed.delete(taskId);
+  else _collapsed.add(taskId);
+  renderTaskArea();
+}
+
+function collectParentIds(tasks, out = []) {
+  tasks.forEach(t => { if (t.children.length) { out.push(t.id); collectParentIds(t.children, out); } });
+  return out;
+}
+
+function collapseAll() {
+  const day = state.days[state.activeDay];
+  if (!day) return;
+  collectParentIds(day.tasks).forEach(id => _collapsed.add(id));
+  renderTaskArea();
+}
+
+function expandAll() {
+  _collapsed.clear();
+  renderTaskArea();
+}
+
+function onDragStart(event, taskId) {
+  event.stopPropagation(); // prevent parent task-block from also firing dragstart
+  _dragId = taskId;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', taskId);
+  setTimeout(() => {
+    const el = document.getElementById(`tb-${taskId}`);
+    if (el) el.classList.add('dragging');
+  }, 0);
+}
+
+function getDragZone(event) {
+  // Returns 'top' | 'middle' | 'bottom' based on cursor position within the block
+  const block = event.currentTarget;
+  const rect = block.getBoundingClientRect();
+  const rel = (event.clientY - rect.top) / rect.height;
+  if (rel < 0.3) return 'top';
+  if (rel > 0.7) return 'bottom';
+  return 'middle';
+}
+
+function onDragOver(event) {
+  event.preventDefault();
+  event.stopPropagation(); // prevent parent block from also responding
+  event.dataTransfer.dropEffect = 'move';
+  const block = event.currentTarget;
+  if (block.id === `tb-${_dragId}`) return;
+  const zone = getDragZone(event);
+  block.classList.toggle('drag-over-top',    zone === 'top');
+  block.classList.toggle('drag-over-bottom', zone === 'bottom');
+  block.classList.toggle('drag-over-child',  zone === 'middle');
+}
+
+function onDragLeave(event) {
+  event.stopPropagation();
+  const block = event.currentTarget;
+  if (!block.contains(event.relatedTarget)) {
+    block.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child');
+  }
+}
+
+function onDragEnd(event) {
+  document.querySelectorAll('.task-block').forEach(el => {
+    el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom', 'drag-over-child');
+  });
+  _dragId = null;
+}
+
+function findParentList(tasks, id) {
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === id) return tasks;
+    const found = findParentList(tasks[i].children, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+function isAncestor(tasks, ancestorId, descendantId) {
+  // Returns true if ancestorId is an ancestor of descendantId
+  const ancestor = findTask(tasks, ancestorId);
+  if (!ancestor) return false;
+  return !!findTask(ancestor.children, descendantId);
+}
+
+function onDrop(event, targetId) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  // Capture and immediately clear _dragId so re-renders don't leave stale state
+  const dragId = _dragId;
+  _dragId = null;
+
+  if (!dragId || dragId === targetId) return;
+
+  const dayKey = state.activeDay;
+  const day = state.days[dayKey];
+  if (!day) return;
+
+  // Prevent dropping a task onto its own descendant
+  const draggedTask = findTask(day.tasks, dragId);
+  if (!draggedTask) return;
+  if (findTask(draggedTask.children, targetId)) return;
+
+  const zone = getDragZone(event);
+  const block = event.currentTarget;
+  block.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child');
+
+  const dragList = findParentList(day.tasks, dragId);
+  const targetList = findParentList(day.tasks, targetId);
+  if (!dragList || !targetList) return;
+
+  if (zone === 'middle') {
+    const targetTask = findTask(day.tasks, targetId);
+    if (!targetTask) return;
+    const dragIdx = dragList.findIndex(t => t.id === dragId);
+    const [dragged] = dragList.splice(dragIdx, 1);
+    targetTask.children.push(dragged);
+  } else {
+    const dragIdx = dragList.findIndex(t => t.id === dragId);
+    const [dragged] = dragList.splice(dragIdx, 1);
+    const newTargetIdx = targetList.findIndex(t => t.id === targetId);
+    const insertAt = zone === 'top' ? newTargetIdx : newTargetIdx + 1;
+    targetList.splice(insertAt, 0, dragged);
+  }
+
+  saveData();
+  renderTaskArea();
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────
+// Navigation
+// ─────────────────────────────────────────
+async function selectMonth(m) {
+  state.activeMonth = m;
+  await loadMonth(m);
+  const days = getDaysInMonth(m);
+  const today = todayKey();
+  const withTasks = days.filter(k => state.days[k] && state.days[k].tasks.length > 0);
+  if (withTasks.length) state.activeDay = withTasks[0];
+  else if (days.includes(today)) state.activeDay = today;
+  else state.activeDay = days[0];
+  render();
+}
+
+function selectDay(key) {
+  state.activeDay = key;
+  ensureDay(key);
+  state.contextTaskId = null;
+  document.getElementById('context-panel').classList.remove('open');
+  renderDayList();
+  renderTaskArea();
+}
+
+// ─────────────────────────────────────────
+// Task CRUD
+// ─────────────────────────────────────────
+function handleAddTask(event, dayKey, parentId) {
+  if (event.key === 'Enter') { event.preventDefault(); addTaskFromInput(dayKey, parentId); }
+  if (event.key === 'Escape') { if (parentId) hideSubtaskInput(parentId); }
+}
+
+function addTaskFromInput(dayKey, parentId) {
+  const inputId = parentId ? `sub-input-${parentId}` : 'new-task-input';
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  addTask(dayKey, parentId, text);
+}
+
+function addTask(dayKey, parentId, text) {
+  ensureDay(dayKey);
+  const task = makeTask(text);
+  const day = state.days[dayKey];
+  if (!parentId) {
+    day.tasks.push(task);
+  } else {
+    const parent = findTask(day.tasks, parentId);
+    if (parent) parent.children.push(task);
+  }
+  saveData();
+  renderTaskArea();
+  renderDayList();
+  // Re-focus the correct input after DOM rebuild
+  if (parentId) {
+    const el = document.getElementById(`add-sub-${parentId}`);
+    if (el) {
+      el.style.display = 'flex';
+      const sub = document.getElementById(`sub-input-${parentId}`);
+      if (sub) sub.focus();
+    }
+  } else {
+    const inp = document.getElementById('new-task-input');
+    if (inp) inp.focus();
+  }
+}
+
+function updateTaskText(dayKey, taskId, text) {
+  const day = state.days[dayKey];
+  if (!day) return;
+  const task = findTask(day.tasks, taskId);
+  if (task) { task.text = text; saveData(); }
+}
+
+function deleteTask(dayKey, taskId) {
+  const day = state.days[dayKey];
+  if (!day) return;
+  day.tasks = removeTask(day.tasks, taskId);
+  if (state.contextTaskId === taskId) { state.contextTaskId = null; document.getElementById('context-panel').classList.remove('open'); }
+  saveData();
+  renderTaskArea();
+}
+
+function toggleTask(dayKey, taskId, checked) {
+  const day = state.days[dayKey];
+  if (!day) return;
+  const task = findTask(day.tasks, taskId);
+  if (!task) return;
+  if (checked) {
+    markAllDone(task);
+  } else {
+    task.status = 'pending';
+    // children stay done unless manually changed
+  }
+  saveData();
+  renderTaskArea();
+  // re-open context panel if was open
+  if (state.contextTaskId) renderContextPanel();
+}
+
+function togglePartial(dayKey, taskId) {
+  const day = state.days[dayKey];
+  if (!day) return;
+  const task = findTask(day.tasks, taskId);
+  if (!task) return;
+  task.status = task.status === 'partial' ? 'pending' : 'partial';
+  saveData();
+  renderTaskArea();
+}
+
+function toggleImportant(dayKey, taskId) {
+  const task = findTask(state.days[dayKey].tasks, taskId);
+  if (!task) return;
+  task.important = !task.important;
+  saveData();
+  renderTaskArea();
+}
+
+function toggleRecurring(dayKey, taskId) {
+  const task = findTask(state.days[dayKey].tasks, taskId);
+  if (!task) return;
+  task.recurring = !task.recurring;
+  if (!task.recurring) task.closed = false;
+  saveData();
+  renderTaskArea();
+}
+
+function closeRecurring(dayKey, taskId) {
+  const task = findTask(state.days[dayKey].tasks, taskId);
+  if (!task) return;
+  task.closed = true;
+  saveData();
+  renderTaskArea();
+}
+
+function addSubtask(dayKey, parentId) {
+  const el = document.getElementById(`add-sub-${parentId}`);
+  if (el) { el.style.display = 'flex'; document.getElementById(`sub-input-${parentId}`).focus(); }
+}
+
+function hideSubtaskInput(parentId) {
+  const el = document.getElementById(`add-sub-${parentId}`);
+  if (el) el.style.display = 'none';
+}
+
+function focusAddSubtask(taskId) {
+  addSubtask(state.activeDay, taskId);
+}
+
+// ─────────────────────────────────────────
+// Move to Next Day
+// ─────────────────────────────────────────
+async function moveToNextDay(dayKey) {
+  const day = state.days[dayKey];
+  if (!day) return;
+  const next = nextDayKey(dayKey);
+  ensureDay(next);
+
+  const remaining = [];
+  day.tasks.forEach(task => {
+    const moved = moveTaskToNext(task, next);
+    if (moved !== null) remaining.push(moved);
+  });
+  day.tasks = remaining;
+
+  // Save current month; if next day is a different month, save that too
+  await saveMonth(monthOf(dayKey));
+  if (monthOf(next) !== monthOf(dayKey)) await saveMonth(monthOf(next));
+
+  state.activeMonth = monthOf(next);
+  state.activeDay = next;
+  render();
+}
+
+// Build the "record" copy kept in the current day for a task with mixed children.
+// Keeps only children that are done or partial (i.e. work that was done today).
+function buildCurrentDayRecord(task) {
+  const record = cloneTask(task);
+  record.children = task.children
+    .filter(c => c.status === 'done' || c.status === 'partial' || hasAnyDoneDeep(c))
+    .map(c => buildCurrentDayRecord(c));
+  return record;
+}
+
+// Build the copy forwarded to the next day.
+// Keeps only children that are not fully done (pending or partial).
+function buildNextDayCopy(task) {
+  const copy = cloneTask(task);
+  copy.children = task.children
+    .filter(c => c.status !== 'done' || hasIncompleteDeep(c))
+    .map(c => buildNextDayCopy(c));
+  return copy;
+}
+
+function hasAnyDoneDeep(task) {
+  if (task.status === 'done' || task.status === 'partial') return true;
+  return task.children.some(c => hasAnyDoneDeep(c));
+}
+
+// Returns the task to retain in current day (or null to remove it entirely).
+// Also pushes the forwarded copy to next day when appropriate.
+function moveTaskToNext(task, nextDayKey) {
+  // Recurring (not closed): always forward a fresh pending copy, keep original as-is
+  if (task.recurring && !task.closed) {
+    const copy = cloneTask(task);
+    copy.status = 'pending';
+    copy.children.forEach(c => resetStatus(c));
+    state.days[nextDayKey].tasks.push(copy);
+    return task;
+  }
+
+  // Fully done: keep in current day, nothing forwarded
+  if (task.status === 'done' && task.children.every(c => !hasIncompleteDeep(c))) {
+    return task;
+  }
+
+  const hasChildren = task.children.length > 0;
+
+  if (hasChildren) {
+    const hasDoneChild    = task.children.some(c => c.status === 'done' || hasAnyDoneDeep(c));
+    const hasIncomplete   = task.children.some(c => hasIncompleteDeep(c));
+
+    if (hasDoneChild && hasIncomplete) {
+      // Mixed: keep a record of completed work, forward incomplete work
+      const record   = buildCurrentDayRecord(task);
+      const forward  = buildNextDayCopy(task);
+      state.days[nextDayKey].tasks.push(forward);
+      return record;
+    }
+
+    if (hasDoneChild && !hasIncomplete) {
+      // All children done: keep as-is
+      return task;
+    }
+
+    // All children incomplete (no done work to record): forward whole task, remove from current
+    const copy = cloneTask(task);
+    state.days[nextDayKey].tasks.push(copy);
+    return null;
+  }
+
+  // Leaf task (no children)
+  if (task.status === 'done') return task;
+
+  if (task.status === 'partial') {
+    // Keep a record copy in current day, forward a fresh copy to next day
+    const forward = cloneTask(task);
+    state.days[nextDayKey].tasks.push(forward);
+    return task; // original stays as the record
+  }
+
+  // Pending leaf: move entirely
+  const copy = cloneTask(task);
+  state.days[nextDayKey].tasks.push(copy);
+  return null;
+}
+
+function resetStatus(task) {
+  task.status = 'pending';
+  task.children.forEach(c => resetStatus(c));
+}
+
+// ─────────────────────────────────────────
+// Context Panel
+// ─────────────────────────────────────────
+function openContext(dayKey, taskId) {
+  state.contextTaskId = taskId;
+  state.contextDayKey = dayKey;
+  document.getElementById('context-panel').classList.add('open');
+  renderContextPanel();
+}
+
+function closeContextPanel() {
+  state.contextTaskId = null;
+  document.getElementById('context-panel').classList.remove('open');
+  renderTaskArea();
+}
+
+function renderContextPanel() {
+  const dayKey = state.contextDayKey;
+  const taskId = state.contextTaskId;
+  if (!dayKey || !taskId) return;
+  const day = state.days[dayKey];
+  if (!day) return;
+  const task = findTask(day.tasks, taskId);
+  if (!task) return;
+
+  document.getElementById('cp-title').textContent = task.text;
+
+  const ctx = task.context;
+  let html = '';
+
+  // Notes
+  html += `<div class="cp-section">
+    <div class="cp-section-title">Notes</div>`;
+  ctx.notes.forEach((note, i) => {
+    html += `<div class="note-card">
+      <textarea onblur="updateNote('${i}',this.value)">${escHtml(note.text)}</textarea>
+      <div class="note-actions">
+        <button class="btn btn-danger btn-sm" onclick="deleteNote(${i})">Delete</button>
+      </div>
+    </div>`;
+  });
+  html += `<button class="btn btn-secondary btn-sm" onclick="addNote()">+ Add Note</button>
+  </div>`;
+
+  // Links
+  html += `<div class="cp-section">
+    <div class="cp-section-title">Links</div>`;
+  const LINK_TYPES = ['Jira','Slack','Google Docs','Google Sheets','Google Slides','Link'];
+  ctx.links.forEach((link, i) => {
+    const icon = linkIcon(link.type);
+    const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t===link.type?' selected':''}>${t}</option>`).join('');
+    html += `<div class="link-card" id="link-card-${i}">
+      <span class="link-icon">${icon}</span>
+      <div class="link-info">
+        <div class="link-label">${escHtml(link.label || link.type)}</div>
+        <a class="link-url" href="${escHtml(link.url)}" target="_blank" rel="noopener">${escHtml(link.url)}</a>
+      </div>
+      <button class="btn-icon" onclick="toggleEditLink(${i})" title="Edit">✏️</button>
+      <button class="btn-icon" onclick="deleteLink(${i})" title="Delete">🗑</button>
+    </div>
+    <div class="link-edit-form" id="link-edit-${i}" style="display:none;">
+      <select id="edit-link-type-${i}">${typeOpts}</select>
+      <input id="edit-link-label-${i}" placeholder="Label (optional)" value="${escHtml(link.label || '')}" />
+      <input id="edit-link-url-${i}" placeholder="URL" value="${escHtml(link.url)}" />
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-primary btn-sm" onclick="saveEditLink(${i})">Save</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleEditLink(${i})">Cancel</button>
+      </div>
+    </div>`;
+  });
+  html += `<div class="add-link-form" id="add-link-form" style="display:none;">
+    <select id="link-type">
+      <option value="Jira">Jira</option>
+      <option value="Slack">Slack</option>
+      <option value="Google Docs">Google Docs</option>
+      <option value="Google Sheets">Google Sheets</option>
+      <option value="Google Slides">Google Slides</option>
+      <option value="Link">Other Link</option>
+    </select>
+    <input id="link-label" placeholder="Label (optional)" />
+    <input id="link-url" placeholder="URL" />
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-primary btn-sm" onclick="saveLink()">Save</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('add-link-form').style.display='none'">Cancel</button>
+    </div>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="document.getElementById('add-link-form').style.display='flex'">+ Add Link</button>
+  </div>`;
+
+  // Attachments
+  html += `<div class="cp-section">
+    <div class="cp-section-title">Attachments</div>`;
+  ctx.attachments.forEach((att, i) => {
+    html += `<div class="attach-card">
+      <span class="attach-icon">${fileIcon(att.name)}</span>
+      <span class="attach-name" title="${escHtml(att.name)}">${escHtml(att.name)}</span>
+      <span class="attach-size">${fmtSize(att.size)}</span>
+      <button class="btn-icon" onclick="deleteAttachment(${i})" title="Delete">🗑</button>
+    </div>`;
+  });
+  html += `<label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+    📎 Attach File
+    <input type="file" multiple style="display:none;" onchange="handleAttach(this)" />
+  </label>
+  </div>`;
+
+  document.getElementById('cp-body').innerHTML = html;
+}
+
+function linkIcon(type) {
+  const map = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'Link': '🔗' };
+  return map[type] || '🔗';
+}
+
+function fileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const map = { pdf: '📕', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📽️', pptx: '📽️', png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', zip: '🗜️', txt: '📄' };
+  return map[ext] || '📎';
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function getCtxTask() {
+  const day = state.days[state.contextDayKey];
+  if (!day) return null;
+  return findTask(day.tasks, state.contextTaskId);
+}
+
+function addNote() {
+  const task = getCtxTask();
+  if (!task) return;
+  task.context.notes.push({ text: '' });
+  saveData();
+  renderContextPanel();
+  // focus the new textarea
+  setTimeout(() => {
+    const tas = document.querySelectorAll('#cp-body textarea');
+    if (tas.length) tas[tas.length - 1].focus();
+  }, 50);
+}
+
+function updateNote(index, text) {
+  const task = getCtxTask();
+  if (!task) return;
+  task.context.notes[index].text = text;
+  saveData();
+}
+
+function deleteNote(index) {
+  const task = getCtxTask();
+  if (!task) return;
+  task.context.notes.splice(index, 1);
+  saveData();
+  renderContextPanel();
+}
+
+function saveLink() {
+  const task = getCtxTask();
+  if (!task) return;
+  const url = document.getElementById('link-url').value.trim();
+  if (!url) return;
+  const type = document.getElementById('link-type').value;
+  const label = document.getElementById('link-label').value.trim() || type;
+  task.context.links.push({ type, label, url });
+  saveData();
+  renderContextPanel();
+}
+
+function deleteLink(index) {
+  const task = getCtxTask();
+  if (!task) return;
+  task.context.links.splice(index, 1);
+  saveData();
+  renderContextPanel();
+}
+
+function toggleEditLink(index) {
+  const form = document.getElementById(`link-edit-${index}`);
+  if (!form) return;
+  const visible = form.style.display !== 'none';
+  form.style.display = visible ? 'none' : 'flex';
+  if (!visible) document.getElementById(`edit-link-url-${index}`).focus();
+}
+
+function saveEditLink(index) {
+  const task = getCtxTask();
+  if (!task) return;
+  const url = document.getElementById(`edit-link-url-${index}`).value.trim();
+  if (!url) return;
+  const type  = document.getElementById(`edit-link-type-${index}`).value;
+  const label = document.getElementById(`edit-link-label-${index}`).value.trim() || type;
+  task.context.links[index] = { type, label, url };
+  saveData();
+  renderContextPanel();
+}
+
+function handleAttach(input) {
+  const task = getCtxTask();
+  if (!task) return;
+  Array.from(input.files).forEach(file => {
+    // Store metadata only (not binary data — would exceed localStorage)
+    task.context.attachments.push({ name: file.name, size: file.size, type: file.type, date: Date.now() });
+  });
+  saveData();
+  renderContextPanel();
+}
+
+function deleteAttachment(index) {
+  const task = getCtxTask();
+  if (!task) return;
+  task.context.attachments.splice(index, 1);
+  saveData();
+  renderContextPanel();
+}
+
+// ─────────────────────────────────────────
+// Summary
+// ─────────────────────────────────────────
+function openSummaryModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeSummaryModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+document.getElementById('sum-period').addEventListener('change', function() {
+  document.getElementById('sum-custom').style.display = this.value === 'custom' ? 'flex' : 'none';
+});
+
+function generateSummary() {
+  const period = document.getElementById('sum-period').value;
+  const today = new Date(todayKey() + 'T00:00:00');
+  let fromKey, toKey;
+
+  if (period === 'week') {
+    const day = today.getDay(); // 0=Sun
+    const diff = (day === 0) ? 6 : day - 1;
+    const from = new Date(today); from.setDate(today.getDate() - diff);
+    fromKey = dateToKey(from); toKey = todayKey();
+  } else if (period === 'month') {
+    fromKey = `${todayKey().slice(0,7)}-01`; toKey = todayKey();
+  } else if (period === 'quarter') {
+    const m = today.getMonth();
+    const qStart = Math.floor(m / 3) * 3;
+    const from = new Date(today.getFullYear(), qStart, 1);
+    fromKey = dateToKey(from); toKey = todayKey();
+  } else if (period === 'year') {
+    fromKey = `${today.getFullYear()}-01-01`; toKey = todayKey();
+  } else {
+    fromKey = document.getElementById('sum-from').value;
+    toKey = document.getElementById('sum-to').value;
+    if (!fromKey || !toKey) { document.getElementById('sum-output').textContent = 'Please set a date range.'; return; }
+  }
+
+  const summary = buildSummary(fromKey, toKey, period);
+  renderSummary(summary);
+}
+
+function dateToKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function buildSummary(fromKey, toKey, period) {
+  // Collect all days in range
+  const days = Object.keys(state.days).filter(k => k >= fromKey && k <= toKey).sort();
+  const result = { days: [], fromKey, toKey, period };
+  let totalDone = 0, totalPartial = 0, totalPending = 0;
+
+  days.forEach(key => {
+    const dayData = state.days[key];
+    if (!dayData || !dayData.tasks.length) return;
+    const dayInfo = { key, tasks: [], done: 0, partial: 0, pending: 0 };
+    dayData.tasks.forEach(t => gatherStats(t, dayInfo));
+    totalDone += dayInfo.done;
+    totalPartial += dayInfo.partial;
+    totalPending += dayInfo.pending;
+    if (dayInfo.tasks.length) result.days.push(dayInfo);
+  });
+
+  result.totalDone = totalDone;
+  result.totalPartial = totalPartial;
+  result.totalPending = totalPending;
+  return result;
+}
+
+function gatherStats(task, dayInfo, depth = 0) {
+  const entry = { text: task.text, status: task.status, depth, contextSummary: summarizeContext(task.context) };
+  dayInfo.tasks.push(entry);
+  if (task.status === 'done') dayInfo.done++;
+  else if (task.status === 'partial') dayInfo.partial++;
+  else dayInfo.pending++;
+  task.children.forEach(c => gatherStats(c, dayInfo, depth + 1));
+}
+
+function summarizeContext(ctx) {
+  if (!ctx) return '';
+  const parts = [];
+  if (ctx.notes && ctx.notes.length) {
+    const noteTexts = ctx.notes.map(n => n.text).filter(Boolean);
+    if (noteTexts.length) parts.push('Notes: ' + noteTexts.join(' | '));
+  }
+  if (ctx.links && ctx.links.length) {
+    parts.push('Links: ' + ctx.links.map(l => `${l.label}(${l.url})`).join(', '));
+  }
+  if (ctx.attachments && ctx.attachments.length) {
+    parts.push('Files: ' + ctx.attachments.map(a => a.name).join(', '));
+  }
+  return parts.join(' · ');
+}
+
+function renderSummary(s) {
+  const el = document.getElementById('sum-output');
+  if (!s.days.length) { el.textContent = 'No tasks found in this period.'; return; }
+
+  const periodLabel = { week: 'Weekly', month: 'Monthly', quarter: 'Quarterly', year: 'Annual', custom: 'Custom Range' }[s.period] || '';
+  let text = '';
+
+  text += `${periodLabel} Summary: ${fmtDay(s.fromKey)} – ${fmtDay(s.toKey)}\n`;
+  text += `${'─'.repeat(52)}\n`;
+  text += `✅ Done: ${s.totalDone}   ◑ Partial: ${s.totalPartial}   ⏳ Pending: ${s.totalPending}   📋 Total: ${s.totalDone + s.totalPartial + s.totalPending}\n\n`;
+
+  s.days.forEach(day => {
+    const d = new Date(day.key + 'T00:00:00');
+    const label = d.toLocaleString('default', { weekday: 'short', month: 'short', day: 'numeric' });
+    text += `📅 ${label}  (✅${day.done} ◑${day.partial} ⏳${day.pending})\n`;
+    day.tasks.forEach(t => {
+      const indent = '  '.repeat(t.depth + 1);
+      const icon = t.status === 'done' ? '✅' : t.status === 'partial' ? '◑' : '⏳';
+      text += `${indent}${icon} ${t.text}\n`;
+      if (t.contextSummary) {
+        text += `${indent}   💬 ${t.contextSummary}\n`;
+      }
+    });
+    text += '\n';
+  });
+
+  el.textContent = text;
+}
+
+// ─────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
