@@ -523,11 +523,16 @@ function countDescendants(task) {
   let done = 0, partial = 0, pending = 0, important = 0;
   const walk = (children) => {
     for (const c of children) {
-      if (c.status === 'done') done++;
-      else if (c.status === 'partial') partial++;
-      else pending++;
-      if (c.important) important++;
-      walk(c.children);
+      if (c.children.length > 0) {
+        // Non-leaf: recurse, don't count this node itself
+        walk(c.children);
+      } else {
+        // Leaf node: count it
+        if (c.status === 'done') done++;
+        else if (c.status === 'partial') partial++;
+        else pending++;
+        if (c.important) important++;
+      }
     }
   };
   walk(task.children);
@@ -934,21 +939,31 @@ async function moveToNextDay(dayKey) {
 
 // Build the "record" copy kept in the current day for a task with mixed children.
 // Keeps only children that are done or partial (i.e. work that was done today).
+// A child should be included in the current-day record if it has any done/partial work
+// OR if it is recurring (kept as-is regardless of status).
 function buildCurrentDayRecord(task) {
   const record = cloneTask(task);
   record.children = task.children
-    .filter(c => c.status === 'done' || c.status === 'partial' || hasAnyDoneDeep(c))
+    .filter(c => c.recurring || c.status === 'done' || c.status === 'partial' || hasAnyDoneDeep(c))
     .map(c => buildCurrentDayRecord(c));
   return record;
 }
 
 // Build the copy forwarded to the next day.
-// Keeps only children that are not fully done (pending or partial).
+// Recurring subtasks always included (reset to pending); done non-recurring subtasks excluded.
 function buildNextDayCopy(task) {
   const copy = cloneTask(task);
   copy.children = task.children
-    .filter(c => c.status !== 'done' || hasIncompleteDeep(c))
-    .map(c => buildNextDayCopy(c));
+    .filter(c => c.recurring || c.status !== 'done' || hasIncompleteDeep(c))
+    .map(c => {
+      const child = buildNextDayCopy(c);
+      // Reset recurring subtasks to pending for the next day
+      if (c.recurring && !c.closed) {
+        child.status = 'pending';
+        child.children.forEach(gc => resetStatus(gc));
+      }
+      return child;
+    });
   return copy;
 }
 
@@ -957,45 +972,53 @@ function hasAnyDoneDeep(task) {
   return task.children.some(c => hasAnyDoneDeep(c));
 }
 
+// A child counts as "needing forwarding" if it is incomplete OR recurring (not closed).
+function needsForwarding(task) {
+  if (task.recurring && !task.closed) return true;
+  return hasIncompleteDeep(task);
+}
+
 // Returns the task to retain in current day (or null to remove it entirely).
 // Also pushes the forwarded copy to next day when appropriate.
 function moveTaskToNext(task, nextDayKey) {
-  // Recurring (not closed): always forward a fresh pending copy, keep original as-is
+  const nextTasks = state.days[nextDayKey].tasks;
+
+  // Recurring top-level (not closed): keep original as-is, always forward a fresh pending copy
   if (task.recurring && !task.closed) {
     const copy = cloneTask(task);
     copy.status = 'pending';
     copy.children.forEach(c => resetStatus(c));
-    state.days[nextDayKey].tasks.push(copy);
+    mergeTaskIntoList(nextTasks, copy);
     return task;
   }
 
-  // Fully done: keep in current day, nothing forwarded
-  if (task.status === 'done' && task.children.every(c => !hasIncompleteDeep(c))) {
+  // Fully done with no recurring descendants: keep in current day, nothing forwarded
+  if (task.status === 'done' && !task.children.some(c => needsForwarding(c))) {
     return task;
   }
 
   const hasChildren = task.children.length > 0;
 
   if (hasChildren) {
-    const hasDoneChild    = task.children.some(c => c.status === 'done' || hasAnyDoneDeep(c));
-    const hasIncomplete   = task.children.some(c => hasIncompleteDeep(c));
+    const hasDoneChild = task.children.some(c => c.status === 'done' || hasAnyDoneDeep(c));
+    const hasForward   = task.children.some(c => needsForwarding(c));
 
-    if (hasDoneChild && hasIncomplete) {
-      // Mixed: keep a record of completed work, forward incomplete work
-      const record   = buildCurrentDayRecord(task);
-      const forward  = buildNextDayCopy(task);
-      state.days[nextDayKey].tasks.push(forward);
+    if (hasDoneChild && hasForward) {
+      // Mixed: keep a record of completed work, forward incomplete/recurring work
+      const record  = buildCurrentDayRecord(task);
+      const forward = buildNextDayCopy(task);
+      mergeTaskIntoList(nextTasks, forward);
       return record;
     }
 
-    if (hasDoneChild && !hasIncomplete) {
-      // All children done: keep as-is
+    if (hasDoneChild && !hasForward) {
+      // All children done and none recurring: keep as-is
       return task;
     }
 
-    // All children incomplete (no done work to record): forward whole task, remove from current
-    const copy = cloneTask(task);
-    state.days[nextDayKey].tasks.push(copy);
+    // All children incomplete/recurring (no done work to record): forward whole task, remove from current
+    const copy = buildNextDayCopy(task);
+    mergeTaskIntoList(nextTasks, copy);
     return null;
   }
 
@@ -1005,19 +1028,39 @@ function moveTaskToNext(task, nextDayKey) {
   if (task.status === 'partial') {
     // Keep a record copy in current day, forward a fresh copy to next day
     const forward = cloneTask(task);
-    state.days[nextDayKey].tasks.push(forward);
-    return task; // original stays as the record
+    mergeTaskIntoList(nextTasks, forward);
+    return task;
   }
 
   // Pending leaf: move entirely
   const copy = cloneTask(task);
-  state.days[nextDayKey].tasks.push(copy);
+  mergeTaskIntoList(nextTasks, copy);
   return null;
 }
 
 function resetStatus(task) {
   task.status = 'pending';
   task.children.forEach(c => resetStatus(c));
+}
+
+// Merge `incoming` into `list` by task text to avoid duplicates.
+// If a task with the same text already exists in the list, recursively merge
+// its children rather than adding a second copy. If no match, push as new.
+function mergeTaskIntoList(list, incoming) {
+  const existing = list.find(t => t.text === incoming.text);
+  if (!existing) {
+    list.push(incoming);
+    return;
+  }
+  // Merge children of incoming into existing
+  for (const child of incoming.children) {
+    mergeTaskIntoList(existing.children, child);
+  }
+  // If the incoming task has a more urgent status, keep the worse one
+  const rank = { pending: 0, partial: 1, done: 2 };
+  if (rank[incoming.status] < rank[existing.status]) {
+    existing.status = incoming.status;
+  }
 }
 
 // ─────────────────────────────────────────

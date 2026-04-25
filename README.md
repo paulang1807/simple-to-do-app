@@ -163,7 +163,7 @@ Every task has one of three statuses, shown with a badge and a left border:
 
 **Marking a task done cascades to all subtasks** — every descendant is marked done automatically.
 
-**Parent indicators when collapsed:** a subtask count badge shows `✓ done · ◑ partial · ○ incomplete · ⭐ important` counts across all descendants (only non-zero values shown). See [Collapsing & Expanding Subtasks](#collapsing--expanding-subtasks) for details.
+**Parent indicators when collapsed:** a subtask count badge shows `✓ done · ◑ partial · ○ incomplete · ⭐ important` counts for the **leaf-level** subtasks only (only non-zero values shown). See [Collapsing & Expanding Subtasks](#collapsing--expanding-subtasks) for details.
 
 ---
 
@@ -193,7 +193,7 @@ A recurring task automatically rolls forward to the next day every time you move
 - The badge changes to `⏹ Closed` and the task stops rolling forward
 
 **Behaviour on move:**
-- A fresh pending copy is created on the next day
+- A fresh pending copy is created on the next day regardless of the current status
 - The original (possibly done) copy is kept on the current day as a record
 
 ---
@@ -206,13 +206,18 @@ The rules applied to each task:
 
 | Task state | Current day | Next day |
 |---|---|---|
-| **Done** (all subtasks done) | Kept as-is | Nothing moved |
+| **Done** (non-recurring, no recurring descendants) | Kept as-is | Nothing moved |
 | **Partial** (leaf task) | Kept as record | Copy moved forward |
 | **Pending** (leaf task) | Removed | Moved forward |
-| **Mixed subtasks** | Record kept with done/partial subtasks only | Copy with pending/partial subtasks only |
-| **Recurring** (any status) | Kept as-is | Fresh pending copy always created |
+| **Mixed subtasks** | Record kept with done/partial/recurring subtasks | Copy with pending/partial/recurring subtasks (recurring reset to pending) |
+| **Recurring** (any status, not closed) | Kept as-is | Fresh pending copy always created |
+| **Recurring subtask** (any status, not closed) | Kept in current-day record | Included in next-day copy, reset to pending |
 
-This means partially-completed work is never silently dropped — the current day always retains a record of what was done.
+Recurring tasks and subtasks are **always forwarded** — even when marked done — so they keep rolling forward every day until explicitly closed. The current day always retains a record of what was done, so no work is silently dropped.
+
+**Duplicate prevention:** tasks are matched by text when merging into the next day. If a task with the same text already exists at the same level on the next day, its children are merged in rather than creating a second copy. This means:
+- Clicking **Move** multiple times is safe — tasks won't pile up on the next day.
+- If the same subtask name appears under two different parent tasks and one parent is already on the next day, only the already-present subtask is skipped — the other parent and its subtask are moved across correctly.
 
 ---
 
@@ -229,16 +234,18 @@ Any task with subtasks shows a **▾ chevron** to the left of its checkbox.
 | Collapse all tasks | Click **⊟ Collapse All** in the day header |
 | Expand all tasks | Click **⊞ Expand All** in the day header |
 
-While collapsed, the parent row shows a subtask count badge summarising all descendants:
+While collapsed, the parent row shows a subtask count badge summarising the **leaf-level** subtasks:
 
 | Symbol | Meaning |
 |---|---|
-| ✓ N | N subtasks marked **done** |
-| ◑ N | N subtasks marked **partial** |
-| ○ N | N subtasks **incomplete** (pending) |
-| ⭐ N | N subtasks marked **important** |
+| ✓ N | N leaf subtasks marked **done** |
+| ◑ N | N leaf subtasks marked **partial** |
+| ○ N | N leaf subtasks **incomplete** (pending) |
+| ⭐ N | N leaf subtasks marked **important** |
 
-Only non-zero counts are shown, so a task with 2 done and 1 incomplete displays `✓ 2 · ○ 1`.
+Only non-zero counts are shown, so a task with 2 done leaves and 1 incomplete leaf displays `✓ 2 · ○ 1`.
+
+**Leaf-level counting:** only the deepest subtasks in each branch are counted. If a subtask has children of its own, the subtask itself is not counted — its children are. For example, a task with two subtasks where one subtask has two children of its own shows a total count of 3 (the childless subtask + the two grandchildren), not 4.
 
 ---
 
