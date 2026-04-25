@@ -338,6 +338,9 @@ const state = {
   contextDayKey: null,
 };
 
+// Clipboard: holds a copied task (with subtasks) until pasted or overwritten
+let _clipboard = null;
+
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
 function todayKey() {
@@ -489,6 +492,7 @@ function renderTaskArea() {
     ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
     <div class="spacer"></div>
     ${(isPast || isToday) && hasIncomplete ? `<button class="btn btn-warn btn-sm" onclick="moveToNextDay('${key}')" title="Move incomplete tasks to ${fmtDay(nextDay)}">⏩ Move to ${fmtDay(nextDay)}</button>` : ''}
+    ${_clipboard ? `<button class="btn btn-secondary btn-sm" onclick="pasteTask('${key}')" title="Paste copied task: ${escHtml(_clipboard.text)}">📋 Paste "${escHtml(_clipboard.text.length > 20 ? _clipboard.text.slice(0,20)+'…' : _clipboard.text)}"</button>` : ''}
     <button class="btn btn-secondary btn-sm" onclick="collapseAll()" title="Collapse all tasks">⊟ Collapse All</button>
     <button class="btn btn-secondary btn-sm" onclick="expandAll()" title="Expand all tasks">⊞ Expand All</button>
   </div>`;
@@ -597,6 +601,7 @@ function renderTaskBlock(task, depth) {
         <button class="btn-icon btn-sm" onclick="togglePartial('${state.activeDay}','${task.id}')" title="Mark partial">◑</button>
         <button class="btn-icon btn-sm" onclick="toggleRecurring('${state.activeDay}','${task.id}')" title="${isRecurring ? 'Disable recurring' : 'Make recurring'}" style="${isRecurring ? 'color:var(--accent)' : ''}">🔁</button>
         ${isRecurring && !isClosed ? `<button class="btn-icon btn-sm" onclick="closeRecurring('${state.activeDay}','${task.id}')" title="Close recurring (stop repeating)" style="color:var(--warn)">⏹</button>` : ''}
+        <button class="btn-icon btn-sm" onclick="copyTask('${task.id}')" title="Copy task">📋</button>
         <button class="btn-icon btn-sm" onclick="addSubtask('${state.activeDay}','${task.id}')" title="Add subtask">⤷</button>
         <button class="btn-icon btn-sm" onclick="deleteTask('${state.activeDay}','${task.id}')" title="Delete" style="color:var(--danger)">🗑</button>
       </div>
@@ -842,6 +847,26 @@ function deleteTask(dayKey, taskId) {
   if (!day) return;
   day.tasks = removeTask(day.tasks, taskId);
   if (state.contextTaskId === taskId) { state.contextTaskId = null; document.getElementById('context-panel').classList.remove('open'); }
+  saveData();
+  renderTaskArea();
+}
+
+function copyTask(taskId) {
+  const day = state.days[state.activeDay];
+  if (!day) return;
+  const task = findTask(day.tasks, taskId);
+  if (!task) return;
+  // Deep clone preserving structure; status reset to pending on paste, not here
+  _clipboard = JSON.parse(JSON.stringify(task));
+  renderTaskArea(); // re-render so Paste button appears in header
+}
+
+function pasteTask(dayKey) {
+  if (!_clipboard) return;
+  ensureDay(dayKey);
+  const copy = cloneTask(_clipboard); // new IDs, preserves structure
+  resetStatus(copy);                  // reset all statuses to pending
+  mergeTaskIntoList(state.days[dayKey].tasks, copy);
   saveData();
   renderTaskArea();
 }

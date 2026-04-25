@@ -20,6 +20,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Collapsing & Expanding Subtasks](#collapsing--expanding-subtasks)
    - [Drag and Drop Reordering](#drag-and-drop-reordering)
    - [Moving Subtasks Between Parents](#moving-subtasks-between-parents)
+   - [Copying Tasks Between Days](#copying-tasks-between-days)
    - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
    - [Monthly Tabs](#monthly-tabs)
    - [Work Summary](#work-summary)
@@ -275,6 +276,24 @@ Using the same drag-and-drop system, you can move a subtask to a completely diff
 4. Or drop on the **top/bottom edge** to place it as a sibling at the target's level
 
 You can also **promote** a subtask to a top-level task by dropping it on the top or bottom edge of a top-level task.
+
+---
+
+### Copying Tasks Between Days
+
+Any task (including all its subtasks) can be copied to the clipboard and pasted into any other day.
+
+**To copy a task:**
+- Hover the task row and click **📋** — the task and its entire subtask hierarchy are copied to the clipboard
+
+**To paste:**
+- Navigate to the destination day
+- Click **📋 Paste "[task name]"** in the day header
+
+**Behaviour:**
+- All statuses (done/partial) are reset to **pending** on paste — you're copying the structure, not the completion state
+- Pasting the same task onto a day that already has a task with the same text will **merge** rather than duplicate — existing subtasks are preserved and only missing subtasks are added
+- The clipboard persists while navigating between days and months, so you can copy from one day and paste into any other
 
 ---
 
