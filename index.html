@@ -100,6 +100,7 @@
   .badge-recurring { background: rgba(108,142,245,0.15); color: var(--accent2); }
   .badge-closed { background: rgba(90,97,128,0.2); color: var(--text3); }
   .badge-subtask-counts { background: rgba(90,97,128,0.15); color: var(--text2); gap: 4px; }
+  .badge-excluded { background: rgba(90,97,128,0.15); color: var(--text3); }
   .badge-important { background: rgba(240,160,75,0.15); color: var(--warn); }
   .task-row.important { border-left: 3px solid var(--warn); }
   .star-btn { font-size: 15px; }
@@ -382,7 +383,7 @@ function ensureDay(key) {
 }
 
 function makeTask(text) {
-  return { id: uid(), text, status: 'pending', important: false, recurring: false, closed: false, children: [], context: { notes: [], links: [], attachments: [] } };
+  return { id: uid(), text, status: 'pending', important: false, recurring: false, closed: false, excludeFromSummary: false, children: [], context: { notes: [], links: [], attachments: [] } };
 }
 
 // Find task by id recursively in a list
@@ -527,15 +528,16 @@ function countDescendants(task) {
   let done = 0, partial = 0, pending = 0, important = 0;
   const walk = (children) => {
     for (const c of children) {
+      // Important is counted on every node regardless of depth
+      if (c.important) important++;
       if (c.children.length > 0) {
-        // Non-leaf: recurse, don't count this node itself
+        // Non-leaf: recurse for status counts, but don't count this node's status
         walk(c.children);
       } else {
-        // Leaf node: count it
+        // Leaf node: count status
         if (c.status === 'done') done++;
         else if (c.status === 'partial') partial++;
         else pending++;
-        if (c.important) important++;
       }
     }
   };
@@ -555,6 +557,7 @@ function renderTaskBlock(task, depth) {
   const isRecurring = !!task.recurring;
   const isClosed = !!task.closed;
   const isImportant = !!task.important;
+  const isExcluded = !!task.excludeFromSummary;
   const isCollapsed = _collapsed.has(task.id);
 
   let badges = '';
@@ -572,6 +575,7 @@ function renderTaskBlock(task, depth) {
     if (important) parts.push(`<span title="Important subtasks">⭐ ${important}</span>`);
     badges += `<span class="badge badge-subtask-counts" title="Subtask counts">${parts.join(' · ')}</span>`;
   }
+  if (isExcluded) badges += `<span class="badge badge-excluded" title="Excluded from summary">∅ Excluded</span>`;
   if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" title="View context">📎 Context</span>`;
 
   let html = `<div class="task-block" id="tb-${task.id}" draggable="true"
@@ -601,6 +605,7 @@ function renderTaskBlock(task, depth) {
         <button class="btn-icon btn-sm" onclick="togglePartial('${state.activeDay}','${task.id}')" title="Mark partial">◑</button>
         <button class="btn-icon btn-sm" onclick="toggleRecurring('${state.activeDay}','${task.id}')" title="${isRecurring ? 'Disable recurring' : 'Make recurring'}" style="${isRecurring ? 'color:var(--accent)' : ''}">🔁</button>
         ${isRecurring && !isClosed ? `<button class="btn-icon btn-sm" onclick="closeRecurring('${state.activeDay}','${task.id}')" title="Close recurring (stop repeating)" style="color:var(--warn)">⏹</button>` : ''}
+        <button class="btn-icon btn-sm" onclick="toggleExcludeFromSummary('${state.activeDay}','${task.id}')" title="${isExcluded ? 'Include in summary' : 'Exclude from summary'}" style="${isExcluded ? 'color:var(--text3)' : ''}">∅</button>
         <button class="btn-icon btn-sm" onclick="copyTask('${task.id}')" title="Copy task">📋</button>
         <button class="btn-icon btn-sm" onclick="addSubtask('${state.activeDay}','${task.id}')" title="Add subtask">⤷</button>
         <button class="btn-icon btn-sm" onclick="deleteTask('${state.activeDay}','${task.id}')" title="Delete" style="color:var(--danger)">🗑</button>
@@ -906,6 +911,14 @@ function toggleImportant(dayKey, taskId) {
   renderTaskArea();
 }
 
+function toggleExcludeFromSummary(dayKey, taskId) {
+  const task = findTask(state.days[dayKey].tasks, taskId);
+  if (!task) return;
+  task.excludeFromSummary = !task.excludeFromSummary;
+  saveData();
+  renderTaskArea();
+}
+
 function toggleRecurring(dayKey, taskId) {
   const task = findTask(state.days[dayKey].tasks, taskId);
   if (!task) return;
@@ -1135,7 +1148,7 @@ function renderContextPanel() {
   // Links
   html += `<div class="cp-section">
     <div class="cp-section-title">Links</div>`;
-  const LINK_TYPES = ['Jira','Slack','Google Docs','Google Sheets','Google Slides','Link'];
+  const LINK_TYPES = ['Jira','Slack','Google Docs','Google Sheets','Google Slides','GitHub','Link'];
   ctx.links.forEach((link, i) => {
     const icon = linkIcon(link.type);
     const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t===link.type?' selected':''}>${t}</option>`).join('');
@@ -1165,6 +1178,7 @@ function renderContextPanel() {
       <option value="Google Docs">Google Docs</option>
       <option value="Google Sheets">Google Sheets</option>
       <option value="Google Slides">Google Slides</option>
+      <option value="GitHub">GitHub</option>
       <option value="Link">Other Link</option>
     </select>
     <input id="link-label" placeholder="Label (optional)" />
@@ -1198,7 +1212,7 @@ function renderContextPanel() {
 }
 
 function linkIcon(type) {
-  const map = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'Link': '🔗' };
+  const map = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'GitHub': '🐙', 'Link': '🔗' };
   return map[type] || '🔗';
 }
 
@@ -1380,6 +1394,7 @@ function buildSummary(fromKey, toKey, period) {
 }
 
 function gatherStats(task, dayInfo, depth = 0) {
+  if (task.excludeFromSummary) return; // skip this task and all its subtasks
   const entry = { text: task.text, status: task.status, depth, contextSummary: summarizeContext(task.context) };
   dayInfo.tasks.push(entry);
   if (task.status === 'done') dayInfo.done++;

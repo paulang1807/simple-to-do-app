@@ -23,6 +23,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Copying Tasks Between Days](#copying-tasks-between-days)
    - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
    - [Monthly Tabs](#monthly-tabs)
+   - [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)
    - [Work Summary](#work-summary)
    - [Export & Import](#export--import)
 5. [Data Storage](#data-storage)
@@ -318,6 +319,7 @@ Attach URLs categorised by type:
 | Google Docs | 📄 |
 | Google Sheets | 📊 |
 | Google Slides | 📽️ |
+| GitHub | 🐙 |
 | Other | 🔗 |
 
 Click **+ Add Link**, select the type, enter an optional label and the URL, then click **Save**.
@@ -343,6 +345,22 @@ The tab bar at the top shows one tab per month that has data, plus the current m
 - Today is highlighted in blue with a **●** marker
 
 Switching to a month loads its data file from disk on demand.
+
+---
+
+### Excluding Tasks from Summaries
+
+By default every task and subtask is included in work summaries. You can exclude individual tasks or entire subtask hierarchies when they aren't relevant to a summary (e.g. admin tasks, recurring housekeeping items).
+
+**To exclude a task:** hover the task row and click **∅** — the button dims and an **∅ Excluded** badge appears on the task row.
+
+**To re-include a task:** hover the row and click **∅** again — the badge disappears and the task is included in future summaries.
+
+**Behaviour:**
+- Excluding a task also excludes **all of its subtasks** — the entire branch is skipped in summary generation
+- The excluded state is saved to disk and persists across sessions
+- Excluded tasks still appear and function normally in the task list; only summary generation is affected
+- The `∅ Excluded` badge is visible at a glance without hovering
 
 ---
 
