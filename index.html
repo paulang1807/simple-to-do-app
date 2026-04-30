@@ -168,7 +168,12 @@
   #modal-body { flex: 1; overflow-y: auto; padding: 20px; }
   .summary-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
   .summary-controls select { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 12px; color: var(--text); font-size: 13px; outline: none; }
-  .summary-output { background: var(--surface2); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); font-size: 14px; line-height: 1.7; white-space: pre-wrap; min-height: 200px; color: var(--text); }
+  .summary-output { background: var(--surface2); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); font-size: 14px; line-height: 1.7; min-height: 200px; color: var(--text); }
+  .summary-output.loading { color: var(--text3); font-style: italic; }
+  .summary-output p { margin: 0 0 14px 0; }
+  .summary-output p:last-child { margin-bottom: 0; }
+  .summary-output .sum-stats { font-size: 12px; color: var(--text3); margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .summary-output .sum-error { color: var(--danger); }
   .summary-output .s-head { color: var(--accent); font-weight: 700; font-size: 15px; }
   .summary-output .s-sub { color: var(--accent2); font-weight: 600; }
   .summary-output .s-done { color: var(--success); }
@@ -236,12 +241,16 @@
           <option value="year">This Year</option>
           <option value="custom">Custom Range</option>
         </select>
-        <span id="sum-custom" style="display:none;gap:8px;align-items:center;display:none;">
+        <span id="sum-custom" style="display:none;gap:8px;align-items:center;">
           <input type="date" id="sum-from" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
           <span>to</span>
           <input type="date" id="sum-to" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
         </span>
-        <button class="btn btn-primary btn-sm" onclick="generateSummary()">Generate</button>
+        <button class="btn btn-primary btn-sm" id="sum-generate-btn" onclick="generateSummary()">Generate</button>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Topics (optional) — one per line</label>
+        <textarea id="sum-topics" placeholder="e.g. Data quality&#10;Gen AI&#10;Deployment" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-size:13px;resize:vertical;min-height:60px;outline:none;font-family:inherit;line-height:1.5;"></textarea>
       </div>
       <div class="summary-output" id="sum-output">Select a period and click Generate.</div>
     </div>
@@ -1331,19 +1340,22 @@ function openSummaryModal() {
 
 function closeSummaryModal() {
   document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('sum-output').innerHTML = 'Select a period and click Generate.';
 }
 
 document.getElementById('sum-period').addEventListener('change', function() {
   document.getElementById('sum-custom').style.display = this.value === 'custom' ? 'flex' : 'none';
 });
 
-function generateSummary() {
-  const period = document.getElementById('sum-period').value;
+function dateToKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function summaryDateRange(period) {
   const today = new Date(todayKey() + 'T00:00:00');
   let fromKey, toKey;
-
   if (period === 'week') {
-    const day = today.getDay(); // 0=Sun
+    const day = today.getDay();
     const diff = (day === 0) ? 6 : day - 1;
     const from = new Date(today); from.setDate(today.getDate() - diff);
     fromKey = dateToKey(from); toKey = todayKey();
@@ -1352,50 +1364,115 @@ function generateSummary() {
   } else if (period === 'quarter') {
     const m = today.getMonth();
     const qStart = Math.floor(m / 3) * 3;
-    const from = new Date(today.getFullYear(), qStart, 1);
-    fromKey = dateToKey(from); toKey = todayKey();
+    fromKey = dateToKey(new Date(today.getFullYear(), qStart, 1)); toKey = todayKey();
   } else if (period === 'year') {
     fromKey = `${today.getFullYear()}-01-01`; toKey = todayKey();
   } else {
     fromKey = document.getElementById('sum-from').value;
-    toKey = document.getElementById('sum-to').value;
-    if (!fromKey || !toKey) { document.getElementById('sum-output').textContent = 'Please set a date range.'; return; }
+    toKey   = document.getElementById('sum-to').value;
+  }
+  return { fromKey, toKey };
+}
+
+// Collect all day data objects in range (including months not yet loaded from disk)
+async function loadMissingMonthsForRange(fromKey, toKey) {
+  // Determine which months overlap the range
+  const fromMonth = fromKey.slice(0, 7);
+  const toMonth   = toKey.slice(0, 7);
+  let cur = fromMonth;
+  while (cur <= toMonth) {
+    if (!Object.keys(state.days).some(k => k.startsWith(cur))) {
+      await loadMonth(cur);
+    }
+    const [y, m] = cur.split('-').map(Number);
+    const next = m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
+    cur = next;
+  }
+}
+
+async function generateSummary() {
+  const period = document.getElementById('sum-period').value;
+  const { fromKey, toKey } = summaryDateRange(period);
+  if (!fromKey || !toKey) {
+    document.getElementById('sum-output').textContent = 'Please set a date range.';
+    return;
   }
 
-  const summary = buildSummary(fromKey, toKey, period);
-  renderSummary(summary);
+  // Load any months not yet in memory
+  await loadMissingMonthsForRange(fromKey, toKey);
+
+  // Collect day data in range
+  const daysInRange = Object.keys(state.days)
+    .filter(k => k >= fromKey && k <= toKey)
+    .sort();
+
+  if (!daysInRange.length) {
+    document.getElementById('sum-output').innerHTML = '<span style="color:var(--text3)">No tasks found in this period.</span>';
+    return;
+  }
+
+  const daysPayload = {};
+  daysInRange.forEach(k => { daysPayload[k] = state.days[k]; });
+
+  // Parse optional topics
+  const topicsRaw = document.getElementById('sum-topics').value;
+  const topics = topicsRaw.split('\n').map(s => s.trim()).filter(Boolean);
+
+  // Show loading state
+  const el = document.getElementById('sum-output');
+  el.className = 'summary-output loading';
+  el.textContent = '✦ Generating summary…';
+  document.getElementById('sum-generate-btn').disabled = true;
+
+  try {
+    const resp = await fetch('/summarize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromKey, toKey, period, topics, days: daysPayload }),
+    });
+    const data = await resp.json();
+
+    el.className = 'summary-output';
+    if (data.error) {
+      el.innerHTML = `<span class="sum-error">⚠ ${escHtml(data.error)}</span>`;
+    } else {
+      renderSummaryText(el, data.summary || 'No summary generated.');
+    }
+  } catch (err) {
+    el.className = 'summary-output';
+    el.innerHTML = `<span class="sum-error">⚠ Could not reach server: ${escHtml(String(err))}</span>`;
+  } finally {
+    document.getElementById('sum-generate-btn').disabled = false;
+  }
 }
 
-function dateToKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function renderSummaryText(el, text) {
+  // Split on the stats line (starts with "Period:") and render as paragraphs
+  const statsMatch = text.match(/\n?(Period:.+)$/s);
+  let prose = text;
+  let statsLine = '';
+  if (statsMatch) {
+    prose = text.slice(0, statsMatch.index).trim();
+    statsLine = statsMatch[1].trim();
+  }
+
+  // Split prose into paragraphs and escape HTML
+  const paragraphs = prose.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  let html = paragraphs.map(p =>
+    `<p>${escHtml(p).replace(/\n/g, '<br>')}</p>`
+  ).join('');
+
+  if (statsLine) {
+    html += `<div class="sum-stats">${escHtml(statsLine)}</div>`;
+  }
+
+  el.innerHTML = html;
 }
 
-function buildSummary(fromKey, toKey, period) {
-  // Collect all days in range
-  const days = Object.keys(state.days).filter(k => k >= fromKey && k <= toKey).sort();
-  const result = { days: [], fromKey, toKey, period };
-  let totalDone = 0, totalPartial = 0, totalPending = 0;
-
-  days.forEach(key => {
-    const dayData = state.days[key];
-    if (!dayData || !dayData.tasks.length) return;
-    const dayInfo = { key, tasks: [], done: 0, partial: 0, pending: 0 };
-    dayData.tasks.forEach(t => gatherStats(t, dayInfo));
-    totalDone += dayInfo.done;
-    totalPartial += dayInfo.partial;
-    totalPending += dayInfo.pending;
-    if (dayInfo.tasks.length) result.days.push(dayInfo);
-  });
-
-  result.totalDone = totalDone;
-  result.totalPartial = totalPartial;
-  result.totalPending = totalPending;
-  return result;
-}
-
+// Keep gatherStats for backwards compatibility (used by countDescendants etc.)
 function gatherStats(task, dayInfo, depth = 0) {
-  if (task.excludeFromSummary) return; // skip this task and all its subtasks
-  const entry = { text: task.text, status: task.status, depth, contextSummary: summarizeContext(task.context) };
+  if (task.excludeFromSummary) return;
+  const entry = { text: task.text, status: task.status, depth };
   dayInfo.tasks.push(entry);
   if (task.status === 'done') dayInfo.done++;
   else if (task.status === 'partial') dayInfo.partial++;
@@ -1403,49 +1480,9 @@ function gatherStats(task, dayInfo, depth = 0) {
   task.children.forEach(c => gatherStats(c, dayInfo, depth + 1));
 }
 
-function summarizeContext(ctx) {
-  if (!ctx) return '';
-  const parts = [];
-  if (ctx.notes && ctx.notes.length) {
-    const noteTexts = ctx.notes.map(n => n.text).filter(Boolean);
-    if (noteTexts.length) parts.push('Notes: ' + noteTexts.join(' | '));
-  }
-  if (ctx.links && ctx.links.length) {
-    parts.push('Links: ' + ctx.links.map(l => `${l.label}(${l.url})`).join(', '));
-  }
-  if (ctx.attachments && ctx.attachments.length) {
-    parts.push('Files: ' + ctx.attachments.map(a => a.name).join(', '));
-  }
-  return parts.join(' · ');
-}
-
 function renderSummary(s) {
-  const el = document.getElementById('sum-output');
-  if (!s.days.length) { el.textContent = 'No tasks found in this period.'; return; }
-
-  const periodLabel = { week: 'Weekly', month: 'Monthly', quarter: 'Quarterly', year: 'Annual', custom: 'Custom Range' }[s.period] || '';
-  let text = '';
-
-  text += `${periodLabel} Summary: ${fmtDay(s.fromKey)} – ${fmtDay(s.toKey)}\n`;
-  text += `${'─'.repeat(52)}\n`;
-  text += `✅ Done: ${s.totalDone}   ◑ Partial: ${s.totalPartial}   ⏳ Pending: ${s.totalPending}   📋 Total: ${s.totalDone + s.totalPartial + s.totalPending}\n\n`;
-
-  s.days.forEach(day => {
-    const d = new Date(day.key + 'T00:00:00');
-    const label = d.toLocaleString('default', { weekday: 'short', month: 'short', day: 'numeric' });
-    text += `📅 ${label}  (✅${day.done} ◑${day.partial} ⏳${day.pending})\n`;
-    day.tasks.forEach(t => {
-      const indent = '  '.repeat(t.depth + 1);
-      const icon = t.status === 'done' ? '✅' : t.status === 'partial' ? '◑' : '⏳';
-      text += `${indent}${icon} ${t.text}\n`;
-      if (t.contextSummary) {
-        text += `${indent}   💬 ${t.contextSummary}\n`;
-      }
-    });
-    text += '\n';
-  });
-
-  el.textContent = text;
+  // Legacy stub — no longer called; generateSummary() renders directly
+  return;
 }
 
 // ─────────────────────────────────────────

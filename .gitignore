@@ -1,6 +1,9 @@
 # Task data — each user's data stays local, never committed
 data/
 
+# Credentials — never commit API keys or EIAM tickets
+.env
+
 # Python
 __pycache__/
 *.pyc
