@@ -424,6 +424,8 @@ Click **Generate** to produce the summary. The AI:
 
 Tasks marked **∅ Excluded** (see [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)) are skipped entirely.
 
+The generated summary is cleared automatically when you close the modal, so each time you open it you start fresh.
+
 This makes it easy to write status updates, retrospectives, or performance reviews.
 
 ---

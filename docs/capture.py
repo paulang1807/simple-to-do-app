@@ -11,6 +11,7 @@ Uses only mock/demo data — real task data on disk is never read or shown.
 """
 
 from playwright.sync_api import sync_playwright
+import json
 import time
 
 BASE = "http://localhost:3456"
@@ -210,11 +211,27 @@ def run():
         page.evaluate("() => new Promise(r => setTimeout(r, 300))")
         shot(page, "10-summary-empty", "Summary modal")
 
-        # Generate a summary
-        page.evaluate("""() => {
+        # Inject a realistic-looking mock summary directly — avoids a live LLM
+        # call and keeps screenshot data entirely fictional.
+        MOCK_SUMMARY = (
+            "Work this month centred on two major engineering tracks. "
+            "The migration of legacy API endpoints progressed significantly: existing endpoints were fully audited and deprecated routes are partially mapped, with three /v1 routes still requiring attention before the migration can be considered complete. "
+            "This remains a high-priority item.\n\n"
+            "Pull request reviews were completed across the auth service refactor (merged) and are ongoing for the data pipeline optimisation. "
+            "Integration test coverage is pending. "
+            "The Q2 project proposal is underway, with the executive summary drafted and success metrics defined; resource estimates are still outstanding.\n\n"
+            "Recurring operational work — daily standup preparation and progress tracking — continued throughout the month. "
+            "A note from standup context flagged an upcoming Friday release freeze for the team.\n\n"
+            "Period: 2026-04-01 to 2026-04-29 · ✓ 4 done · ◑ 3 partial · ○ 6 pending"
+        )
+        page.evaluate(f"""() => {{
+            const el = document.getElementById('sum-output');
+            const btn = document.getElementById('sum-generate-btn');
             document.getElementById('sum-period').value = 'month';
-            generateSummary();
-        }""")
+            // Render mock summary using the app's own renderSummaryText helper
+            renderSummaryText(el, {json.dumps(MOCK_SUMMARY)});
+            if (btn) btn.disabled = false;
+        }}""")
         page.evaluate("() => new Promise(r => setTimeout(r, 400))")
         shot(page, "11-summary-result", "Summary output")
         page.evaluate("closeSummaryModal()")
