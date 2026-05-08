@@ -23,6 +23,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Copying Tasks Between Days](#copying-tasks-between-days)
    - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
    - [Monthly Tabs](#monthly-tabs)
+   - [Searching Tasks](#searching-tasks)
    - [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)
    - [Work Summary](#work-summary)
    - [Export & Import](#export--import)
@@ -41,6 +42,7 @@ Daily Task Manager helps you track what you work on each day. You can:
 - Roll incomplete tasks forward to the next day with a single click
 - Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides) and files to any task
 - Browse tasks by month using tabs
+- Search across all tasks and notes instantly with keyboard navigation
 - Generate summaries of work done over a week, month, quarter, or year
 
 ---
@@ -137,7 +139,7 @@ If no API key is configured, summary generation will return an error explaining 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  📋 Daily Tasks          ⬇ Export  ⬆ Import  📊 Summarize      │  ← Header
+│  📋 Daily Tasks    🔍 Search  ⬇ Export  ⬆ Import  📊 Summarize  │  ← Header
 ├─────────────────────────────────────────────────────────────────┤
 │  April 2026  │  May 2026  │  ...                                │  ← Month tabs
 ├──────────────┬──────────────────────────────────────────────────┤
@@ -155,7 +157,7 @@ If no API key is configured, summary generation will return an error explaining 
 
 | Area | Purpose |
 |---|---|
-| **Header** | App title, Export/Import data, open Summarize modal |
+| **Header** | App title, Search tasks, Export/Import data, open Summarize modal |
 | **Month tabs** | Switch between months; each tab covers one calendar month |
 | **Day sidebar** | All days of the active month; blue dot = has tasks; ● = today |
 | **Task area** | Tasks for the selected day, action buttons in the header row |
@@ -335,6 +337,8 @@ Any task (including all its subtasks) can be copied to the clipboard and pasted 
 
 Every task has a context panel for capturing supporting information. Open it by hovering the row and clicking **📎** (or clicking the `📎 Context` badge).
 
+**Context preview on hover:** when a task has context, hovering over the `📎 Context` badge shows a tooltip preview of its contents — notes (up to 3), links with their type icons and labels (up to 4), and attachments (up to 3). If there are more items than shown, a "+N more…" indicator appears. This lets you glance at context without opening the full panel. Click the badge to open the full panel for editing.
+
 The panel slides in from the right and shows:
 
 #### Notes
@@ -376,6 +380,35 @@ The tab bar at the top shows one tab per month that has data, plus the current m
 - Today is highlighted in blue with a **●** marker
 
 Switching to a month loads its data file from disk on demand.
+
+---
+
+### Searching Tasks
+
+Click **🔍 Search** in the header (or press **⌘K** / **Ctrl+K**) to open the search panel.
+
+**What it searches:**
+- Task and subtask text across **all months**
+- Note content in task context panels
+
+**Results show:**
+- The matched task text with the matching portion highlighted
+- Breadcrumb path for subtasks (e.g. `Parent task › Subtask`)
+- The date the task belongs to
+- Status and flag badges (Done, Partial, Important, Recurring)
+- A note indicating when the match was found in a note rather than the task name
+
+**Navigating results:**
+
+| Action | How |
+|---|---|
+| Move between results | **↑ / ↓** arrow keys |
+| Jump to a result | **Enter** or click the result row |
+| Close search | **Esc** or click outside the panel |
+
+**Jumping to a result** navigates to the correct month and day, expands any collapsed ancestor tasks, scrolls the matching task into view, and briefly highlights it in blue.
+
+Search loads all months on first open so results are complete regardless of which month is currently active.
 
 ---
 
@@ -491,7 +524,7 @@ todo-app/
     └── YYYY-MM.json # One file per month
 ```
 
-**`server.py`** supports three LLM providers (Anthropic, OpenAI, Google Gemini) and handles the following routes:
+**`server.py`** handles the following routes:
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -509,6 +542,10 @@ todo-app/
 
 | Key | Action |
 |---|---|
+| `⌘K` / `Ctrl+K` | Open / close search |
+| `↑` / `↓` (in search) | Navigate results |
+| `Enter` (in search) | Jump to selected result |
+| `Esc` (in search) | Close search |
 | `Enter` (in task input) | Save task / add another |
 | `Enter` (in task text field) | Open subtask input below |
 | `Esc` (in subtask input) | Close subtask input |

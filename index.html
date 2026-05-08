@@ -97,6 +97,22 @@
   .badge-partial { background: rgba(240,160,75,0.2); color: var(--warn); }
   .badge-ctx { background: rgba(108,142,245,0.2); color: var(--accent); cursor: pointer; }
   .badge-ctx:hover { background: rgba(108,142,245,0.4); }
+
+  /* ── Context hover preview (singleton, appended to body) ── */
+  #ctx-preview { position: fixed; z-index: 500; display: none;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 10px 12px; min-width: 220px; max-width: 320px;
+    font-size: 12px; color: var(--text); line-height: 1.5; pointer-events: none; }
+  .ctx-tooltip-section { margin-bottom: 8px; }
+  .ctx-tooltip-section:last-child { margin-bottom: 0; }
+  .ctx-tooltip-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text3); margin-bottom: 4px; }
+  .ctx-tooltip-note { color: var(--text2); margin-bottom: 2px;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .ctx-tooltip-link { display: flex; align-items: center; gap: 5px; color: var(--text2); margin-bottom: 2px; }
+  .ctx-tooltip-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ctx-tooltip-att { color: var(--text2); margin-bottom: 2px; }
+  .ctx-tooltip-more { color: var(--text3); font-style: italic; margin-top: 2px; }
   .badge-recurring { background: rgba(108,142,245,0.15); color: var(--accent2); }
   .badge-closed { background: rgba(90,97,128,0.2); color: var(--text3); }
   .badge-subtask-counts { background: rgba(90,97,128,0.15); color: var(--text2); gap: 4px; }
@@ -181,6 +197,37 @@
   .summary-output .s-pending { color: var(--text3); }
 
 
+  /* ── Search Modal ── */
+  #search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: none; align-items: flex-start; justify-content: center; padding-top: 80px; }
+  #search-overlay.open { display: flex; }
+  #search-modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); width: 640px; max-width: 95vw; max-height: 70vh; display: flex; flex-direction: column; box-shadow: var(--shadow); overflow: hidden; }
+  #search-input-wrap { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  #search-input-wrap .search-icon { font-size: 16px; color: var(--text3); flex-shrink: 0; }
+  #search-input { flex: 1; background: transparent; border: none; outline: none; font-size: 15px; color: var(--text); }
+  #search-input::placeholder { color: var(--text3); }
+  #search-input-wrap .search-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 0 4px; line-height: 1; }
+  #search-input-wrap .search-close:hover { color: var(--text); }
+  #search-results { overflow-y: auto; flex: 1; }
+  #search-meta { padding: 8px 16px; font-size: 12px; color: var(--text3); border-bottom: 1px solid var(--border); }
+  .search-result { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .search-result:last-child { border-bottom: none; }
+  .search-result:hover, .search-result.focused { background: var(--surface2); }
+  .search-result-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .search-result-body { flex: 1; min-width: 0; }
+  .search-result-text { font-size: 14px; color: var(--text); line-height: 1.4; }
+  .search-result-text mark { background: transparent; color: var(--accent); font-weight: 700; }
+  .search-result-meta { font-size: 12px; color: var(--text3); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .search-result-date { color: var(--accent2); }
+  .search-result-crumb { color: var(--text3); }
+  .search-badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .search-badge.done    { background: rgba(76,175,136,0.15); color: var(--success); }
+  .search-badge.partial { background: rgba(240,160,75,0.15);  color: var(--warn); }
+  .search-badge.important { background: rgba(240,160,75,0.15); color: var(--warn); }
+  .search-badge.recurring { background: rgba(108,142,245,0.15); color: var(--accent); }
+  .search-empty { padding: 48px 24px; text-align: center; color: var(--text3); font-size: 14px; }
+  .search-hint { padding: 10px 16px; font-size: 11px; color: var(--text3); border-top: 1px solid var(--border); display: flex; gap: 16px; }
+  .search-hint kbd { background: var(--surface3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 10px; font-family: inherit; }
+
   /* ── Empty state ── */
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
   .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
@@ -194,6 +241,8 @@
   /* ── Animations ── */
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   .fade-in { animation: fadeIn 0.2s ease; }
+  @keyframes searchPulse { 0%,100% { background: transparent; } 30% { background: rgba(108,142,245,0.18); } }
+  .search-highlight { animation: searchPulse 1.8s ease; }
 </style>
 </head>
 <body>
@@ -203,6 +252,7 @@
     <h1>📋 Daily Tasks</h1>
     <div class="spacer"></div>
     <span id="save-toast" style="font-size:12px;color:var(--success);opacity:0;transition:opacity 0.4s;">✓ Saved</span>
+    <button class="btn btn-secondary btn-sm" onclick="openSearchModal()" title="Search tasks (⌘K)">🔍 Search</button>
     <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Export all data as JSON">⬇ Export</button>
     <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="Import data from JSON backup">⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importData(this)"></label>
     <button class="btn btn-secondary btn-sm" onclick="openSummaryModal()">📊 Summarize</button>
@@ -256,6 +306,30 @@
     </div>
   </div>
 </div>
+
+<!-- Search Modal -->
+<div id="search-overlay" onclick="if(event.target===this)closeSearchModal()">
+  <div id="search-modal">
+    <div id="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="search-input" type="text" placeholder="Search tasks…" autocomplete="off"
+             oninput="onSearchInput()"
+             onkeydown="onSearchKey(event)" />
+      <button class="search-close" onclick="closeSearchModal()" title="Close">✕</button>
+    </div>
+    <div id="search-meta" style="display:none"></div>
+    <div id="search-results"></div>
+    <div class="search-hint">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span><kbd>Enter</kbd> jump to day</span>
+      <span><kbd>Esc</kbd> close</span>
+      <span><kbd>⌘K</kbd> open</span>
+    </div>
+  </div>
+</div>
+
+<!-- Context hover preview — singleton outside task DOM so it never inflates drag images -->
+<div id="ctx-preview"></div>
 
 <script>
 // ─────────────────────────────────────────
@@ -585,7 +659,7 @@ function renderTaskBlock(task, depth) {
     badges += `<span class="badge badge-subtask-counts" title="Subtask counts">${parts.join(' · ')}</span>`;
   }
   if (isExcluded) badges += `<span class="badge badge-excluded" title="Excluded from summary">∅ Excluded</span>`;
-  if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" title="View context">📎 Context</span>`;
+  if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" onmouseenter="showCtxPreview(event,'${task.id}')" onmouseleave="hideCtxPreview()">📎 Context</span>`;
 
   let html = `<div class="task-block" id="tb-${task.id}" draggable="true"
     data-id="${task.id}" data-day="${state.activeDay}"
@@ -641,7 +715,9 @@ function renderTaskBlock(task, depth) {
 // ─────────────────────────────────────────
 // Drag and Drop
 // ─────────────────────────────────────────
-let _dragId = null; // id of task being dragged
+let _dragId       = null; // id of task being dragged
+let _dragOverId   = null; // id of task currently being hovered over during drag
+let _dragOverZone = null; // 'top' | 'middle' | 'bottom' — last computed zone
 const _collapsed = new Set(); // task ids whose children are collapsed
 
 function toggleCollapse(taskId) {
@@ -672,9 +748,13 @@ function onDragStart(event, taskId) {
   _dragId = taskId;
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', taskId);
+  // Use the inner task-row as the drag image, not the full task-block.
+  // The task-block contains an absolutely-positioned .ctx-tooltip that sits
+  // above the row, inflating the drag ghost to cover the task above.
   setTimeout(() => {
     const el = document.getElementById(`tb-${taskId}`);
     if (el) el.classList.add('dragging');
+    document.body.classList.add('dragging-active');
   }, 0);
 }
 
@@ -698,6 +778,10 @@ function onDragOver(event) {
   block.classList.toggle('drag-over-top',    zone === 'top');
   block.classList.toggle('drag-over-bottom', zone === 'bottom');
   block.classList.toggle('drag-over-child',  zone === 'middle');
+  // Track the authoritative drop target — used by onDrop instead of
+  // recomputing from event coordinates (which can land on the wrong element)
+  _dragOverId   = block.dataset.id;
+  _dragOverZone = zone;
 }
 
 function onDragLeave(event) {
@@ -705,6 +789,11 @@ function onDragLeave(event) {
   const block = event.currentTarget;
   if (!block.contains(event.relatedTarget)) {
     block.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child');
+    // Clear tracked target only if we're leaving the block that set it
+    if (_dragOverId === block.dataset.id) {
+      _dragOverId   = null;
+      _dragOverZone = null;
+    }
   }
 }
 
@@ -712,7 +801,8 @@ function onDragEnd(event) {
   document.querySelectorAll('.task-block').forEach(el => {
     el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom', 'drag-over-child');
   });
-  _dragId = null;
+  document.body.classList.remove('dragging-active');
+  _dragId = _dragOverId = _dragOverZone = null;
 }
 
 function findParentList(tasks, id) {
@@ -735,11 +825,18 @@ function onDrop(event, targetId) {
   event.preventDefault();
   event.stopPropagation();
 
-  // Capture and immediately clear _dragId so re-renders don't leave stale state
-  const dragId = _dragId;
-  _dragId = null;
+  // Use the target+zone recorded by the last onDragOver — NOT recomputed from
+  // drop coordinates, which can land on a different element at the boundary.
+  const dragId  = _dragId;
+  const overId  = _dragOverId;
+  const zone    = _dragOverZone;
+  _dragId = _dragOverId = _dragOverZone = null;
 
-  if (!dragId || dragId === targetId) return;
+  document.querySelectorAll('.task-block').forEach(el =>
+    el.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child'));
+  document.body.classList.remove('dragging-active');
+
+  if (!dragId || !overId || !zone || dragId === overId) return;
 
   const dayKey = state.activeDay;
   const day = state.days[dayKey];
@@ -748,27 +845,26 @@ function onDrop(event, targetId) {
   // Prevent dropping a task onto its own descendant
   const draggedTask = findTask(day.tasks, dragId);
   if (!draggedTask) return;
-  if (findTask(draggedTask.children, targetId)) return;
+  if (findTask(draggedTask.children, overId)) return;
 
-  const zone = getDragZone(event);
-  const block = event.currentTarget;
-  block.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child');
-
-  const dragList = findParentList(day.tasks, dragId);
-  const targetList = findParentList(day.tasks, targetId);
+  const dragList   = findParentList(day.tasks, dragId);
+  const targetList = findParentList(day.tasks, overId);
   if (!dragList || !targetList) return;
 
   if (zone === 'middle') {
-    const targetTask = findTask(day.tasks, targetId);
+    const targetTask = findTask(day.tasks, overId);
     if (!targetTask) return;
     const dragIdx = dragList.findIndex(t => t.id === dragId);
     const [dragged] = dragList.splice(dragIdx, 1);
     targetTask.children.push(dragged);
   } else {
-    const dragIdx = dragList.findIndex(t => t.id === dragId);
+    const dragIdx  = dragList.findIndex(t => t.id === dragId);
+    const targetIdx = targetList.findIndex(t => t.id === overId);
     const [dragged] = dragList.splice(dragIdx, 1);
-    const newTargetIdx = targetList.findIndex(t => t.id === targetId);
-    const insertAt = zone === 'top' ? newTargetIdx : newTargetIdx + 1;
+    // If same list and drag was above target, the splice shifted target up by 1
+    const sameList = dragList === targetList;
+    const adjusted = sameList && dragIdx < targetIdx ? targetIdx - 1 : targetIdx;
+    const insertAt = zone === 'top' ? adjusted : adjusted + 1;
     targetList.splice(insertAt, 0, dragged);
   }
 
@@ -1113,6 +1209,81 @@ function mergeTaskIntoList(list, incoming) {
 // ─────────────────────────────────────────
 // Context Panel
 // ─────────────────────────────────────────
+
+let _ctxPreviewHideTimer = null;
+
+function showCtxPreview(event, taskId) {
+  const dayKey = state.contextDayKey || state.activeDay;
+  // Search all days since the badge may be on any loaded day
+  let ctx = null;
+  for (const dk of Object.keys(state.days)) {
+    const t = findTask((state.days[dk].tasks || []), taskId);
+    if (t) { ctx = t.context; break; }
+  }
+  if (!ctx) return;
+
+  clearTimeout(_ctxPreviewHideTimer);
+
+  const MAX_NOTES = 3, MAX_LINKS = 4, MAX_ATTS = 3;
+  let html = '';
+
+  if (ctx.notes && ctx.notes.length) {
+    html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Notes</div>';
+    ctx.notes.slice(0, MAX_NOTES).forEach(n => {
+      const text = (n.text || '').trim();
+      if (text) html += `<div class="ctx-tooltip-note">${escHtml(text)}</div>`;
+    });
+    if (ctx.notes.length > MAX_NOTES)
+      html += `<div class="ctx-tooltip-more">+${ctx.notes.length - MAX_NOTES} more…</div>`;
+    html += '</div>';
+  }
+
+  if (ctx.links && ctx.links.length) {
+    html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Links</div>';
+    ctx.links.slice(0, MAX_LINKS).forEach(lnk => {
+      html += `<div class="ctx-tooltip-link">${linkIcon(lnk.type)} <span>${escHtml(lnk.label || lnk.type || lnk.url || '')}</span></div>`;
+    });
+    if (ctx.links.length > MAX_LINKS)
+      html += `<div class="ctx-tooltip-more">+${ctx.links.length - MAX_LINKS} more…</div>`;
+    html += '</div>';
+  }
+
+  if (ctx.attachments && ctx.attachments.length) {
+    html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Attachments</div>';
+    ctx.attachments.slice(0, MAX_ATTS).forEach(a => {
+      html += `<div class="ctx-tooltip-att">📎 ${escHtml(a.name || 'file')}</div>`;
+    });
+    if (ctx.attachments.length > MAX_ATTS)
+      html += `<div class="ctx-tooltip-more">+${ctx.attachments.length - MAX_ATTS} more…</div>`;
+    html += '</div>';
+  }
+
+  if (!html) return;
+
+  const preview = document.getElementById('ctx-preview');
+  preview.innerHTML = html;
+  preview.style.display = 'block';
+
+  // Position above the badge using fixed coordinates
+  const badgeRect = event.currentTarget.getBoundingClientRect();
+  preview.style.left = badgeRect.left + 'px';
+  preview.style.top  = (badgeRect.top - preview.offsetHeight - 6) + 'px';
+
+  // Clamp to viewport edges
+  const pr = preview.getBoundingClientRect();
+  if (pr.right > window.innerWidth - 8)
+    preview.style.left = (window.innerWidth - 8 - pr.width) + 'px';
+  if (pr.top < 8)
+    preview.style.top = (badgeRect.bottom + 6) + 'px'; // flip below if no room above
+}
+
+function hideCtxPreview() {
+  _ctxPreviewHideTimer = setTimeout(() => {
+    const preview = document.getElementById('ctx-preview');
+    if (preview) preview.style.display = 'none';
+  }, 100);
+}
+
 function openContext(dayKey, taskId) {
   state.contextTaskId = taskId;
   state.contextDayKey = dayKey;
@@ -1334,6 +1505,222 @@ function deleteAttachment(index) {
 // ─────────────────────────────────────────
 // Summary
 // ─────────────────────────────────────────
+// ─────────────────────────────────────────
+// Search
+// ─────────────────────────────────────────
+
+let _searchFocusIndex = -1;
+
+async function openSearchModal() {
+  // Load all known months so search covers all history
+  const known = await loadKnownMonths();
+  for (const m of known) await loadMonth(m);
+
+  document.getElementById('search-overlay').classList.add('open');
+  const inp = document.getElementById('search-input');
+  inp.value = '';
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-meta').style.display = 'none';
+  _searchFocusIndex = -1;
+  setTimeout(() => inp.focus(), 50);
+}
+
+function closeSearchModal() {
+  document.getElementById('search-overlay').classList.remove('open');
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-meta').style.display = 'none';
+  _searchFocusIndex = -1;
+}
+
+// Collect all tasks across all loaded days as flat result objects
+function searchAllTasks(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const results = [];
+  const dayKeys = Object.keys(state.days).sort().reverse(); // newest first
+
+  for (const dayKey of dayKeys) {
+    const tasks = (state.days[dayKey] && state.days[dayKey].tasks) || [];
+    collectMatchingTasks(tasks, dayKey, [], q, results);
+  }
+  return results;
+}
+
+function collectMatchingTasks(tasks, dayKey, ancestors, query, results) {
+  for (const task of tasks) {
+    const matchesText = task.text.toLowerCase().includes(query);
+    const matchesNote = (task.context && task.context.notes || [])
+      .some(n => n.text && n.text.toLowerCase().includes(query));
+
+    if (matchesText || matchesNote) {
+      results.push({
+        task,
+        dayKey,
+        ancestors: [...ancestors],
+        matchesNote: !matchesText && matchesNote,
+      });
+    }
+    if (task.children && task.children.length) {
+      collectMatchingTasks(task.children, dayKey, [...ancestors, task.text], query, results);
+    }
+  }
+}
+
+function highlightMatch(text, query) {
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return escHtml(text);
+  return escHtml(text.slice(0, idx))
+    + `<mark>${escHtml(text.slice(idx, idx + query.length))}</mark>`
+    + escHtml(text.slice(idx + query.length));
+}
+
+function formatSearchDate(dayKey) {
+  const d = new Date(dayKey + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+let _searchDebounce = null;
+function onSearchInput() {
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(runSearch, 120);
+}
+
+function runSearch() {
+  const query = document.getElementById('search-input').value;
+  const resultsEl = document.getElementById('search-results');
+  const metaEl = document.getElementById('search-meta');
+  _searchFocusIndex = -1;
+
+  if (!query.trim()) {
+    resultsEl.innerHTML = '';
+    metaEl.style.display = 'none';
+    return;
+  }
+
+  const results = searchAllTasks(query);
+
+  if (results.length === 0) {
+    resultsEl.innerHTML = `<div class="search-empty">No tasks matching "<strong>${escHtml(query)}</strong>"</div>`;
+    metaEl.style.display = 'none';
+    return;
+  }
+
+  metaEl.textContent = `${results.length} result${results.length === 1 ? '' : 's'}`;
+  metaEl.style.display = 'block';
+
+  const q = query.trim().toLowerCase();
+  resultsEl.innerHTML = results.map((r, i) => {
+    const { task, dayKey, ancestors, matchesNote } = r;
+    const statusIcon = task.status === 'done' ? '✓' : task.status === 'partial' ? '◑' : '○';
+    const badges = [];
+    if (task.status === 'done')    badges.push(`<span class="search-badge done">✓ Done</span>`);
+    if (task.status === 'partial') badges.push(`<span class="search-badge partial">◑ Partial</span>`);
+    if (task.important)            badges.push(`<span class="search-badge important">⭐ Important</span>`);
+    if (task.recurring && !task.closed) badges.push(`<span class="search-badge recurring">🔁 Recurring</span>`);
+
+    const crumbHtml = ancestors.length
+      ? `<span class="search-result-crumb">${ancestors.map(a => escHtml(a)).join(' › ')} › </span>`
+      : '';
+    const noteHint = matchesNote ? `<span style="color:var(--text3);font-style:italic;"> (matched in note)</span>` : '';
+
+    return `<div class="search-result" data-index="${i}" data-day="${escHtml(dayKey)}" data-id="${escHtml(task.id)}"
+                 onclick="jumpToSearchResult('${escHtml(dayKey)}','${escHtml(task.id)}')"
+                 onmouseenter="setSearchFocus(${i})">
+      <div class="search-result-icon">${statusIcon}</div>
+      <div class="search-result-body">
+        <div class="search-result-text">${crumbHtml}${highlightMatch(task.text, query)}${noteHint}</div>
+        <div class="search-result-meta">
+          <span class="search-result-date">${formatSearchDate(dayKey)}</span>
+          ${badges.join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setSearchFocus(index) {
+  _searchFocusIndex = index;
+  document.querySelectorAll('.search-result').forEach((el, i) => {
+    el.classList.toggle('focused', i === index);
+  });
+}
+
+function onSearchKey(e) {
+  const items = document.querySelectorAll('.search-result');
+  if (e.key === 'Escape') {
+    closeSearchModal();
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const next = Math.min(_searchFocusIndex + 1, items.length - 1);
+    setSearchFocus(next);
+    items[next] && items[next].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = Math.max(_searchFocusIndex - 1, 0);
+    setSearchFocus(prev);
+    items[prev] && items[prev].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    if (_searchFocusIndex >= 0 && items[_searchFocusIndex]) {
+      const el = items[_searchFocusIndex];
+      jumpToSearchResult(el.dataset.day, el.dataset.id);
+    } else if (items.length === 1) {
+      const el = items[0];
+      jumpToSearchResult(el.dataset.day, el.dataset.id);
+    }
+  }
+}
+
+async function jumpToSearchResult(dayKey, taskId) {
+  closeSearchModal();
+  // Switch to the right month if needed
+  const month = dayKey.slice(0, 7);
+  if (!_loadedMonths.has(month)) await loadMonth(month);
+  state.activeMonth = month;
+  state.activeDay = dayKey;
+  render();
+  // Expand ancestors and scroll to + highlight the task
+  setTimeout(() => {
+    // Ensure the task's parent chain is expanded
+    expandToTask(state.days[dayKey] && state.days[dayKey].tasks || [], taskId);
+    renderTaskArea();
+    setTimeout(() => {
+      const el = document.getElementById(`tr-${taskId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('search-highlight');
+        setTimeout(() => el.classList.remove('search-highlight'), 1800);
+      }
+    }, 80);
+  }, 80);
+}
+
+// Expand any collapsed ancestor so the target task is visible
+function expandToTask(tasks, targetId) {
+  for (const t of tasks) {
+    if (t.id === targetId) return true;
+    if (t.children && t.children.length) {
+      if (expandToTask(t.children, targetId)) {
+        _collapsed.delete(t.id); // ensure parent is expanded
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Keyboard shortcut: Cmd/Ctrl+K
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    if (document.getElementById('search-overlay').classList.contains('open')) {
+      closeSearchModal();
+    } else {
+      openSearchModal();
+    }
+  }
+});
+
 function openSummaryModal() {
   document.getElementById('modal-overlay').classList.add('open');
 }
