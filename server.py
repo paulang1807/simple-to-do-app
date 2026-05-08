@@ -136,6 +136,11 @@ def detect_provider() -> tuple[str, str]:
     Priority: anthropic → openai → google.
     Raises RuntimeError if none are configured.
     """
+
+    google_key = (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
+    if google_key:
+        return "google", google_key
+        
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
     if anthropic_key:
         return "anthropic", anthropic_key
@@ -143,10 +148,6 @@ def detect_provider() -> tuple[str, str]:
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     if openai_key:
         return "openai", openai_key
-
-    google_key = (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
-    if google_key:
-        return "google", google_key
 
     raise RuntimeError(
         "No LLM credentials found.\n\n"
