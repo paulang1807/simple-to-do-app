@@ -1,667 +1,1849 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Daily Task Manager</title>
-<style>
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #232636;
-    --surface3: #2d3148;
-    --border: #3a3f5c;
-    --accent: #6c8ef5;
-    --accent2: #9b6cf5;
-    --success: #4caf88;
-    --warn: #f0a04b;
-    --danger: #e05c5c;
-    --text: #e2e6f3;
-    --text2: #9aa3c2;
-    --text3: #5a6180;
-    --radius: 8px;
-    --radius-lg: 12px;
-    --shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkpoint</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #232636;
+      --surface3: #2d3148;
+      --border: #3a3f5c;
+      --accent: #6c8ef5;
+      --accent2: #9b6cf5;
+      --success: #4caf88;
+      --warn: #f0a04b;
+      --danger: #e05c5c;
+      --text: #e2e6f3;
+      --text2: #9aa3c2;
+      --text3: #5a6180;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
 
-  /* ── Layout ── */
-  #app { display: flex; flex-direction: column; height: 100vh; }
-  #header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
-  #header h1 { font-size: 18px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  #header .spacer { flex: 1; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* ── Month Tabs ── */
-  #month-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 8px 20px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; scrollbar-width: thin; }
-  .month-tab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; white-space: nowrap; font-size: 13px; transition: all 0.15s; }
-  .month-tab:hover { border-color: var(--accent); color: var(--text); }
-  .month-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
 
-  /* ── Main content ── */
-  #main { display: flex; flex: 1; overflow: hidden; }
-  #day-list { width: 200px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid var(--border); padding: 12px 8px; }
-  .day-item { padding: 8px 12px; border-radius: var(--radius); cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
-  .day-item:hover { background: var(--surface2); color: var(--text); }
-  .day-item.active { background: var(--surface3); color: var(--text); font-weight: 600; }
-  .day-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
-  .day-item.has-tasks .dot { background: var(--accent); }
-  .day-item.today-marker { color: var(--accent); }
-  #task-area { flex: 1; overflow-y: auto; padding: 20px; }
-  #context-panel { width: 340px; flex-shrink: 0; border-left: 1px solid var(--border); overflow-y: auto; display: none; flex-direction: column; }
-  #context-panel.open { display: flex; }
+    /* ── Layout ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-  /* ── Day header ── */
-  .day-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-  .day-header h2 { font-size: 22px; font-weight: 700; }
-  .day-header .today-badge { font-size: 11px; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { filter: brightness(1.1); }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-warn { background: var(--warn); color: #1a1200; }
-  .btn-warn:hover { filter: brightness(1.1); }
-  .btn-success { background: var(--success); color: #fff; }
-  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
-  .btn-danger:hover { background: var(--danger); color: #fff; }
-  .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .btn-icon { padding: 5px; border-radius: 6px; background: transparent; border: none; cursor: pointer; color: var(--text3); transition: all 0.15s; display: inline-flex; align-items: center; }
-  .btn-icon:hover { color: var(--text); background: var(--surface2); }
+    #header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
 
-  /* ── Task tree ── */
-  .task-list { display: flex; flex-direction: column; gap: 4px; }
-  .task-block { display: flex; flex-direction: column; }
-  .task-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius); border: 1px solid transparent; transition: all 0.15s; background: var(--surface); }
-  .task-row:hover { border-color: var(--border); }
-  .task-row.selected { border-color: var(--accent); background: rgba(108,142,245,0.08); }
-  .task-children { margin-left: 28px; margin-top: 4px; display: flex; flex-direction: column; gap: 4px; border-left: 2px solid var(--border); padding-left: 12px; }
+    #header-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
 
-  .task-checkbox { flex-shrink: 0; }
-  .cb-wrap { width: 20px; height: 20px; position: relative; cursor: pointer; }
-  .cb-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .cb-box { width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border); background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-  .cb-wrap:hover .cb-box { border-color: var(--accent); }
-  .cb-wrap input:checked + .cb-box { background: var(--success); border-color: var(--success); }
-  .cb-wrap input:checked + .cb-box::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
-  .cb-partial .cb-box { background: var(--warn); border-color: var(--warn); }
-  .cb-partial .cb-box::after { content: '–'; color: #fff; font-size: 14px; font-weight: 700; }
+    #header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
 
-  .task-text { flex: 1; font-size: 14px; outline: none; background: transparent; border: none; color: var(--text); min-width: 0; }
-  .task-text.done { text-decoration: line-through; color: var(--text3); }
-  .task-text:focus { color: var(--accent); }
+    #header-tagline {
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: 0.03em;
+    }
 
-  .task-badges { display: flex; gap: 4px; flex-wrap: wrap; }
-  .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
-  .badge-done { background: rgba(76,175,136,0.2); color: var(--success); }
-  .badge-partial { background: rgba(240,160,75,0.2); color: var(--warn); }
-  .badge-ctx { background: rgba(108,142,245,0.2); color: var(--accent); cursor: pointer; }
-  .badge-ctx:hover { background: rgba(108,142,245,0.4); }
+    #header .spacer {
+      flex: 1;
+    }
 
-  /* ── Context hover preview (singleton, appended to body) ── */
-  #ctx-preview { position: fixed; z-index: 500; display: none;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: var(--shadow); padding: 10px 12px; min-width: 220px; max-width: 320px;
-    font-size: 12px; color: var(--text); line-height: 1.5; pointer-events: none; }
-  .ctx-tooltip-section { margin-bottom: 8px; }
-  .ctx-tooltip-section:last-child { margin-bottom: 0; }
-  .ctx-tooltip-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .06em; color: var(--text3); margin-bottom: 4px; }
-  .ctx-tooltip-note { color: var(--text2); margin-bottom: 2px;
-    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .ctx-tooltip-link { display: flex; align-items: center; gap: 5px; color: var(--text2); margin-bottom: 2px; }
-  .ctx-tooltip-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ctx-tooltip-att { color: var(--text2); margin-bottom: 2px; }
-  .ctx-tooltip-more { color: var(--text3); font-style: italic; margin-top: 2px; }
-  .badge-recurring { background: rgba(108,142,245,0.15); color: var(--accent2); }
-  .badge-closed { background: rgba(90,97,128,0.2); color: var(--text3); }
-  .badge-subtask-counts { background: rgba(90,97,128,0.15); color: var(--text2); gap: 4px; }
-  .badge-excluded { background: rgba(90,97,128,0.15); color: var(--text3); }
-  .badge-important { background: rgba(240,160,75,0.15); color: var(--warn); }
-  .task-row.important { border-left: 3px solid var(--warn); }
-  .star-btn { font-size: 15px; }
-  .star-btn.on { color: var(--warn); }
+    /* ── Month Tabs ── */
 
-  .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
-  .task-row:hover .task-actions { opacity: 1; }
+    /* ── Main content ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
 
-  /* ── Collapse toggle ── */
-  .collapse-btn { cursor: pointer; color: var(--text2); font-size: 15px; width: 20px; flex-shrink: 0; transition: transform 0.15s, color 0.15s; user-select: none; display: flex; align-items: center; justify-content: center; }
-  .collapse-btn:hover { color: var(--text); }
-  .collapse-btn.collapsed { transform: rotate(-90deg); }
-  .task-children.hidden { display: none; }
+    #day-panel {
+      width: 200px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
 
-  /* ── Drag and drop ── */
-  .drag-handle { cursor: grab; color: var(--text3); font-size: 14px; padding: 0 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; user-select: none; }
-  .task-row:hover .drag-handle { opacity: 1; }
-  .task-block.dragging { opacity: 0.35; }
-  .task-block.drag-over-top { border-top: 2px solid var(--accent); }
-  .task-block.drag-over-bottom { border-bottom: 2px solid var(--accent); }
-  .task-block.drag-over-child .task-row { outline: 2px dashed var(--accent2); background: rgba(155,108,245,0.08); }
-  .drag-zone-hint { font-size: 10px; color: var(--accent2); margin-left: 4px; opacity: 0; transition: opacity 0.1s; pointer-events: none; }
-  .task-block.drag-over-child .drag-zone-hint { opacity: 1; }
+    #day-panel-header {
+      padding: 14px 8px 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-  .add-task-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-top: 8px; }
-  .add-task-input { flex: 1; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); padding: 7px 12px; color: var(--text); font-size: 14px; outline: none; }
-  .add-task-input:focus { border-color: var(--accent); border-style: solid; }
-  .add-task-input::placeholder { color: var(--text3); }
+    #day-panel-month {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
 
-  /* ── Context Panel ── */
-  #cp-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-  #cp-header h3 { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #cp-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-  .cp-section { display: flex; flex-direction: column; gap: 8px; }
-  .cp-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); }
-  .note-card { background: var(--surface2); border-radius: var(--radius); padding: 10px; border: 1px solid var(--border); }
-  .note-card textarea { width: 100%; background: transparent; border: none; color: var(--text); font-size: 13px; resize: vertical; outline: none; min-height: 60px; font-family: inherit; line-height: 1.5; }
-  .note-card .note-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 6px; }
-  .link-card { background: var(--surface2); border-radius: var(--radius); padding: 8px 10px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-  .link-icon { font-size: 16px; flex-shrink: 0; }
-  .link-info { flex: 1; min-width: 0; }
-  .link-label { font-size: 12px; font-weight: 600; color: var(--text); }
-  .link-url { font-size: 11px; color: var(--accent); text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .link-url:hover { text-decoration: underline; }
-  .attach-card { background: var(--surface2); border-radius: var(--radius); padding: 8px 10px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-  .attach-icon { font-size: 18px; }
-  .attach-name { flex: 1; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .attach-size { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+    .month-nav-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 15px;
+      line-height: 1;
+      padding: 2px 5px;
+      border-radius: 5px;
+      transition: color 0.15s, background 0.15s;
+    }
 
-  /* add / edit link forms */
-  .add-link-form { display: flex; flex-direction: column; gap: 6px; background: var(--surface2); border-radius: var(--radius); padding: 10px; border: 1px solid var(--border); }
-  .add-link-form input { background: var(--surface3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; outline: none; }
-  .add-link-form input:focus { border-color: var(--accent); }
-  .add-link-form select { background: var(--surface3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; outline: none; }
-  .link-edit-form { display: flex; flex-direction: column; gap: 6px; background: var(--surface2); border-radius: var(--radius); padding: 10px; border: 1px solid var(--accent); margin-top: 4px; }
-  .link-edit-form input, .link-edit-form select { background: var(--surface3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; outline: none; }
-  .link-edit-form input:focus, .link-edit-form select:focus { border-color: var(--accent); }
+    .month-nav-btn:hover {
+      color: var(--text);
+      background: var(--surface2);
+    }
 
-  /* ── Summary Modal ── */
-  #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; }
-  #modal-overlay.open { display: flex; }
-  #modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); width: 680px; max-width: 95vw; max-height: 85vh; display: flex; flex-direction: column; box-shadow: var(--shadow); }
-  #modal-head { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-  #modal-head h2 { flex: 1; font-size: 18px; }
-  #modal-body { flex: 1; overflow-y: auto; padding: 20px; }
-  .summary-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
-  .summary-controls select { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 12px; color: var(--text); font-size: 13px; outline: none; }
-  .summary-output { background: var(--surface2); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); font-size: 14px; line-height: 1.7; min-height: 200px; color: var(--text); }
-  .summary-output.loading { color: var(--text3); font-style: italic; }
-  .summary-output p { margin: 0 0 14px 0; }
-  .summary-output p:last-child { margin-bottom: 0; }
-  .summary-output .sum-stats { font-size: 12px; color: var(--text3); margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
-  .summary-output .sum-error { color: var(--danger); }
-  .summary-output .s-head { color: var(--accent); font-weight: 700; font-size: 15px; }
-  .summary-output .s-sub { color: var(--accent2); font-weight: 600; }
-  .summary-output .s-done { color: var(--success); }
-  .summary-output .s-partial { color: var(--warn); }
-  .summary-output .s-pending { color: var(--text3); }
+    #day-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px 12px;
+    }
+
+    .day-item {
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text2);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .day-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .day-item.active {
+      background: var(--surface3);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .day-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .day-item.has-tasks .dot {
+      background: var(--accent);
+    }
+
+    .day-item.today-marker {
+      color: var(--accent);
+    }
+
+    #task-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    #context-panel {
+      width: 340px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+    }
+
+    #context-panel.open {
+      display: flex;
+    }
+
+    /* ── Day header ── */
+    .day-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .day-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .day-header .today-badge {
+      font-size: 11px;
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-warn {
+      background: var(--warn);
+      color: #1a1200;
+    }
+
+    .btn-warn:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    .btn-icon {
+      padding: 5px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-icon:hover {
+      color: var(--text);
+      background: var(--surface2);
+    }
+
+    /* ── Task tree ── */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .task-block {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      background: var(--surface);
+    }
+
+    .task-row:hover {
+      border-color: var(--border);
+    }
+
+    .task-row.selected {
+      border-color: var(--accent);
+      background: rgba(108, 142, 245, 0.08);
+    }
+
+    .task-children {
+      margin-left: 28px;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-left: 2px solid var(--border);
+      padding-left: 12px;
+    }
+
+    .task-checkbox {
+      flex-shrink: 0;
+    }
+
+    .cb-wrap {
+      width: 20px;
+      height: 20px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .cb-wrap input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .cb-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 2px solid var(--border);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .cb-wrap:hover .cb-box {
+      border-color: var(--accent);
+    }
+
+    .cb-wrap input:checked+.cb-box {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .cb-wrap input:checked+.cb-box::after {
+      content: '✓';
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .cb-partial .cb-box {
+      background: var(--warn);
+      border-color: var(--warn);
+    }
+
+    .cb-partial .cb-box::after {
+      content: '–';
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 14px;
+      outline: none;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .task-text.done {
+      text-decoration: line-through;
+      color: var(--text3);
+    }
+
+    .task-text:focus {
+      color: var(--accent);
+    }
+
+    .task-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .badge-done {
+      background: rgba(76, 175, 136, 0.2);
+      color: var(--success);
+    }
+
+    .badge-partial {
+      background: rgba(240, 160, 75, 0.2);
+      color: var(--warn);
+    }
+
+    .badge-ctx {
+      background: rgba(108, 142, 245, 0.2);
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .badge-ctx:hover {
+      background: rgba(108, 142, 245, 0.4);
+    }
+
+    /* ── Context hover preview (singleton, appended to body) ── */
+    #ctx-preview {
+      position: fixed;
+      z-index: 500;
+      display: none;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 10px 12px;
+      min-width: 220px;
+      max-width: 320px;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.5;
+      pointer-events: none;
+    }
+
+    .ctx-tooltip-section {
+      margin-bottom: 8px;
+    }
+
+    .ctx-tooltip-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .ctx-tooltip-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text3);
+      margin-bottom: 4px;
+    }
+
+    .ctx-tooltip-note {
+      color: var(--text2);
+      margin-bottom: 2px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .ctx-tooltip-link {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text2);
+      margin-bottom: 2px;
+    }
+
+    .ctx-tooltip-link span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ctx-tooltip-att {
+      color: var(--text2);
+      margin-bottom: 2px;
+    }
+
+    .ctx-tooltip-more {
+      color: var(--text3);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .badge-recurring {
+      background: rgba(108, 142, 245, 0.15);
+      color: var(--accent2);
+    }
+
+    .badge-closed {
+      background: rgba(90, 97, 128, 0.2);
+      color: var(--text3);
+    }
+
+    .badge-subtask-counts {
+      background: rgba(90, 97, 128, 0.15);
+      color: var(--text2);
+      gap: 4px;
+    }
+
+    .badge-excluded {
+      background: rgba(90, 97, 128, 0.15);
+      color: var(--text3);
+    }
+
+    .badge-important {
+      background: rgba(240, 160, 75, 0.15);
+      color: var(--warn);
+    }
+
+    .task-row.important {
+      border-left: 3px solid var(--warn);
+    }
+
+    .star-btn {
+      font-size: 15px;
+    }
+
+    .star-btn.on {
+      color: var(--warn);
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .task-row:hover .task-actions {
+      opacity: 1;
+    }
+
+    /* ── Collapse toggle ── */
+    .collapse-btn {
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 15px;
+      width: 20px;
+      flex-shrink: 0;
+      transition: transform 0.15s, color 0.15s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .collapse-btn:hover {
+      color: var(--text);
+    }
+
+    .collapse-btn.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .task-children.hidden {
+      display: none;
+    }
+
+    /* ── Drag and drop ── */
+    .drag-handle {
+      cursor: grab;
+      color: var(--text3);
+      font-size: 14px;
+      padding: 0 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+      user-select: none;
+    }
+
+    .task-row:hover .drag-handle {
+      opacity: 1;
+    }
+
+    .task-block.dragging {
+      opacity: 0.35;
+    }
+
+    .task-block.drag-over-top {
+      border-top: 2px solid var(--accent);
+    }
+
+    .task-block.drag-over-bottom {
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .task-block.drag-over-child .task-row {
+      outline: 2px dashed var(--accent2);
+      background: rgba(155, 108, 245, 0.08);
+    }
+
+    .drag-zone-hint {
+      font-size: 10px;
+      color: var(--accent2);
+      margin-left: 4px;
+      opacity: 0;
+      transition: opacity 0.1s;
+      pointer-events: none;
+    }
+
+    .task-block.drag-over-child .drag-zone-hint {
+      opacity: 1;
+    }
+
+    .add-task-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      margin-top: 8px;
+    }
+
+    .add-task-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 7px 12px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .add-task-input:focus {
+      border-color: var(--accent);
+      border-style: solid;
+    }
+
+    .add-task-input::placeholder {
+      color: var(--text3);
+    }
+
+    /* ── Context Panel ── */
+    #cp-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #cp-header h3 {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #cp-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .cp-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cp-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text3);
+    }
+
+    .note-card {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .note-card textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 13px;
+      resize: vertical;
+      outline: none;
+      min-height: 60px;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+
+    .note-card .note-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .link-card {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .link-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .link-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .link-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .link-url {
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .link-url:hover {
+      text-decoration: underline;
+    }
+
+    .attach-card {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .attach-icon {
+      font-size: 18px;
+    }
+
+    .attach-name {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .attach-size {
+      font-size: 11px;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    /* add / edit link forms */
+    .add-link-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .add-link-form input {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .add-link-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .add-link-form select {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .link-edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 10px;
+      border: 1px solid var(--accent);
+      margin-top: 4px;
+    }
+
+    .link-edit-form input,
+    .link-edit-form select {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .link-edit-form input:focus,
+    .link-edit-form select:focus {
+      border-color: var(--accent);
+    }
+
+    /* ── Summary Modal ── */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modal-overlay.open {
+      display: flex;
+    }
+
+    #modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      width: 680px;
+      max-width: 95vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    #modal-head {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #modal-head h2 {
+      flex: 1;
+      font-size: 18px;
+    }
+
+    #modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .summary-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .summary-controls select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 12px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .summary-output {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 200px;
+      color: var(--text);
+    }
+
+    .summary-output.loading {
+      color: var(--text3);
+      font-style: italic;
+    }
+
+    .summary-output p {
+      margin: 0 0 14px 0;
+    }
+
+    .summary-output p:last-child {
+      margin-bottom: 0;
+    }
+
+    .summary-output .sum-stats {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .summary-output .sum-error {
+      color: var(--danger);
+    }
+
+    .summary-output .s-head {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .summary-output .s-sub {
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    .summary-output .s-done {
+      color: var(--success);
+    }
+
+    .summary-output .s-partial {
+      color: var(--warn);
+    }
+
+    .summary-output .s-pending {
+      color: var(--text3);
+    }
 
 
-  /* ── Search Modal ── */
-  #search-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: none; align-items: flex-start; justify-content: center; padding-top: 80px; }
-  #search-overlay.open { display: flex; }
-  #search-modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); width: 640px; max-width: 95vw; max-height: 70vh; display: flex; flex-direction: column; box-shadow: var(--shadow); overflow: hidden; }
-  #search-input-wrap { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-  #search-input-wrap .search-icon { font-size: 16px; color: var(--text3); flex-shrink: 0; }
-  #search-input { flex: 1; background: transparent; border: none; outline: none; font-size: 15px; color: var(--text); }
-  #search-input::placeholder { color: var(--text3); }
-  #search-input-wrap .search-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 0 4px; line-height: 1; }
-  #search-input-wrap .search-close:hover { color: var(--text); }
-  #search-results { overflow-y: auto; flex: 1; }
-  #search-meta { padding: 8px 16px; font-size: 12px; color: var(--text3); border-bottom: 1px solid var(--border); }
-  .search-result { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; }
-  .search-result:last-child { border-bottom: none; }
-  .search-result:hover, .search-result.focused { background: var(--surface2); }
-  .search-result-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
-  .search-result-body { flex: 1; min-width: 0; }
-  .search-result-text { font-size: 14px; color: var(--text); line-height: 1.4; }
-  .search-result-text mark { background: transparent; color: var(--accent); font-weight: 700; }
-  .search-result-meta { font-size: 12px; color: var(--text3); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .search-result-date { color: var(--accent2); }
-  .search-result-crumb { color: var(--text3); }
-  .search-badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-  .search-badge.done    { background: rgba(76,175,136,0.15); color: var(--success); }
-  .search-badge.partial { background: rgba(240,160,75,0.15);  color: var(--warn); }
-  .search-badge.important { background: rgba(240,160,75,0.15); color: var(--warn); }
-  .search-badge.recurring { background: rgba(108,142,245,0.15); color: var(--accent); }
-  .search-empty { padding: 48px 24px; text-align: center; color: var(--text3); font-size: 14px; }
-  .search-hint { padding: 10px 16px; font-size: 11px; color: var(--text3); border-top: 1px solid var(--border); display: flex; gap: 16px; }
-  .search-hint kbd { background: var(--surface3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 10px; font-family: inherit; }
+    /* ── Search Modal ── */
+    #search-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 80px;
+    }
 
-  /* ── Empty state ── */
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
-  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-state p { font-size: 14px; }
+    #search-overlay.open {
+      display: flex;
+    }
 
-  /* ── Scrollbars ── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #search-modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      width: 640px;
+      max-width: 95vw;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
 
-  /* ── Animations ── */
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  .fade-in { animation: fadeIn 0.2s ease; }
-  @keyframes searchPulse { 0%,100% { background: transparent; } 30% { background: rgba(108,142,245,0.18); } }
-  .search-highlight { animation: searchPulse 1.8s ease; }
-</style>
+    #search-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #search-input-wrap .search-icon {
+      font-size: 16px;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    #search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    #search-input::placeholder {
+      color: var(--text3);
+    }
+
+    #search-input-wrap .search-close {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      line-height: 1;
+    }
+
+    #search-input-wrap .search-close:hover {
+      color: var(--text);
+    }
+
+    #search-results {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    #search-meta {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .search-result {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    .search-result:last-child {
+      border-bottom: none;
+    }
+
+    .search-result:hover,
+    .search-result.focused {
+      background: var(--surface2);
+    }
+
+    .search-result-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .search-result-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .search-result-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .search-result-text mark {
+      background: transparent;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .search-result-meta {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 3px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .search-result-date {
+      color: var(--accent2);
+    }
+
+    .search-result-crumb {
+      color: var(--text3);
+    }
+
+    .search-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .search-badge.done {
+      background: rgba(76, 175, 136, 0.15);
+      color: var(--success);
+    }
+
+    .search-badge.partial {
+      background: rgba(240, 160, 75, 0.15);
+      color: var(--warn);
+    }
+
+    .search-badge.important {
+      background: rgba(240, 160, 75, 0.15);
+      color: var(--warn);
+    }
+
+    .search-badge.recurring {
+      background: rgba(108, 142, 245, 0.15);
+      color: var(--accent);
+    }
+
+    .search-empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    .search-hint {
+      padding: 10px 16px;
+      font-size: 11px;
+      color: var(--text3);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 16px;
+    }
+
+    .search-hint kbd {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 10px;
+      font-family: inherit;
+    }
+
+    /* ── Calendar Popover ── */
+    #cal-popover {
+      position: fixed;
+      z-index: 300;
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      width: 252px;
+    }
+
+    #cal-popover.open {
+      display: block;
+    }
+
+    .cal-nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .cal-nav-row span {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .cal-nav-btn {
+      background: none;
+      border: none;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 15px;
+      padding: 2px 7px;
+      border-radius: var(--radius);
+      line-height: 1;
+    }
+
+    .cal-nav-btn:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-top: 8px;
+    }
+
+    .cal-dow {
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--text3);
+      padding: 3px 0;
+      text-transform: uppercase;
+    }
+
+    .cal-day {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 30px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text2);
+      transition: background 0.1s;
+    }
+
+    .cal-day:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .cal-day.other-month {
+      color: var(--text3);
+      opacity: 0.4;
+    }
+
+    .cal-day.today {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .cal-day.today::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .cal-day.selected {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .cal-day.selected:hover {
+      background: var(--accent);
+    }
+
+    .cal-day.selected.today::after {
+      background: #fff;
+    }
+
+    .cal-day.has-tasks .cal-dot {
+      display: block;
+    }
+
+    .cal-dot {
+      display: none;
+      position: absolute;
+      bottom: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .cal-day.selected .cal-dot {
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .cal-day.today .cal-dot {
+      bottom: 3px;
+      left: calc(50% + 5px);
+    }
+
+    .cal-day.today.selected .cal-dot {
+      left: calc(50% + 5px);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+    }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes searchPulse {
+
+      0%,
+      100% {
+        background: transparent;
+      }
+
+      30% {
+        background: rgba(108, 142, 245, 0.18);
+      }
+    }
+
+    .search-highlight {
+      animation: searchPulse 1.8s ease;
+    }
+  </style>
 </head>
+
 <body>
-<div id="app">
-  <!-- Header -->
-  <div id="header">
-    <h1>📋 Daily Tasks</h1>
-    <div class="spacer"></div>
-    <span id="save-toast" style="font-size:12px;color:var(--success);opacity:0;transition:opacity 0.4s;">✓ Saved</span>
-    <button class="btn btn-secondary btn-sm" onclick="openSearchModal()" title="Search tasks (⌘K)">🔍 Search</button>
-    <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Export all data as JSON">⬇ Export</button>
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="Import data from JSON backup">⬆ Import<input type="file" accept=".json" style="display:none;" onchange="importData(this)"></label>
-    <button class="btn btn-secondary btn-sm" onclick="openSummaryModal()">📊 Summarize</button>
-  </div>
-
-  <!-- Month Tabs -->
-  <div id="month-tabs"></div>
-
-  <!-- Main -->
-  <div id="main">
-    <div id="day-list"></div>
-    <div id="task-area"></div>
-    <div id="context-panel">
-      <div id="cp-header">
-        <h3 id="cp-title">Context</h3>
-        <button class="btn-icon" onclick="closeContextPanel()" title="Close">✕</button>
+  <div id="app">
+    <!-- Header -->
+    <div id="header">
+      <div id="header-brand">
+        <h1>🚩 Checkpoint</h1>
+        <span id="header-tagline">Every day accounted for.</span>
       </div>
-      <div id="cp-body"></div>
+      <div class="spacer"></div>
+      <span id="save-toast" style="font-size:12px;color:var(--success);opacity:0;transition:opacity 0.4s;">✓
+        Saved</span>
+      <button class="btn btn-secondary btn-sm" onclick="openSearchModal()" title="Search tasks (⌘K)">🔍 Search</button>
+      <button class="btn btn-secondary btn-sm" id="cal-btn" onclick="toggleCalendar(event)" title="Open calendar">📅
+        Calendar</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Export all data as JSON">⬇ Export</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="Import data from JSON backup">⬆
+        Import<input type="file" accept=".json" style="display:none;" onchange="importData(this)"></label>
+      <button class="btn btn-secondary btn-sm" onclick="openSummaryModal()">📊 Summarize</button>
     </div>
-  </div>
-</div>
 
-<!-- Summary Modal -->
-<div id="modal-overlay" onclick="if(event.target===this)closeSummaryModal()">
-  <div id="modal">
-    <div id="modal-head">
-      <h2>📊 Work Summary</h2>
-      <button class="btn-icon" onclick="closeSummaryModal()">✕</button>
-    </div>
-    <div id="modal-body">
-      <div class="summary-controls">
-        <select id="sum-period">
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="quarter">This Quarter</option>
-          <option value="year">This Year</option>
-          <option value="custom">Custom Range</option>
-        </select>
-        <span id="sum-custom" style="display:none;gap:8px;align-items:center;">
-          <input type="date" id="sum-from" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
-          <span>to</span>
-          <input type="date" id="sum-to" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
-        </span>
-        <button class="btn btn-primary btn-sm" id="sum-generate-btn" onclick="generateSummary()">Generate</button>
+    <!-- Month Tabs -->
+    <!-- Main -->
+    <div id="main">
+      <div id="day-panel">
+        <div id="day-panel-header">
+          <button class="month-nav-btn" onclick="navigateMonth(-1)" title="Previous month">‹</button>
+          <span id="day-panel-month"></span>
+          <button class="month-nav-btn" onclick="navigateMonth(1)" title="Next month">›</button>
+        </div>
+        <div id="day-list"></div>
       </div>
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Topics (optional) — one per line</label>
-        <textarea id="sum-topics" placeholder="e.g. Data quality&#10;Gen AI&#10;Deployment" style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-size:13px;resize:vertical;min-height:60px;outline:none;font-family:inherit;line-height:1.5;"></textarea>
+      <div id="task-area"></div>
+      <div id="context-panel">
+        <div id="cp-header">
+          <h3 id="cp-title">Context</h3>
+          <button class="btn-icon" onclick="closeContextPanel()" title="Close">✕</button>
+        </div>
+        <div id="cp-body"></div>
       </div>
-      <div class="summary-output" id="sum-output">Select a period and click Generate.</div>
     </div>
   </div>
-</div>
 
-<!-- Search Modal -->
-<div id="search-overlay" onclick="if(event.target===this)closeSearchModal()">
-  <div id="search-modal">
-    <div id="search-input-wrap">
-      <span class="search-icon">🔍</span>
-      <input id="search-input" type="text" placeholder="Search tasks…" autocomplete="off"
-             oninput="onSearchInput()"
-             onkeydown="onSearchKey(event)" />
-      <button class="search-close" onclick="closeSearchModal()" title="Close">✕</button>
-    </div>
-    <div id="search-meta" style="display:none"></div>
-    <div id="search-results"></div>
-    <div class="search-hint">
-      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-      <span><kbd>Enter</kbd> jump to day</span>
-      <span><kbd>Esc</kbd> close</span>
-      <span><kbd>⌘K</kbd> open</span>
+  <!-- Summary Modal -->
+  <div id="modal-overlay" onclick="if(event.target===this)closeSummaryModal()">
+    <div id="modal">
+      <div id="modal-head">
+        <h2>📊 Work Summary</h2>
+        <button class="btn-icon" onclick="closeSummaryModal()">✕</button>
+      </div>
+      <div id="modal-body">
+        <div class="summary-controls">
+          <select id="sum-period">
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <span id="sum-custom" style="display:none;gap:8px;align-items:center;">
+            <input type="date" id="sum-from"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
+            <span>to</span>
+            <input type="date" id="sum-to"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
+          </span>
+          <button class="btn btn-primary btn-sm" id="sum-generate-btn" onclick="generateSummary()">Generate</button>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label
+            style="display:block;font-size:12px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Topics
+            (optional) — one per line</label>
+          <textarea id="sum-topics" placeholder="e.g. Data quality&#10;Gen AI&#10;Deployment"
+            style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-size:13px;resize:vertical;min-height:60px;outline:none;font-family:inherit;line-height:1.5;"></textarea>
+        </div>
+        <div class="summary-output" id="sum-output">Select a period and click Generate.</div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Context hover preview — singleton outside task DOM so it never inflates drag images -->
-<div id="ctx-preview"></div>
+  <!-- Search Modal -->
+  <div id="search-overlay" onclick="if(event.target===this)closeSearchModal()">
+    <div id="search-modal">
+      <div id="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="search-input" type="text" placeholder="Search tasks…" autocomplete="off" oninput="onSearchInput()"
+          onkeydown="onSearchKey(event)" />
+        <button class="search-close" onclick="closeSearchModal()" title="Close">✕</button>
+      </div>
+      <div id="search-meta" style="display:none"></div>
+      <div id="search-results"></div>
+      <div class="search-hint">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>Enter</kbd> jump to day</span>
+        <span><kbd>Esc</kbd> close</span>
+        <span><kbd>⌘K</kbd> open</span>
+      </div>
+    </div>
+  </div>
 
-<script>
-// ─────────────────────────────────────────
-// Storage — one JSON file per month via server API
-// data/YYYY-MM.json  { "YYYY-MM-DD": { tasks: [...] }, ... }
-// ─────────────────────────────────────────
+  <!-- Context hover preview — singleton outside task DOM so it never inflates drag images -->
+  <div id="ctx-preview"></div>
 
-// Cache of already-loaded months so we don't re-fetch on every render
-const _loadedMonths = new Set();
+  <!-- Calendar popover -->
+  <div id="cal-popover">
+    <div class="cal-nav-row">
+      <button class="cal-nav-btn" onclick="calNavYear(-1)">‹</button>
+      <span id="cal-year-label"></span>
+      <button class="cal-nav-btn" onclick="calNavYear(1)">›</button>
+    </div>
+    <div class="cal-nav-row">
+      <button class="cal-nav-btn" onclick="calNavMonth(-1)">‹</button>
+      <span id="cal-month-label"></span>
+      <button class="cal-nav-btn" onclick="calNavMonth(1)">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
 
-async function loadMonth(month) {
-  if (_loadedMonths.has(month)) return;
-  try {
-    const res = await fetch(`/data/${month}`);
-    if (!res.ok) return;
-    const days = await res.json();
-    Object.assign(state.days, days);
-    _loadedMonths.add(month);
-  } catch(e) { console.warn('loadMonth failed:', month, e); }
-}
+  <script>
+    // ─────────────────────────────────────────
+    // Storage — one JSON file per month via server API
+    // data/YYYY-MM.json  { "YYYY-MM-DD": { tasks: [...] }, ... }
+    // ─────────────────────────────────────────
 
-async function saveMonth(month) {
-  // Collect only days belonging to this month
-  const payload = {};
-  Object.keys(state.days).forEach(k => { if (k.startsWith(month)) payload[k] = state.days[k]; });
-  try {
-    await fetch(`/data/${month}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload, null, 2),
-    });
-  } catch(e) { console.warn('saveMonth failed:', month, e); }
-  showSaveToast();
-}
+    // Cache of already-loaded months so we don't re-fetch on every render
+    const _loadedMonths = new Set();
 
-async function loadKnownMonths() {
-  try {
-    const res = await fetch('/months');
-    return res.ok ? await res.json() : [];
-  } catch { return []; }
-}
+    async function loadMonth(month) {
+      if (_loadedMonths.has(month)) return;
+      try {
+        const res = await fetch(`/data/${month}`);
+        if (!res.ok) return;
+        const days = await res.json();
+        Object.assign(state.days, days);
+        _loadedMonths.add(month);
+      } catch (e) { console.warn('loadMonth failed:', month, e); }
+    }
 
-function showSaveToast() {
-  const toast = document.getElementById('save-toast');
-  if (toast) { toast.style.opacity = '1'; clearTimeout(toast._t); toast._t = setTimeout(() => toast.style.opacity = '0', 1500); }
-}
+    async function saveMonth(month) {
+      // Collect only days belonging to this month
+      const payload = {};
+      Object.keys(state.days).forEach(k => { if (k.startsWith(month)) payload[k] = state.days[k]; });
+      try {
+        await fetch(`/data/${month}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload, null, 2),
+        });
+      } catch (e) { console.warn('saveMonth failed:', month, e); }
+      showSaveToast();
+    }
 
-// saveData saves only the currently active month (where edits happen)
-async function saveData() {
-  await saveMonth(state.activeMonth);
-}
+    async function loadKnownMonths() {
+      try {
+        const res = await fetch('/months');
+        return res.ok ? await res.json() : [];
+      } catch { return []; }
+    }
 
-function exportData() {
-  const json = JSON.stringify(state.days, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `tasks-backup-${todayKey()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+    function showSaveToast() {
+      const toast = document.getElementById('save-toast');
+      if (toast) { toast.style.opacity = '1'; clearTimeout(toast._t); toast._t = setTimeout(() => toast.style.opacity = '0', 1500); }
+    }
 
-function importData(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async e => {
-    try {
-      const parsed = JSON.parse(e.target.result);
-      if (typeof parsed !== 'object') throw new Error('Invalid format');
-      // Merge imported days into state and save each affected month
-      const months = new Set();
-      Object.keys(parsed).forEach(k => { state.days[k] = parsed[k]; months.add(k.slice(0,7)); });
-      for (const m of months) await saveMonth(m);
+    // saveData saves only the currently active month (where edits happen)
+    async function saveData() {
+      await saveMonth(state.activeMonth);
+    }
+
+    function exportData() {
+      const json = JSON.stringify(state.days, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tasks-backup-${todayKey()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (typeof parsed !== 'object') throw new Error('Invalid format');
+          // Merge imported days into state and save each affected month
+          const months = new Set();
+          Object.keys(parsed).forEach(k => { state.days[k] = parsed[k]; months.add(k.slice(0, 7)); });
+          for (const m of months) await saveMonth(m);
+          render();
+        } catch { alert('Invalid backup file.'); }
+      };
+      reader.readAsText(file);
+      input.value = '';
+    }
+
+    // state.days = { "2026-04-23": { tasks: [...] } }
+    // task = { id, text, status: 'pending'|'done'|'partial', children: [], context: { notes:[], links:[], attachments:[] } }
+    const state = {
+      days: {},
+      activeMonth: null,
+      activeDay: null,
+      contextTaskId: null,
+      contextDayKey: null,
+    };
+
+    // Clipboard: holds a copied task (with subtasks) until pasted or overwritten
+    let _clipboard = null;
+
+    function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+    function todayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function nextDayKey(key) {
+      const d = new Date(key + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function monthOf(key) { return key.slice(0, 7); }
+
+    function getMonths() {
+      const ms = new Set();
+      const today = todayKey();
+      ms.add(monthOf(today));
+      Object.keys(state.days).forEach(k => ms.add(monthOf(k)));
+      // Also include months known from server (loaded at init)
+      (state.knownMonths || []).forEach(m => ms.add(m));
+      return Array.from(ms).sort();
+    }
+
+    function getDaysInMonth(ym) {
+      const [y, m] = ym.split('-').map(Number);
+      const count = new Date(y, m, 0).getDate();
+      const days = [];
+      for (let d = 1; d <= count; d++) {
+        days.push(`${ym}-${String(d).padStart(2, '0')}`);
+      }
+      return days;
+    }
+
+    function ensureDay(key) {
+      if (!state.days[key]) state.days[key] = { tasks: [] };
+      return state.days[key];
+    }
+
+    function makeTask(text) {
+      return { id: uid(), text, status: 'pending', important: false, recurring: false, closed: false, excludeFromSummary: false, children: [], context: { notes: [], links: [], attachments: [] } };
+    }
+
+    // Find task by id recursively in a list
+    function findTask(tasks, id) {
+      for (const t of tasks) {
+        if (t.id === id) return t;
+        const found = findTask(t.children, id);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    // Remove task by id recursively, return new list
+    function removeTask(tasks, id) {
+      return tasks.filter(t => t.id !== id).map(t => ({ ...t, children: removeTask(t.children, id) }));
+    }
+
+    // Deep clone a task (for copy operations)
+    function cloneTask(task) {
+      return JSON.parse(JSON.stringify({ ...task, id: uid(), children: task.children.map(c => ({ ...cloneTask(c) })) }));
+    }
+
+    // Mark all children done
+    function markAllDone(task) {
+      task.status = 'done';
+      task.children.forEach(c => markAllDone(c));
+    }
+
+    // Compute aggregate status of children
+    function computeParentStatus(task) {
+      if (task.children.length === 0) return task.status;
+      const statuses = task.children.map(c => computeParentStatus(c));
+      if (statuses.every(s => s === 'done')) return 'done';
+      if (statuses.some(s => s === 'done' || s === 'partial')) return 'partial';
+      return 'pending';
+    }
+
+    // ─────────────────────────────────────────
+    // Init
+    // ─────────────────────────────────────────
+    async function init() {
+      const today = todayKey();
+      state.activeMonth = monthOf(today);
+      state.activeDay = today;
+      // Load list of all months with data from server, then load current month
+      state.knownMonths = await loadKnownMonths();
+      await loadMonth(state.activeMonth);
+      ensureDay(today);
       render();
-    } catch { alert('Invalid backup file.'); }
-  };
-  reader.readAsText(file);
-  input.value = '';
-}
+    }
 
-// state.days = { "2026-04-23": { tasks: [...] } }
-// task = { id, text, status: 'pending'|'done'|'partial', children: [], context: { notes:[], links:[], attachments:[] } }
-const state = {
-  days: {},
-  activeMonth: null,
-  activeDay: null,
-  contextTaskId: null,
-  contextDayKey: null,
-};
+    // ─────────────────────────────────────────
+    // Render
+    // ─────────────────────────────────────────
+    function render() {
+      renderDayList();
+      renderTaskArea();
+    }
 
-// Clipboard: holds a copied task (with subtasks) until pasted or overwritten
-let _clipboard = null;
 
-function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
-
-function todayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function nextDayKey(key) {
-  const d = new Date(key + 'T00:00:00');
-  d.setDate(d.getDate() + 1);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function monthOf(key) { return key.slice(0, 7); }
-
-function getMonths() {
-  const ms = new Set();
-  const today = todayKey();
-  ms.add(monthOf(today));
-  Object.keys(state.days).forEach(k => ms.add(monthOf(k)));
-  // Also include months known from server (loaded at init)
-  (state.knownMonths || []).forEach(m => ms.add(m));
-  return Array.from(ms).sort();
-}
-
-function getDaysInMonth(ym) {
-  const [y, m] = ym.split('-').map(Number);
-  const count = new Date(y, m, 0).getDate();
-  const days = [];
-  for (let d = 1; d <= count; d++) {
-    days.push(`${ym}-${String(d).padStart(2,'0')}`);
-  }
-  return days;
-}
-
-function ensureDay(key) {
-  if (!state.days[key]) state.days[key] = { tasks: [] };
-  return state.days[key];
-}
-
-function makeTask(text) {
-  return { id: uid(), text, status: 'pending', important: false, recurring: false, closed: false, excludeFromSummary: false, children: [], context: { notes: [], links: [], attachments: [] } };
-}
-
-// Find task by id recursively in a list
-function findTask(tasks, id) {
-  for (const t of tasks) {
-    if (t.id === id) return t;
-    const found = findTask(t.children, id);
-    if (found) return found;
-  }
-  return null;
-}
-
-// Remove task by id recursively, return new list
-function removeTask(tasks, id) {
-  return tasks.filter(t => t.id !== id).map(t => ({ ...t, children: removeTask(t.children, id) }));
-}
-
-// Deep clone a task (for copy operations)
-function cloneTask(task) {
-  return JSON.parse(JSON.stringify({ ...task, id: uid(), children: task.children.map(c => ({ ...cloneTask(c) })) }));
-}
-
-// Mark all children done
-function markAllDone(task) {
-  task.status = 'done';
-  task.children.forEach(c => markAllDone(c));
-}
-
-// Compute aggregate status of children
-function computeParentStatus(task) {
-  if (task.children.length === 0) return task.status;
-  const statuses = task.children.map(c => computeParentStatus(c));
-  if (statuses.every(s => s === 'done')) return 'done';
-  if (statuses.some(s => s === 'done' || s === 'partial')) return 'partial';
-  return 'pending';
-}
-
-// ─────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────
-async function init() {
-  const today = todayKey();
-  state.activeMonth = monthOf(today);
-  state.activeDay = today;
-  // Load list of all months with data from server, then load current month
-  state.knownMonths = await loadKnownMonths();
-  await loadMonth(state.activeMonth);
-  ensureDay(today);
-  render();
-}
-
-// ─────────────────────────────────────────
-// Render
-// ─────────────────────────────────────────
-function render() {
-  renderMonthTabs();
-  renderDayList();
-  renderTaskArea();
-}
-
-function renderMonthTabs() {
-  const months = getMonths();
-  const el = document.getElementById('month-tabs');
-  el.innerHTML = months.map(m => {
-    const [y, mo] = m.split('-').map(Number);
-    const label = new Date(y, mo - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
-    return `<button class="month-tab ${m === state.activeMonth ? 'active' : ''}" onclick="selectMonth('${m}')">${label}</button>`;
-  }).join('');
-}
-
-function renderDayList() {
-  const days = getDaysInMonth(state.activeMonth);
-  const today = todayKey();
-  const el = document.getElementById('day-list');
-  el.innerHTML = days.map(key => {
-    const hasTasks = state.days[key] && state.days[key].tasks.length > 0;
-    const isToday = key === today;
-    const d = new Date(key + 'T00:00:00');
-    const label = d.toLocaleString('default', { weekday: 'short', day: 'numeric' });
-    return `<div class="day-item ${key === state.activeDay ? 'active' : ''} ${hasTasks ? 'has-tasks' : ''} ${isToday ? 'today-marker' : ''}" onclick="selectDay('${key}')">
+    function renderDayList() {
+      const days = getDaysInMonth(state.activeMonth);
+      const today = todayKey();
+      const el = document.getElementById('day-list');
+      // Update the month/year label
+      const [y, m] = state.activeMonth.split('-').map(Number);
+      const monthLabel = new Date(y, m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+      document.getElementById('day-panel-month').textContent = monthLabel;
+      el.innerHTML = days.map(key => {
+        const hasTasks = state.days[key] && state.days[key].tasks.length > 0;
+        const isToday = key === today;
+        const d = new Date(key + 'T00:00:00');
+        const label = d.toLocaleString('default', { weekday: 'short', day: 'numeric' });
+        return `<div class="day-item ${key === state.activeDay ? 'active' : ''} ${hasTasks ? 'has-tasks' : ''} ${isToday ? 'today-marker' : ''}" onclick="selectDay('${key}')">
       <span class="dot"></span>
       <span>${label}${isToday ? ' ●' : ''}</span>
     </div>`;
-  }).join('');
-  // scroll active into view
-  setTimeout(() => {
-    const active = el.querySelector('.day-item.active');
-    if (active) active.scrollIntoView({ block: 'nearest' });
-  }, 0);
-}
+      }).join('');
+      // scroll active into view
+      setTimeout(() => {
+        const active = el.querySelector('.day-item.active');
+        if (active) active.scrollIntoView({ block: 'nearest' });
+      }, 0);
+    }
 
-function renderTaskArea() {
-  const key = state.activeDay;
-  const dayData = state.days[key];
-  const today = todayKey();
-  const d = new Date(key + 'T00:00:00');
-  const dateLabel = d.toLocaleString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const isToday = key === today;
-  const isPast = key < today;
+    function renderTaskArea() {
+      const key = state.activeDay;
+      const dayData = state.days[key];
+      const today = todayKey();
+      const d = new Date(key + 'T00:00:00');
+      const dateLabel = d.toLocaleString('default', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const isToday = key === today;
+      const isPast = key < today;
 
-  const tasks = dayData ? dayData.tasks : [];
-  const hasIncomplete = tasks.some(t => hasIncompleteDeep(t));
-  const nextDay = nextDayKey(key);
+      const tasks = dayData ? dayData.tasks : [];
+      const hasIncomplete = tasks.some(t => hasIncompleteDeep(t));
+      const nextDay = nextDayKey(key);
 
-  let html = `<div class="day-header fade-in">
+      let html = `<div class="day-header fade-in">
     <h2>${dateLabel}</h2>
     ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
     <div class="spacer"></div>
     ${(isPast || isToday) && hasIncomplete ? `<button class="btn btn-warn btn-sm" onclick="moveToNextDay('${key}')" title="Move incomplete tasks to ${fmtDay(nextDay)}">⏩ Move to ${fmtDay(nextDay)}</button>` : ''}
-    ${_clipboard ? `<button class="btn btn-secondary btn-sm" onclick="pasteTask('${key}')" title="Paste copied task: ${escHtml(_clipboard.text)}">📋 Paste "${escHtml(_clipboard.text.length > 20 ? _clipboard.text.slice(0,20)+'…' : _clipboard.text)}"</button>` : ''}
+    ${_clipboard ? `<button class="btn btn-secondary btn-sm" onclick="pasteTask('${key}')" title="Paste copied task: ${escHtml(_clipboard.text)}">📋 Paste "${escHtml(_clipboard.text.length > 20 ? _clipboard.text.slice(0, 20) + '…' : _clipboard.text)}"</button>` : ''}
     <button class="btn btn-secondary btn-sm" onclick="collapseAll()" title="Collapse all tasks">⊟ Collapse All</button>
     <button class="btn btn-secondary btn-sm" onclick="expandAll()" title="Expand all tasks">⊞ Expand All</button>
   </div>`;
 
-  html += `<div class="task-list fade-in" id="tl-${key}">`;
-  if (tasks.length === 0) {
-    html += `<div class="empty-state"><div class="icon">📝</div><p>No tasks yet. Add one below!</p></div>`;
-  } else {
-    tasks.forEach(t => { html += renderTaskBlock(t, 0); });
-  }
-  html += `</div>`;
+      html += `<div class="task-list fade-in" id="tl-${key}">`;
+      if (tasks.length === 0) {
+        html += `<div class="empty-state"><div class="icon">📝</div><p>No tasks yet. Add one below!</p></div>`;
+      } else {
+        tasks.forEach(t => { html += renderTaskBlock(t, 0); });
+      }
+      html += `</div>`;
 
-  html += `<div class="add-task-row" style="margin-top:12px;">
+      html += `<div class="add-task-row" style="margin-top:12px;">
     <input class="add-task-input" id="new-task-input" placeholder="+ Add a task… (press Enter)" onkeydown="handleAddTask(event, '${key}', null)" />
     <button class="btn btn-primary btn-sm" onclick="addTaskFromInput('${key}', null)">Add</button>
   </div>`;
 
-  document.getElementById('task-area').innerHTML = html;
-}
-
-function hasIncompleteDeep(task) {
-  if (task.status !== 'done') return true;
-  return task.children.some(c => hasIncompleteDeep(c));
-}
-
-function fmtDay(key) {
-  const d = new Date(key + 'T00:00:00');
-  return d.toLocaleString('default', { month: 'short', day: 'numeric' });
-}
-
-function countDescendants(task) {
-  let done = 0, partial = 0, pending = 0, important = 0;
-  const walk = (children) => {
-    for (const c of children) {
-      // Important is counted on every node regardless of depth
-      if (c.important) important++;
-      if (c.children.length > 0) {
-        // Non-leaf: recurse for status counts, but don't count this node's status
-        walk(c.children);
-      } else {
-        // Leaf node: count status
-        if (c.status === 'done') done++;
-        else if (c.status === 'partial') partial++;
-        else pending++;
-      }
+      document.getElementById('task-area').innerHTML = html;
     }
-  };
-  walk(task.children);
-  return { done, partial, pending, important };
-}
 
-function renderTaskBlock(task, depth) {
-  const isDone = task.status === 'done';
-  const isPartial = task.status === 'partial';
-  const hasCtx = task.context && (task.context.notes.length + task.context.links.length + task.context.attachments.length) > 0;
-  const isSelected = state.contextTaskId === task.id;
+    function hasIncompleteDeep(task) {
+      if (task.status !== 'done') return true;
+      return task.children.some(c => hasIncompleteDeep(c));
+    }
 
-  const cbClass = isPartial ? 'cb-partial' : '';
-  const textClass = isDone ? 'done' : '';
+    function fmtDay(key) {
+      const d = new Date(key + 'T00:00:00');
+      return d.toLocaleString('default', { month: 'short', day: 'numeric' });
+    }
 
-  const isRecurring = !!task.recurring;
-  const isClosed = !!task.closed;
-  const isImportant = !!task.important;
-  const isExcluded = !!task.excludeFromSummary;
-  const isCollapsed = _collapsed.has(task.id);
+    function countDescendants(task) {
+      let done = 0, partial = 0, pending = 0, important = 0;
+      const walk = (children) => {
+        for (const c of children) {
+          // Important is counted on every node regardless of depth
+          if (c.important) important++;
+          if (c.children.length > 0) {
+            // Non-leaf: recurse for status counts, but don't count this node's status
+            walk(c.children);
+          } else {
+            // Leaf node: count status
+            if (c.status === 'done') done++;
+            else if (c.status === 'partial') partial++;
+            else pending++;
+          }
+        }
+      };
+      walk(task.children);
+      return { done, partial, pending, important };
+    }
 
-  let badges = '';
-  if (isImportant) badges += `<span class="badge badge-important">⭐ Important</span>`;
-  if (isDone) badges += `<span class="badge badge-done">Done</span>`;
-  if (isPartial) badges += `<span class="badge badge-partial">Partial</span>`;
-  if (isRecurring && !isClosed) badges += `<span class="badge badge-recurring">🔁 Recurring</span>`;
-  if (isRecurring && isClosed) badges += `<span class="badge badge-closed">⏹ Closed</span>`;
-  if (isCollapsed && task.children.length > 0) {
-    const { done, partial, pending, important } = countDescendants(task);
-    const parts = [];
-    if (done)      parts.push(`<span title="Done subtasks">✓ ${done}</span>`);
-    if (partial)   parts.push(`<span title="Partial subtasks">◑ ${partial}</span>`);
-    if (pending)   parts.push(`<span title="Incomplete subtasks">○ ${pending}</span>`);
-    if (important) parts.push(`<span title="Important subtasks">⭐ ${important}</span>`);
-    badges += `<span class="badge badge-subtask-counts" title="Subtask counts">${parts.join(' · ')}</span>`;
-  }
-  if (isExcluded) badges += `<span class="badge badge-excluded" title="Excluded from summary">∅ Excluded</span>`;
-  if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" onmouseenter="showCtxPreview(event,'${task.id}')" onmouseleave="hideCtxPreview()">📎 Context</span>`;
+    function renderTaskBlock(task, depth) {
+      const isDone = task.status === 'done';
+      const isPartial = task.status === 'partial';
+      const hasCtx = task.context && (task.context.notes.length + task.context.links.length + task.context.attachments.length) > 0;
+      const isSelected = state.contextTaskId === task.id;
 
-  let html = `<div class="task-block" id="tb-${task.id}" draggable="true"
+      const cbClass = isPartial ? 'cb-partial' : '';
+      const textClass = isDone ? 'done' : '';
+
+      const isRecurring = !!task.recurring;
+      const isClosed = !!task.closed;
+      const isImportant = !!task.important;
+      const isExcluded = !!task.excludeFromSummary;
+      const isCollapsed = _collapsed.has(task.id);
+
+      let badges = '';
+      if (isImportant) badges += `<span class="badge badge-important">⭐ Important</span>`;
+      if (isDone) badges += `<span class="badge badge-done">Done</span>`;
+      if (isPartial) badges += `<span class="badge badge-partial">Partial</span>`;
+      if (isRecurring && !isClosed) badges += `<span class="badge badge-recurring">🔁 Recurring</span>`;
+      if (isRecurring && isClosed) badges += `<span class="badge badge-closed">⏹ Closed</span>`;
+      if (isCollapsed && task.children.length > 0) {
+        const { done, partial, pending, important } = countDescendants(task);
+        const parts = [];
+        if (done) parts.push(`<span title="Done subtasks">✓ ${done}</span>`);
+        if (partial) parts.push(`<span title="Partial subtasks">◑ ${partial}</span>`);
+        if (pending) parts.push(`<span title="Incomplete subtasks">○ ${pending}</span>`);
+        if (important) parts.push(`<span title="Important subtasks">⭐ ${important}</span>`);
+        badges += `<span class="badge badge-subtask-counts" title="Subtask counts">${parts.join(' · ')}</span>`;
+      }
+      if (isExcluded) badges += `<span class="badge badge-excluded" title="Excluded from summary">∅ Excluded</span>`;
+      if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" onmouseenter="showCtxPreview(event,'${task.id}')" onmouseleave="hideCtxPreview()">📎 Context</span>`;
+
+      let html = `<div class="task-block" id="tb-${task.id}" draggable="true"
     data-id="${task.id}" data-day="${state.activeDay}"
     ondragstart="onDragStart(event,'${task.id}')"
     ondragend="onDragEnd(event)"
@@ -671,8 +1853,8 @@ function renderTaskBlock(task, depth) {
     <div class="task-row ${isSelected ? 'selected' : ''} ${isImportant ? 'important' : ''}" id="tr-${task.id}">
       <span class="drag-handle" title="Drag to reorder">⠿</span>
       ${task.children && task.children.length > 0
-        ? `<span class="collapse-btn ${isCollapsed ? 'collapsed' : ''}" onclick="toggleCollapse('${task.id}')" title="${isCollapsed ? 'Expand subtasks' : 'Collapse subtasks'}">▾</span>`
-        : `<span style="width:16px;flex-shrink:0;"></span>`}
+          ? `<span class="collapse-btn ${isCollapsed ? 'collapsed' : ''}" onclick="toggleCollapse('${task.id}')" title="${isCollapsed ? 'Expand subtasks' : 'Collapse subtasks'}">▾</span>`
+          : `<span style="width:16px;flex-shrink:0;"></span>`}
       <div class="task-checkbox">
         <label class="cb-wrap ${cbClass}">
           <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleTask('${state.activeDay}','${task.id}',this.checked)" />
@@ -695,644 +1877,651 @@ function renderTaskBlock(task, depth) {
       </div>
     </div>`;
 
-  if (task.children && task.children.length > 0) {
-    html += `<div class="task-children ${isCollapsed ? 'hidden' : ''}">`;
-    task.children.forEach(c => { html += renderTaskBlock(c, depth + 1); });
-    html += `</div>`;
-  }
+      if (task.children && task.children.length > 0) {
+        html += `<div class="task-children ${isCollapsed ? 'hidden' : ''}">`;
+        task.children.forEach(c => { html += renderTaskBlock(c, depth + 1); });
+        html += `</div>`;
+      }
 
-  // subtask add row placeholder (hidden, shown on demand)
-  html += `<div id="add-sub-${task.id}" style="display:none;" class="add-task-row" style="margin-left:28px;">
+      // subtask add row placeholder (hidden, shown on demand)
+      html += `<div id="add-sub-${task.id}" style="display:none;" class="add-task-row" style="margin-left:28px;">
     <input class="add-task-input" id="sub-input-${task.id}" placeholder="+ Add subtask…" onkeydown="handleAddTask(event,'${state.activeDay}','${task.id}')" style="font-size:13px;" />
     <button class="btn btn-secondary btn-sm" onclick="addTaskFromInput('${state.activeDay}','${task.id}')">Add</button>
     <button class="btn-icon" onclick="hideSubtaskInput('${task.id}')">✕</button>
   </div>`;
 
-  html += `</div>`;
-  return html;
-}
-
-// ─────────────────────────────────────────
-// Drag and Drop
-// ─────────────────────────────────────────
-let _dragId       = null; // id of task being dragged
-let _dragOverId   = null; // id of task currently being hovered over during drag
-let _dragOverZone = null; // 'top' | 'middle' | 'bottom' — last computed zone
-const _collapsed = new Set(); // task ids whose children are collapsed
-
-function toggleCollapse(taskId) {
-  if (_collapsed.has(taskId)) _collapsed.delete(taskId);
-  else _collapsed.add(taskId);
-  renderTaskArea();
-}
-
-function collectParentIds(tasks, out = []) {
-  tasks.forEach(t => { if (t.children.length) { out.push(t.id); collectParentIds(t.children, out); } });
-  return out;
-}
-
-function collapseAll() {
-  const day = state.days[state.activeDay];
-  if (!day) return;
-  collectParentIds(day.tasks).forEach(id => _collapsed.add(id));
-  renderTaskArea();
-}
-
-function expandAll() {
-  _collapsed.clear();
-  renderTaskArea();
-}
-
-function onDragStart(event, taskId) {
-  event.stopPropagation(); // prevent parent task-block from also firing dragstart
-  _dragId = taskId;
-  event.dataTransfer.effectAllowed = 'move';
-  event.dataTransfer.setData('text/plain', taskId);
-  // Use the inner task-row as the drag image, not the full task-block.
-  // The task-block contains an absolutely-positioned .ctx-tooltip that sits
-  // above the row, inflating the drag ghost to cover the task above.
-  setTimeout(() => {
-    const el = document.getElementById(`tb-${taskId}`);
-    if (el) el.classList.add('dragging');
-    document.body.classList.add('dragging-active');
-  }, 0);
-}
-
-function getDragZone(event) {
-  // Returns 'top' | 'middle' | 'bottom' based on cursor position within the block
-  const block = event.currentTarget;
-  const rect = block.getBoundingClientRect();
-  const rel = (event.clientY - rect.top) / rect.height;
-  if (rel < 0.3) return 'top';
-  if (rel > 0.7) return 'bottom';
-  return 'middle';
-}
-
-function onDragOver(event) {
-  event.preventDefault();
-  event.stopPropagation(); // prevent parent block from also responding
-  event.dataTransfer.dropEffect = 'move';
-  const block = event.currentTarget;
-  if (block.id === `tb-${_dragId}`) return;
-  const zone = getDragZone(event);
-  block.classList.toggle('drag-over-top',    zone === 'top');
-  block.classList.toggle('drag-over-bottom', zone === 'bottom');
-  block.classList.toggle('drag-over-child',  zone === 'middle');
-  // Track the authoritative drop target — used by onDrop instead of
-  // recomputing from event coordinates (which can land on the wrong element)
-  _dragOverId   = block.dataset.id;
-  _dragOverZone = zone;
-}
-
-function onDragLeave(event) {
-  event.stopPropagation();
-  const block = event.currentTarget;
-  if (!block.contains(event.relatedTarget)) {
-    block.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child');
-    // Clear tracked target only if we're leaving the block that set it
-    if (_dragOverId === block.dataset.id) {
-      _dragOverId   = null;
-      _dragOverZone = null;
+      html += `</div>`;
+      return html;
     }
-  }
-}
 
-function onDragEnd(event) {
-  document.querySelectorAll('.task-block').forEach(el => {
-    el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom', 'drag-over-child');
-  });
-  document.body.classList.remove('dragging-active');
-  _dragId = _dragOverId = _dragOverZone = null;
-}
+    // ─────────────────────────────────────────
+    // Drag and Drop
+    // ─────────────────────────────────────────
+    let _dragId = null; // id of task being dragged
+    let _dragOverId = null; // id of task currently being hovered over during drag
+    let _dragOverZone = null; // 'top' | 'middle' | 'bottom' — last computed zone
+    const _collapsed = new Set(); // task ids whose children are collapsed
 
-function findParentList(tasks, id) {
-  for (let i = 0; i < tasks.length; i++) {
-    if (tasks[i].id === id) return tasks;
-    const found = findParentList(tasks[i].children, id);
-    if (found) return found;
-  }
-  return null;
-}
-
-function isAncestor(tasks, ancestorId, descendantId) {
-  // Returns true if ancestorId is an ancestor of descendantId
-  const ancestor = findTask(tasks, ancestorId);
-  if (!ancestor) return false;
-  return !!findTask(ancestor.children, descendantId);
-}
-
-function onDrop(event, targetId) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  // Use the target+zone recorded by the last onDragOver — NOT recomputed from
-  // drop coordinates, which can land on a different element at the boundary.
-  const dragId  = _dragId;
-  const overId  = _dragOverId;
-  const zone    = _dragOverZone;
-  _dragId = _dragOverId = _dragOverZone = null;
-
-  document.querySelectorAll('.task-block').forEach(el =>
-    el.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child'));
-  document.body.classList.remove('dragging-active');
-
-  if (!dragId || !overId || !zone || dragId === overId) return;
-
-  const dayKey = state.activeDay;
-  const day = state.days[dayKey];
-  if (!day) return;
-
-  // Prevent dropping a task onto its own descendant
-  const draggedTask = findTask(day.tasks, dragId);
-  if (!draggedTask) return;
-  if (findTask(draggedTask.children, overId)) return;
-
-  const dragList   = findParentList(day.tasks, dragId);
-  const targetList = findParentList(day.tasks, overId);
-  if (!dragList || !targetList) return;
-
-  if (zone === 'middle') {
-    const targetTask = findTask(day.tasks, overId);
-    if (!targetTask) return;
-    const dragIdx = dragList.findIndex(t => t.id === dragId);
-    const [dragged] = dragList.splice(dragIdx, 1);
-    targetTask.children.push(dragged);
-  } else {
-    const dragIdx  = dragList.findIndex(t => t.id === dragId);
-    const targetIdx = targetList.findIndex(t => t.id === overId);
-    const [dragged] = dragList.splice(dragIdx, 1);
-    // If same list and drag was above target, the splice shifted target up by 1
-    const sameList = dragList === targetList;
-    const adjusted = sameList && dragIdx < targetIdx ? targetIdx - 1 : targetIdx;
-    const insertAt = zone === 'top' ? adjusted : adjusted + 1;
-    targetList.splice(insertAt, 0, dragged);
-  }
-
-  saveData();
-  renderTaskArea();
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ─────────────────────────────────────────
-// Navigation
-// ─────────────────────────────────────────
-async function selectMonth(m) {
-  state.activeMonth = m;
-  await loadMonth(m);
-  const days = getDaysInMonth(m);
-  const today = todayKey();
-  const withTasks = days.filter(k => state.days[k] && state.days[k].tasks.length > 0);
-  if (withTasks.length) state.activeDay = withTasks[0];
-  else if (days.includes(today)) state.activeDay = today;
-  else state.activeDay = days[0];
-  render();
-}
-
-function selectDay(key) {
-  state.activeDay = key;
-  ensureDay(key);
-  state.contextTaskId = null;
-  document.getElementById('context-panel').classList.remove('open');
-  renderDayList();
-  renderTaskArea();
-}
-
-// ─────────────────────────────────────────
-// Task CRUD
-// ─────────────────────────────────────────
-function handleAddTask(event, dayKey, parentId) {
-  if (event.key === 'Enter') { event.preventDefault(); addTaskFromInput(dayKey, parentId); }
-  if (event.key === 'Escape') { if (parentId) hideSubtaskInput(parentId); }
-}
-
-function addTaskFromInput(dayKey, parentId) {
-  const inputId = parentId ? `sub-input-${parentId}` : 'new-task-input';
-  const inp = document.getElementById(inputId);
-  if (!inp) return;
-  const text = inp.value.trim();
-  if (!text) return;
-  inp.value = '';
-  addTask(dayKey, parentId, text);
-}
-
-function addTask(dayKey, parentId, text) {
-  ensureDay(dayKey);
-  const task = makeTask(text);
-  const day = state.days[dayKey];
-  if (!parentId) {
-    day.tasks.push(task);
-  } else {
-    const parent = findTask(day.tasks, parentId);
-    if (parent) parent.children.push(task);
-  }
-  saveData();
-  renderTaskArea();
-  renderDayList();
-  // Re-focus the correct input after DOM rebuild
-  if (parentId) {
-    const el = document.getElementById(`add-sub-${parentId}`);
-    if (el) {
-      el.style.display = 'flex';
-      const sub = document.getElementById(`sub-input-${parentId}`);
-      if (sub) sub.focus();
+    function toggleCollapse(taskId) {
+      if (_collapsed.has(taskId)) _collapsed.delete(taskId);
+      else _collapsed.add(taskId);
+      renderTaskArea();
     }
-  } else {
-    const inp = document.getElementById('new-task-input');
-    if (inp) inp.focus();
-  }
-}
 
-function updateTaskText(dayKey, taskId, text) {
-  const day = state.days[dayKey];
-  if (!day) return;
-  const task = findTask(day.tasks, taskId);
-  if (task) { task.text = text; saveData(); }
-}
+    function collectParentIds(tasks, out = []) {
+      tasks.forEach(t => { if (t.children.length) { out.push(t.id); collectParentIds(t.children, out); } });
+      return out;
+    }
 
-function deleteTask(dayKey, taskId) {
-  const day = state.days[dayKey];
-  if (!day) return;
-  day.tasks = removeTask(day.tasks, taskId);
-  if (state.contextTaskId === taskId) { state.contextTaskId = null; document.getElementById('context-panel').classList.remove('open'); }
-  saveData();
-  renderTaskArea();
-}
+    function collapseAll() {
+      const day = state.days[state.activeDay];
+      if (!day) return;
+      collectParentIds(day.tasks).forEach(id => _collapsed.add(id));
+      renderTaskArea();
+    }
 
-function copyTask(taskId) {
-  const day = state.days[state.activeDay];
-  if (!day) return;
-  const task = findTask(day.tasks, taskId);
-  if (!task) return;
-  // Deep clone preserving structure; status reset to pending on paste, not here
-  _clipboard = JSON.parse(JSON.stringify(task));
-  renderTaskArea(); // re-render so Paste button appears in header
-}
+    function expandAll() {
+      _collapsed.clear();
+      renderTaskArea();
+    }
 
-function pasteTask(dayKey) {
-  if (!_clipboard) return;
-  ensureDay(dayKey);
-  const copy = cloneTask(_clipboard); // new IDs, preserves structure
-  resetStatus(copy);                  // reset all statuses to pending
-  mergeTaskIntoList(state.days[dayKey].tasks, copy);
-  saveData();
-  renderTaskArea();
-}
+    function onDragStart(event, taskId) {
+      event.stopPropagation(); // prevent parent task-block from also firing dragstart
+      _dragId = taskId;
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', taskId);
+      // Use the inner task-row as the drag image, not the full task-block.
+      // The task-block contains an absolutely-positioned .ctx-tooltip that sits
+      // above the row, inflating the drag ghost to cover the task above.
+      setTimeout(() => {
+        const el = document.getElementById(`tb-${taskId}`);
+        if (el) el.classList.add('dragging');
+        document.body.classList.add('dragging-active');
+      }, 0);
+    }
 
-function toggleTask(dayKey, taskId, checked) {
-  const day = state.days[dayKey];
-  if (!day) return;
-  const task = findTask(day.tasks, taskId);
-  if (!task) return;
-  if (checked) {
-    markAllDone(task);
-  } else {
-    task.status = 'pending';
-    // children stay done unless manually changed
-  }
-  saveData();
-  renderTaskArea();
-  // re-open context panel if was open
-  if (state.contextTaskId) renderContextPanel();
-}
+    function getDragZone(event) {
+      // Returns 'top' | 'middle' | 'bottom' based on cursor position within the block
+      const block = event.currentTarget;
+      const rect = block.getBoundingClientRect();
+      const rel = (event.clientY - rect.top) / rect.height;
+      if (rel < 0.3) return 'top';
+      if (rel > 0.7) return 'bottom';
+      return 'middle';
+    }
 
-function togglePartial(dayKey, taskId) {
-  const day = state.days[dayKey];
-  if (!day) return;
-  const task = findTask(day.tasks, taskId);
-  if (!task) return;
-  task.status = task.status === 'partial' ? 'pending' : 'partial';
-  saveData();
-  renderTaskArea();
-}
+    function onDragOver(event) {
+      event.preventDefault();
+      event.stopPropagation(); // prevent parent block from also responding
+      event.dataTransfer.dropEffect = 'move';
+      const block = event.currentTarget;
+      if (block.id === `tb-${_dragId}`) return;
+      const zone = getDragZone(event);
+      block.classList.toggle('drag-over-top', zone === 'top');
+      block.classList.toggle('drag-over-bottom', zone === 'bottom');
+      block.classList.toggle('drag-over-child', zone === 'middle');
+      // Track the authoritative drop target — used by onDrop instead of
+      // recomputing from event coordinates (which can land on the wrong element)
+      _dragOverId = block.dataset.id;
+      _dragOverZone = zone;
+    }
 
-function toggleImportant(dayKey, taskId) {
-  const task = findTask(state.days[dayKey].tasks, taskId);
-  if (!task) return;
-  task.important = !task.important;
-  saveData();
-  renderTaskArea();
-}
-
-function toggleExcludeFromSummary(dayKey, taskId) {
-  const task = findTask(state.days[dayKey].tasks, taskId);
-  if (!task) return;
-  task.excludeFromSummary = !task.excludeFromSummary;
-  saveData();
-  renderTaskArea();
-}
-
-function toggleRecurring(dayKey, taskId) {
-  const task = findTask(state.days[dayKey].tasks, taskId);
-  if (!task) return;
-  task.recurring = !task.recurring;
-  if (!task.recurring) task.closed = false;
-  saveData();
-  renderTaskArea();
-}
-
-function closeRecurring(dayKey, taskId) {
-  const task = findTask(state.days[dayKey].tasks, taskId);
-  if (!task) return;
-  task.closed = true;
-  saveData();
-  renderTaskArea();
-}
-
-function addSubtask(dayKey, parentId) {
-  const el = document.getElementById(`add-sub-${parentId}`);
-  if (el) { el.style.display = 'flex'; document.getElementById(`sub-input-${parentId}`).focus(); }
-}
-
-function hideSubtaskInput(parentId) {
-  const el = document.getElementById(`add-sub-${parentId}`);
-  if (el) el.style.display = 'none';
-}
-
-function focusAddSubtask(taskId) {
-  addSubtask(state.activeDay, taskId);
-}
-
-// ─────────────────────────────────────────
-// Move to Next Day
-// ─────────────────────────────────────────
-async function moveToNextDay(dayKey) {
-  const day = state.days[dayKey];
-  if (!day) return;
-  const next = nextDayKey(dayKey);
-  ensureDay(next);
-
-  const remaining = [];
-  day.tasks.forEach(task => {
-    const moved = moveTaskToNext(task, next);
-    if (moved !== null) remaining.push(moved);
-  });
-  day.tasks = remaining;
-
-  // Save current month; if next day is a different month, save that too
-  await saveMonth(monthOf(dayKey));
-  if (monthOf(next) !== monthOf(dayKey)) await saveMonth(monthOf(next));
-
-  state.activeMonth = monthOf(next);
-  state.activeDay = next;
-  render();
-}
-
-// Build the "record" copy kept in the current day for a task with mixed children.
-// Keeps only children that are done or partial (i.e. work that was done today).
-// A child should be included in the current-day record if it has any done/partial work
-// OR if it is recurring (kept as-is regardless of status).
-function buildCurrentDayRecord(task) {
-  const record = cloneTask(task);
-  record.children = task.children
-    .filter(c => c.recurring || c.status === 'done' || c.status === 'partial' || hasAnyDoneDeep(c))
-    .map(c => buildCurrentDayRecord(c));
-  return record;
-}
-
-// Build the copy forwarded to the next day.
-// Recurring subtasks always included (reset to pending); done non-recurring subtasks excluded.
-function buildNextDayCopy(task) {
-  const copy = cloneTask(task);
-  copy.children = task.children
-    .filter(c => c.recurring || c.status !== 'done' || hasIncompleteDeep(c))
-    .map(c => {
-      const child = buildNextDayCopy(c);
-      // Reset recurring subtasks to pending for the next day
-      if (c.recurring && !c.closed) {
-        child.status = 'pending';
-        child.children.forEach(gc => resetStatus(gc));
+    function onDragLeave(event) {
+      event.stopPropagation();
+      const block = event.currentTarget;
+      if (!block.contains(event.relatedTarget)) {
+        block.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child');
+        // Clear tracked target only if we're leaving the block that set it
+        if (_dragOverId === block.dataset.id) {
+          _dragOverId = null;
+          _dragOverZone = null;
+        }
       }
-      return child;
-    });
-  return copy;
-}
+    }
 
-function hasAnyDoneDeep(task) {
-  if (task.status === 'done' || task.status === 'partial') return true;
-  return task.children.some(c => hasAnyDoneDeep(c));
-}
+    function onDragEnd(event) {
+      document.querySelectorAll('.task-block').forEach(el => {
+        el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom', 'drag-over-child');
+      });
+      document.body.classList.remove('dragging-active');
+      _dragId = _dragOverId = _dragOverZone = null;
+    }
 
-// A child counts as "needing forwarding" if it is incomplete OR recurring (not closed).
-function needsForwarding(task) {
-  if (task.recurring && !task.closed) return true;
-  return hasIncompleteDeep(task);
-}
+    function findParentList(tasks, id) {
+      for (let i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === id) return tasks;
+        const found = findParentList(tasks[i].children, id);
+        if (found) return found;
+      }
+      return null;
+    }
 
-// Returns the task to retain in current day (or null to remove it entirely).
-// Also pushes the forwarded copy to next day when appropriate.
-function moveTaskToNext(task, nextDayKey) {
-  const nextTasks = state.days[nextDayKey].tasks;
+    function isAncestor(tasks, ancestorId, descendantId) {
+      // Returns true if ancestorId is an ancestor of descendantId
+      const ancestor = findTask(tasks, ancestorId);
+      if (!ancestor) return false;
+      return !!findTask(ancestor.children, descendantId);
+    }
 
-  // Recurring top-level (not closed): keep original as-is, always forward a fresh pending copy
-  if (task.recurring && !task.closed) {
-    const copy = cloneTask(task);
-    copy.status = 'pending';
-    copy.children.forEach(c => resetStatus(c));
-    mergeTaskIntoList(nextTasks, copy);
-    return task;
-  }
+    function onDrop(event, targetId) {
+      event.preventDefault();
+      event.stopPropagation();
 
-  // Fully done with no recurring descendants: keep in current day, nothing forwarded
-  if (task.status === 'done' && !task.children.some(c => needsForwarding(c))) {
-    return task;
-  }
+      // Use the target+zone recorded by the last onDragOver — NOT recomputed from
+      // drop coordinates, which can land on a different element at the boundary.
+      const dragId = _dragId;
+      const overId = _dragOverId;
+      const zone = _dragOverZone;
+      _dragId = _dragOverId = _dragOverZone = null;
 
-  const hasChildren = task.children.length > 0;
+      document.querySelectorAll('.task-block').forEach(el =>
+        el.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-child'));
+      document.body.classList.remove('dragging-active');
 
-  if (hasChildren) {
-    const hasDoneChild = task.children.some(c => c.status === 'done' || hasAnyDoneDeep(c));
-    const hasForward   = task.children.some(c => needsForwarding(c));
+      if (!dragId || !overId || !zone || dragId === overId) return;
 
-    if (hasDoneChild && hasForward) {
-      // Mixed: keep a record of completed work, forward incomplete/recurring work
-      const record  = buildCurrentDayRecord(task);
-      const forward = buildNextDayCopy(task);
-      mergeTaskIntoList(nextTasks, forward);
+      const dayKey = state.activeDay;
+      const day = state.days[dayKey];
+      if (!day) return;
+
+      // Prevent dropping a task onto its own descendant
+      const draggedTask = findTask(day.tasks, dragId);
+      if (!draggedTask) return;
+      if (findTask(draggedTask.children, overId)) return;
+
+      const dragList = findParentList(day.tasks, dragId);
+      const targetList = findParentList(day.tasks, overId);
+      if (!dragList || !targetList) return;
+
+      if (zone === 'middle') {
+        const targetTask = findTask(day.tasks, overId);
+        if (!targetTask) return;
+        const dragIdx = dragList.findIndex(t => t.id === dragId);
+        const [dragged] = dragList.splice(dragIdx, 1);
+        targetTask.children.push(dragged);
+      } else {
+        const dragIdx = dragList.findIndex(t => t.id === dragId);
+        const targetIdx = targetList.findIndex(t => t.id === overId);
+        const [dragged] = dragList.splice(dragIdx, 1);
+        // If same list and drag was above target, the splice shifted target up by 1
+        const sameList = dragList === targetList;
+        const adjusted = sameList && dragIdx < targetIdx ? targetIdx - 1 : targetIdx;
+        const insertAt = zone === 'top' ? adjusted : adjusted + 1;
+        targetList.splice(insertAt, 0, dragged);
+      }
+
+      saveData();
+      renderTaskArea();
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ─────────────────────────────────────────
+    // Navigation
+    // ─────────────────────────────────────────
+    async function selectMonth(m) {
+      state.activeMonth = m;
+      await loadMonth(m);
+      const days = getDaysInMonth(m);
+      const today = todayKey();
+      const withTasks = days.filter(k => state.days[k] && state.days[k].tasks.length > 0);
+      if (withTasks.length) state.activeDay = withTasks[0];
+      else if (days.includes(today)) state.activeDay = today;
+      else state.activeDay = days[0];
+      render();
+    }
+
+    function navigateMonth(delta) {
+      const [y, m] = state.activeMonth.split('-').map(Number);
+      const d = new Date(y, m - 1 + delta, 1);
+      const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      selectMonth(newMonth);
+    }
+
+    function selectDay(key) {
+      state.activeDay = key;
+      ensureDay(key);
+      state.contextTaskId = null;
+      document.getElementById('context-panel').classList.remove('open');
+      renderDayList();
+      renderTaskArea();
+    }
+
+    // ─────────────────────────────────────────
+    // Task CRUD
+    // ─────────────────────────────────────────
+    function handleAddTask(event, dayKey, parentId) {
+      if (event.key === 'Enter') { event.preventDefault(); addTaskFromInput(dayKey, parentId); }
+      if (event.key === 'Escape') { if (parentId) hideSubtaskInput(parentId); }
+    }
+
+    function addTaskFromInput(dayKey, parentId) {
+      const inputId = parentId ? `sub-input-${parentId}` : 'new-task-input';
+      const inp = document.getElementById(inputId);
+      if (!inp) return;
+      const text = inp.value.trim();
+      if (!text) return;
+      inp.value = '';
+      addTask(dayKey, parentId, text);
+    }
+
+    function addTask(dayKey, parentId, text) {
+      ensureDay(dayKey);
+      const task = makeTask(text);
+      const day = state.days[dayKey];
+      if (!parentId) {
+        day.tasks.push(task);
+      } else {
+        const parent = findTask(day.tasks, parentId);
+        if (parent) parent.children.push(task);
+      }
+      saveData();
+      renderTaskArea();
+      renderDayList();
+      // Re-focus the correct input after DOM rebuild
+      if (parentId) {
+        const el = document.getElementById(`add-sub-${parentId}`);
+        if (el) {
+          el.style.display = 'flex';
+          const sub = document.getElementById(`sub-input-${parentId}`);
+          if (sub) sub.focus();
+        }
+      } else {
+        const inp = document.getElementById('new-task-input');
+        if (inp) inp.focus();
+      }
+    }
+
+    function updateTaskText(dayKey, taskId, text) {
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (task) { task.text = text; saveData(); }
+    }
+
+    function deleteTask(dayKey, taskId) {
+      const day = state.days[dayKey];
+      if (!day) return;
+      day.tasks = removeTask(day.tasks, taskId);
+      if (state.contextTaskId === taskId) { state.contextTaskId = null; document.getElementById('context-panel').classList.remove('open'); }
+      saveData();
+      renderTaskArea();
+    }
+
+    function copyTask(taskId) {
+      const day = state.days[state.activeDay];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task) return;
+      // Deep clone preserving structure; status reset to pending on paste, not here
+      _clipboard = JSON.parse(JSON.stringify(task));
+      renderTaskArea(); // re-render so Paste button appears in header
+    }
+
+    function pasteTask(dayKey) {
+      if (!_clipboard) return;
+      ensureDay(dayKey);
+      const copy = cloneTask(_clipboard); // new IDs, preserves structure
+      resetStatus(copy);                  // reset all statuses to pending
+      mergeTaskIntoList(state.days[dayKey].tasks, copy);
+      saveData();
+      renderTaskArea();
+    }
+
+    function toggleTask(dayKey, taskId, checked) {
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task) return;
+      if (checked) {
+        markAllDone(task);
+      } else {
+        task.status = 'pending';
+        // children stay done unless manually changed
+      }
+      saveData();
+      renderTaskArea();
+      // re-open context panel if was open
+      if (state.contextTaskId) renderContextPanel();
+    }
+
+    function togglePartial(dayKey, taskId) {
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task) return;
+      task.status = task.status === 'partial' ? 'pending' : 'partial';
+      saveData();
+      renderTaskArea();
+    }
+
+    function toggleImportant(dayKey, taskId) {
+      const task = findTask(state.days[dayKey].tasks, taskId);
+      if (!task) return;
+      task.important = !task.important;
+      saveData();
+      renderTaskArea();
+    }
+
+    function toggleExcludeFromSummary(dayKey, taskId) {
+      const task = findTask(state.days[dayKey].tasks, taskId);
+      if (!task) return;
+      task.excludeFromSummary = !task.excludeFromSummary;
+      saveData();
+      renderTaskArea();
+    }
+
+    function toggleRecurring(dayKey, taskId) {
+      const task = findTask(state.days[dayKey].tasks, taskId);
+      if (!task) return;
+      task.recurring = !task.recurring;
+      if (!task.recurring) task.closed = false;
+      saveData();
+      renderTaskArea();
+    }
+
+    function closeRecurring(dayKey, taskId) {
+      const task = findTask(state.days[dayKey].tasks, taskId);
+      if (!task) return;
+      task.closed = true;
+      saveData();
+      renderTaskArea();
+    }
+
+    function addSubtask(dayKey, parentId) {
+      const el = document.getElementById(`add-sub-${parentId}`);
+      if (el) { el.style.display = 'flex'; document.getElementById(`sub-input-${parentId}`).focus(); }
+    }
+
+    function hideSubtaskInput(parentId) {
+      const el = document.getElementById(`add-sub-${parentId}`);
+      if (el) el.style.display = 'none';
+    }
+
+    function focusAddSubtask(taskId) {
+      addSubtask(state.activeDay, taskId);
+    }
+
+    // ─────────────────────────────────────────
+    // Move to Next Day
+    // ─────────────────────────────────────────
+    async function moveToNextDay(dayKey) {
+      const day = state.days[dayKey];
+      if (!day) return;
+      const next = nextDayKey(dayKey);
+      ensureDay(next);
+
+      const remaining = [];
+      day.tasks.forEach(task => {
+        const moved = moveTaskToNext(task, next);
+        if (moved !== null) remaining.push(moved);
+      });
+      day.tasks = remaining;
+
+      // Save current month; if next day is a different month, save that too
+      await saveMonth(monthOf(dayKey));
+      if (monthOf(next) !== monthOf(dayKey)) await saveMonth(monthOf(next));
+
+      state.activeMonth = monthOf(next);
+      state.activeDay = next;
+      render();
+    }
+
+    // Build the "record" copy kept in the current day for a task with mixed children.
+    // Keeps only children that are done or partial (i.e. work that was done today).
+    // A child should be included in the current-day record if it has any done/partial work
+    // OR if it is recurring (kept as-is regardless of status).
+    function buildCurrentDayRecord(task) {
+      const record = cloneTask(task);
+      record.children = task.children
+        .filter(c => c.recurring || c.status === 'done' || c.status === 'partial' || hasAnyDoneDeep(c))
+        .map(c => buildCurrentDayRecord(c));
       return record;
     }
 
-    if (hasDoneChild && !hasForward) {
-      // All children done and none recurring: keep as-is
-      return task;
+    // Build the copy forwarded to the next day.
+    // Recurring subtasks always included (reset to pending); done non-recurring subtasks excluded.
+    function buildNextDayCopy(task) {
+      const copy = cloneTask(task);
+      copy.children = task.children
+        .filter(c => c.recurring || c.status !== 'done' || hasIncompleteDeep(c))
+        .map(c => {
+          const child = buildNextDayCopy(c);
+          // Reset recurring subtasks to pending for the next day
+          if (c.recurring && !c.closed) {
+            child.status = 'pending';
+            child.children.forEach(gc => resetStatus(gc));
+          }
+          return child;
+        });
+      return copy;
     }
 
-    // All children incomplete/recurring (no done work to record): forward whole task, remove from current
-    const copy = buildNextDayCopy(task);
-    mergeTaskIntoList(nextTasks, copy);
-    return null;
-  }
+    function hasAnyDoneDeep(task) {
+      if (task.status === 'done' || task.status === 'partial') return true;
+      return task.children.some(c => hasAnyDoneDeep(c));
+    }
 
-  // Leaf task (no children)
-  if (task.status === 'done') return task;
+    // A child counts as "needing forwarding" if it is incomplete OR recurring (not closed).
+    function needsForwarding(task) {
+      if (task.recurring && !task.closed) return true;
+      return hasIncompleteDeep(task);
+    }
 
-  if (task.status === 'partial') {
-    // Keep a record copy in current day, forward a fresh copy to next day
-    const forward = cloneTask(task);
-    mergeTaskIntoList(nextTasks, forward);
-    return task;
-  }
+    // Returns the task to retain in current day (or null to remove it entirely).
+    // Also pushes the forwarded copy to next day when appropriate.
+    function moveTaskToNext(task, nextDayKey) {
+      const nextTasks = state.days[nextDayKey].tasks;
 
-  // Pending leaf: move entirely
-  const copy = cloneTask(task);
-  mergeTaskIntoList(nextTasks, copy);
-  return null;
-}
+      // Recurring top-level (not closed): keep original as-is, always forward a fresh pending copy
+      if (task.recurring && !task.closed) {
+        const copy = cloneTask(task);
+        copy.status = 'pending';
+        copy.children.forEach(c => resetStatus(c));
+        mergeTaskIntoList(nextTasks, copy);
+        return task;
+      }
 
-function resetStatus(task) {
-  task.status = 'pending';
-  task.children.forEach(c => resetStatus(c));
-}
+      // Fully done with no recurring descendants: keep in current day, nothing forwarded
+      if (task.status === 'done' && !task.children.some(c => needsForwarding(c))) {
+        return task;
+      }
 
-// Merge `incoming` into `list` by task text to avoid duplicates.
-// If a task with the same text already exists in the list, recursively merge
-// its children rather than adding a second copy. If no match, push as new.
-function mergeTaskIntoList(list, incoming) {
-  const existing = list.find(t => t.text === incoming.text);
-  if (!existing) {
-    list.push(incoming);
-    return;
-  }
-  // Merge children of incoming into existing
-  for (const child of incoming.children) {
-    mergeTaskIntoList(existing.children, child);
-  }
-  // If the incoming task has a more urgent status, keep the worse one
-  const rank = { pending: 0, partial: 1, done: 2 };
-  if (rank[incoming.status] < rank[existing.status]) {
-    existing.status = incoming.status;
-  }
-}
+      const hasChildren = task.children.length > 0;
 
-// ─────────────────────────────────────────
-// Context Panel
-// ─────────────────────────────────────────
+      if (hasChildren) {
+        const hasDoneChild = task.children.some(c => c.status === 'done' || hasAnyDoneDeep(c));
+        const hasForward = task.children.some(c => needsForwarding(c));
 
-let _ctxPreviewHideTimer = null;
+        if (hasDoneChild && hasForward) {
+          // Mixed: keep a record of completed work, forward incomplete/recurring work
+          const record = buildCurrentDayRecord(task);
+          const forward = buildNextDayCopy(task);
+          mergeTaskIntoList(nextTasks, forward);
+          return record;
+        }
 
-function showCtxPreview(event, taskId) {
-  const dayKey = state.contextDayKey || state.activeDay;
-  // Search all days since the badge may be on any loaded day
-  let ctx = null;
-  for (const dk of Object.keys(state.days)) {
-    const t = findTask((state.days[dk].tasks || []), taskId);
-    if (t) { ctx = t.context; break; }
-  }
-  if (!ctx) return;
+        if (hasDoneChild && !hasForward) {
+          // All children done and none recurring: keep as-is
+          return task;
+        }
 
-  clearTimeout(_ctxPreviewHideTimer);
+        // All children incomplete/recurring (no done work to record): forward whole task, remove from current
+        const copy = buildNextDayCopy(task);
+        mergeTaskIntoList(nextTasks, copy);
+        return null;
+      }
 
-  const MAX_NOTES = 3, MAX_LINKS = 4, MAX_ATTS = 3;
-  let html = '';
+      // Leaf task (no children)
+      if (task.status === 'done') return task;
 
-  if (ctx.notes && ctx.notes.length) {
-    html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Notes</div>';
-    ctx.notes.slice(0, MAX_NOTES).forEach(n => {
-      const text = (n.text || '').trim();
-      if (text) html += `<div class="ctx-tooltip-note">${escHtml(text)}</div>`;
-    });
-    if (ctx.notes.length > MAX_NOTES)
-      html += `<div class="ctx-tooltip-more">+${ctx.notes.length - MAX_NOTES} more…</div>`;
-    html += '</div>';
-  }
+      if (task.status === 'partial') {
+        // Keep a record copy in current day, forward a fresh copy to next day
+        const forward = cloneTask(task);
+        mergeTaskIntoList(nextTasks, forward);
+        return task;
+      }
 
-  if (ctx.links && ctx.links.length) {
-    html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Links</div>';
-    ctx.links.slice(0, MAX_LINKS).forEach(lnk => {
-      html += `<div class="ctx-tooltip-link">${linkIcon(lnk.type)} <span>${escHtml(lnk.label || lnk.type || lnk.url || '')}</span></div>`;
-    });
-    if (ctx.links.length > MAX_LINKS)
-      html += `<div class="ctx-tooltip-more">+${ctx.links.length - MAX_LINKS} more…</div>`;
-    html += '</div>';
-  }
+      // Pending leaf: move entirely
+      const copy = cloneTask(task);
+      mergeTaskIntoList(nextTasks, copy);
+      return null;
+    }
 
-  if (ctx.attachments && ctx.attachments.length) {
-    html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Attachments</div>';
-    ctx.attachments.slice(0, MAX_ATTS).forEach(a => {
-      html += `<div class="ctx-tooltip-att">📎 ${escHtml(a.name || 'file')}</div>`;
-    });
-    if (ctx.attachments.length > MAX_ATTS)
-      html += `<div class="ctx-tooltip-more">+${ctx.attachments.length - MAX_ATTS} more…</div>`;
-    html += '</div>';
-  }
+    function resetStatus(task) {
+      task.status = 'pending';
+      task.children.forEach(c => resetStatus(c));
+    }
 
-  if (!html) return;
+    // Merge `incoming` into `list` by task text to avoid duplicates.
+    // If a task with the same text already exists in the list, recursively merge
+    // its children rather than adding a second copy. If no match, push as new.
+    function mergeTaskIntoList(list, incoming) {
+      const existing = list.find(t => t.text === incoming.text);
+      if (!existing) {
+        list.push(incoming);
+        return;
+      }
+      // Merge children of incoming into existing
+      for (const child of incoming.children) {
+        mergeTaskIntoList(existing.children, child);
+      }
+      // If the incoming task has a more urgent status, keep the worse one
+      const rank = { pending: 0, partial: 1, done: 2 };
+      if (rank[incoming.status] < rank[existing.status]) {
+        existing.status = incoming.status;
+      }
+    }
 
-  const preview = document.getElementById('ctx-preview');
-  preview.innerHTML = html;
-  preview.style.display = 'block';
+    // ─────────────────────────────────────────
+    // Context Panel
+    // ─────────────────────────────────────────
 
-  // Position above the badge using fixed coordinates
-  const badgeRect = event.currentTarget.getBoundingClientRect();
-  preview.style.left = badgeRect.left + 'px';
-  preview.style.top  = (badgeRect.top - preview.offsetHeight - 6) + 'px';
+    let _ctxPreviewHideTimer = null;
 
-  // Clamp to viewport edges
-  const pr = preview.getBoundingClientRect();
-  if (pr.right > window.innerWidth - 8)
-    preview.style.left = (window.innerWidth - 8 - pr.width) + 'px';
-  if (pr.top < 8)
-    preview.style.top = (badgeRect.bottom + 6) + 'px'; // flip below if no room above
-}
+    function showCtxPreview(event, taskId) {
+      const dayKey = state.contextDayKey || state.activeDay;
+      // Search all days since the badge may be on any loaded day
+      let ctx = null;
+      for (const dk of Object.keys(state.days)) {
+        const t = findTask((state.days[dk].tasks || []), taskId);
+        if (t) { ctx = t.context; break; }
+      }
+      if (!ctx) return;
 
-function hideCtxPreview() {
-  _ctxPreviewHideTimer = setTimeout(() => {
-    const preview = document.getElementById('ctx-preview');
-    if (preview) preview.style.display = 'none';
-  }, 100);
-}
+      clearTimeout(_ctxPreviewHideTimer);
 
-function openContext(dayKey, taskId) {
-  state.contextTaskId = taskId;
-  state.contextDayKey = dayKey;
-  document.getElementById('context-panel').classList.add('open');
-  renderContextPanel();
-}
+      const MAX_NOTES = 3, MAX_LINKS = 4, MAX_ATTS = 3;
+      let html = '';
 
-function closeContextPanel() {
-  state.contextTaskId = null;
-  document.getElementById('context-panel').classList.remove('open');
-  renderTaskArea();
-}
+      if (ctx.notes && ctx.notes.length) {
+        html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Notes</div>';
+        ctx.notes.slice(0, MAX_NOTES).forEach(n => {
+          const text = (n.text || '').trim();
+          if (text) html += `<div class="ctx-tooltip-note">${escHtml(text)}</div>`;
+        });
+        if (ctx.notes.length > MAX_NOTES)
+          html += `<div class="ctx-tooltip-more">+${ctx.notes.length - MAX_NOTES} more…</div>`;
+        html += '</div>';
+      }
 
-function renderContextPanel() {
-  const dayKey = state.contextDayKey;
-  const taskId = state.contextTaskId;
-  if (!dayKey || !taskId) return;
-  const day = state.days[dayKey];
-  if (!day) return;
-  const task = findTask(day.tasks, taskId);
-  if (!task) return;
+      if (ctx.links && ctx.links.length) {
+        html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Links</div>';
+        ctx.links.slice(0, MAX_LINKS).forEach(lnk => {
+          html += `<div class="ctx-tooltip-link">${linkIcon(lnk.type)} <span>${escHtml(lnk.label || lnk.type || lnk.url || '')}</span></div>`;
+        });
+        if (ctx.links.length > MAX_LINKS)
+          html += `<div class="ctx-tooltip-more">+${ctx.links.length - MAX_LINKS} more…</div>`;
+        html += '</div>';
+      }
 
-  document.getElementById('cp-title').textContent = task.text;
+      if (ctx.attachments && ctx.attachments.length) {
+        html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Attachments</div>';
+        ctx.attachments.slice(0, MAX_ATTS).forEach(a => {
+          html += `<div class="ctx-tooltip-att">📎 ${escHtml(a.name || 'file')}</div>`;
+        });
+        if (ctx.attachments.length > MAX_ATTS)
+          html += `<div class="ctx-tooltip-more">+${ctx.attachments.length - MAX_ATTS} more…</div>`;
+        html += '</div>';
+      }
 
-  const ctx = task.context;
-  let html = '';
+      if (!html) return;
 
-  // Notes
-  html += `<div class="cp-section">
+      const preview = document.getElementById('ctx-preview');
+      preview.innerHTML = html;
+      preview.style.display = 'block';
+
+      // Position above the badge using fixed coordinates
+      const badgeRect = event.currentTarget.getBoundingClientRect();
+      preview.style.left = badgeRect.left + 'px';
+      preview.style.top = (badgeRect.top - preview.offsetHeight - 6) + 'px';
+
+      // Clamp to viewport edges
+      const pr = preview.getBoundingClientRect();
+      if (pr.right > window.innerWidth - 8)
+        preview.style.left = (window.innerWidth - 8 - pr.width) + 'px';
+      if (pr.top < 8)
+        preview.style.top = (badgeRect.bottom + 6) + 'px'; // flip below if no room above
+    }
+
+    function hideCtxPreview() {
+      _ctxPreviewHideTimer = setTimeout(() => {
+        const preview = document.getElementById('ctx-preview');
+        if (preview) preview.style.display = 'none';
+      }, 100);
+    }
+
+    function openContext(dayKey, taskId) {
+      state.contextTaskId = taskId;
+      state.contextDayKey = dayKey;
+      document.getElementById('context-panel').classList.add('open');
+      renderContextPanel();
+    }
+
+    function closeContextPanel() {
+      state.contextTaskId = null;
+      document.getElementById('context-panel').classList.remove('open');
+      renderTaskArea();
+    }
+
+    function renderContextPanel() {
+      const dayKey = state.contextDayKey;
+      const taskId = state.contextTaskId;
+      if (!dayKey || !taskId) return;
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task) return;
+
+      document.getElementById('cp-title').textContent = task.text;
+
+      const ctx = task.context;
+      let html = '';
+
+      // Notes
+      html += `<div class="cp-section">
     <div class="cp-section-title">Notes</div>`;
-  ctx.notes.forEach((note, i) => {
-    html += `<div class="note-card">
+      ctx.notes.forEach((note, i) => {
+        html += `<div class="note-card">
       <textarea onblur="updateNote('${i}',this.value)">${escHtml(note.text)}</textarea>
       <div class="note-actions">
         <button class="btn btn-danger btn-sm" onclick="deleteNote(${i})">Delete</button>
       </div>
     </div>`;
-  });
-  html += `<button class="btn btn-secondary btn-sm" onclick="addNote()">+ Add Note</button>
+      });
+      html += `<button class="btn btn-secondary btn-sm" onclick="addNote()">+ Add Note</button>
   </div>`;
 
-  // Links
-  html += `<div class="cp-section">
+      // Links
+      html += `<div class="cp-section">
     <div class="cp-section-title">Links</div>`;
-  const LINK_TYPES = ['Jira','Slack','Google Docs','Google Sheets','Google Slides','GitHub','Link'];
-  ctx.links.forEach((link, i) => {
-    const icon = linkIcon(link.type);
-    const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t===link.type?' selected':''}>${t}</option>`).join('');
-    html += `<div class="link-card" id="link-card-${i}">
+      const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Link'];
+      ctx.links.forEach((link, i) => {
+        const icon = linkIcon(link.type);
+        const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t === link.type ? ' selected' : ''}>${t}</option>`).join('');
+        html += `<div class="link-card" id="link-card-${i}">
       <span class="link-icon">${icon}</span>
       <div class="link-info">
         <div class="link-label">${escHtml(link.label || link.type)}</div>
@@ -1350,8 +2539,8 @@ function renderContextPanel() {
         <button class="btn btn-secondary btn-sm" onclick="toggleEditLink(${i})">Cancel</button>
       </div>
     </div>`;
-  });
-  html += `<div class="add-link-form" id="add-link-form" style="display:none;">
+      });
+      html += `<div class="add-link-form" id="add-link-form" style="display:none;">
     <select id="link-type">
       <option value="Jira">Jira</option>
       <option value="Slack">Slack</option>
@@ -1371,260 +2560,393 @@ function renderContextPanel() {
   <button class="btn btn-secondary btn-sm" onclick="document.getElementById('add-link-form').style.display='flex'">+ Add Link</button>
   </div>`;
 
-  // Attachments
-  html += `<div class="cp-section">
+      // Attachments
+      html += `<div class="cp-section">
     <div class="cp-section-title">Attachments</div>`;
-  ctx.attachments.forEach((att, i) => {
-    html += `<div class="attach-card">
+      ctx.attachments.forEach((att, i) => {
+        html += `<div class="attach-card">
       <span class="attach-icon">${fileIcon(att.name)}</span>
       <span class="attach-name" title="${escHtml(att.name)}">${escHtml(att.name)}</span>
       <span class="attach-size">${fmtSize(att.size)}</span>
       <button class="btn-icon" onclick="deleteAttachment(${i})" title="Delete">🗑</button>
     </div>`;
-  });
-  html += `<label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+      });
+      html += `<label class="btn btn-secondary btn-sm" style="cursor:pointer;">
     📎 Attach File
     <input type="file" multiple style="display:none;" onchange="handleAttach(this)" />
   </label>
   </div>`;
 
-  document.getElementById('cp-body').innerHTML = html;
-}
+      document.getElementById('cp-body').innerHTML = html;
+    }
 
-function linkIcon(type) {
-  const map = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'GitHub': '🐙', 'Link': '🔗' };
-  return map[type] || '🔗';
-}
+    function linkIcon(type) {
+      const map = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'GitHub': '🐙', 'Link': '🔗' };
+      return map[type] || '🔗';
+    }
 
-function fileIcon(name) {
-  const ext = name.split('.').pop().toLowerCase();
-  const map = { pdf: '📕', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📽️', pptx: '📽️', png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', zip: '🗜️', txt: '📄' };
-  return map[ext] || '📎';
-}
+    function fileIcon(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      const map = { pdf: '📕', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📽️', pptx: '📽️', png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', zip: '🗜️', txt: '📄' };
+      return map[ext] || '📎';
+    }
 
-function fmtSize(bytes) {
-  if (!bytes) return '';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / 1048576).toFixed(1) + ' MB';
-}
+    function fmtSize(bytes) {
+      if (!bytes) return '';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
 
-function getCtxTask() {
-  const day = state.days[state.contextDayKey];
-  if (!day) return null;
-  return findTask(day.tasks, state.contextTaskId);
-}
+    function getCtxTask() {
+      const day = state.days[state.contextDayKey];
+      if (!day) return null;
+      return findTask(day.tasks, state.contextTaskId);
+    }
 
-function addNote() {
-  const task = getCtxTask();
-  if (!task) return;
-  task.context.notes.push({ text: '' });
-  saveData();
-  renderContextPanel();
-  // focus the new textarea
-  setTimeout(() => {
-    const tas = document.querySelectorAll('#cp-body textarea');
-    if (tas.length) tas[tas.length - 1].focus();
-  }, 50);
-}
+    function addNote() {
+      const task = getCtxTask();
+      if (!task) return;
+      task.context.notes.push({ text: '' });
+      saveData();
+      renderContextPanel();
+      // focus the new textarea
+      setTimeout(() => {
+        const tas = document.querySelectorAll('#cp-body textarea');
+        if (tas.length) tas[tas.length - 1].focus();
+      }, 50);
+    }
 
-function updateNote(index, text) {
-  const task = getCtxTask();
-  if (!task) return;
-  task.context.notes[index].text = text;
-  saveData();
-}
+    function updateNote(index, text) {
+      const task = getCtxTask();
+      if (!task) return;
+      task.context.notes[index].text = text;
+      saveData();
+    }
 
-function deleteNote(index) {
-  const task = getCtxTask();
-  if (!task) return;
-  task.context.notes.splice(index, 1);
-  saveData();
-  renderContextPanel();
-}
+    function deleteNote(index) {
+      const task = getCtxTask();
+      if (!task) return;
+      task.context.notes.splice(index, 1);
+      saveData();
+      renderContextPanel();
+    }
 
-function saveLink() {
-  const task = getCtxTask();
-  if (!task) return;
-  const url = document.getElementById('link-url').value.trim();
-  if (!url) return;
-  const type = document.getElementById('link-type').value;
-  const label = document.getElementById('link-label').value.trim() || type;
-  task.context.links.push({ type, label, url });
-  saveData();
-  renderContextPanel();
-}
+    function saveLink() {
+      const task = getCtxTask();
+      if (!task) return;
+      const url = document.getElementById('link-url').value.trim();
+      if (!url) return;
+      const type = document.getElementById('link-type').value;
+      const label = document.getElementById('link-label').value.trim() || type;
+      task.context.links.push({ type, label, url });
+      saveData();
+      renderContextPanel();
+    }
 
-function deleteLink(index) {
-  const task = getCtxTask();
-  if (!task) return;
-  task.context.links.splice(index, 1);
-  saveData();
-  renderContextPanel();
-}
+    function deleteLink(index) {
+      const task = getCtxTask();
+      if (!task) return;
+      task.context.links.splice(index, 1);
+      saveData();
+      renderContextPanel();
+    }
 
-function toggleEditLink(index) {
-  const form = document.getElementById(`link-edit-${index}`);
-  if (!form) return;
-  const visible = form.style.display !== 'none';
-  form.style.display = visible ? 'none' : 'flex';
-  if (!visible) document.getElementById(`edit-link-url-${index}`).focus();
-}
+    function toggleEditLink(index) {
+      const form = document.getElementById(`link-edit-${index}`);
+      if (!form) return;
+      const visible = form.style.display !== 'none';
+      form.style.display = visible ? 'none' : 'flex';
+      if (!visible) document.getElementById(`edit-link-url-${index}`).focus();
+    }
 
-function saveEditLink(index) {
-  const task = getCtxTask();
-  if (!task) return;
-  const url = document.getElementById(`edit-link-url-${index}`).value.trim();
-  if (!url) return;
-  const type  = document.getElementById(`edit-link-type-${index}`).value;
-  const label = document.getElementById(`edit-link-label-${index}`).value.trim() || type;
-  task.context.links[index] = { type, label, url };
-  saveData();
-  renderContextPanel();
-}
+    function saveEditLink(index) {
+      const task = getCtxTask();
+      if (!task) return;
+      const url = document.getElementById(`edit-link-url-${index}`).value.trim();
+      if (!url) return;
+      const type = document.getElementById(`edit-link-type-${index}`).value;
+      const label = document.getElementById(`edit-link-label-${index}`).value.trim() || type;
+      task.context.links[index] = { type, label, url };
+      saveData();
+      renderContextPanel();
+    }
 
-function handleAttach(input) {
-  const task = getCtxTask();
-  if (!task) return;
-  Array.from(input.files).forEach(file => {
-    // Store metadata only (not binary data — would exceed localStorage)
-    task.context.attachments.push({ name: file.name, size: file.size, type: file.type, date: Date.now() });
-  });
-  saveData();
-  renderContextPanel();
-}
-
-function deleteAttachment(index) {
-  const task = getCtxTask();
-  if (!task) return;
-  task.context.attachments.splice(index, 1);
-  saveData();
-  renderContextPanel();
-}
-
-// ─────────────────────────────────────────
-// Summary
-// ─────────────────────────────────────────
-// ─────────────────────────────────────────
-// Search
-// ─────────────────────────────────────────
-
-let _searchFocusIndex = -1;
-
-async function openSearchModal() {
-  // Load all known months so search covers all history
-  const known = await loadKnownMonths();
-  for (const m of known) await loadMonth(m);
-
-  document.getElementById('search-overlay').classList.add('open');
-  const inp = document.getElementById('search-input');
-  inp.value = '';
-  document.getElementById('search-results').innerHTML = '';
-  document.getElementById('search-meta').style.display = 'none';
-  _searchFocusIndex = -1;
-  setTimeout(() => inp.focus(), 50);
-}
-
-function closeSearchModal() {
-  document.getElementById('search-overlay').classList.remove('open');
-  document.getElementById('search-input').value = '';
-  document.getElementById('search-results').innerHTML = '';
-  document.getElementById('search-meta').style.display = 'none';
-  _searchFocusIndex = -1;
-}
-
-// Collect all tasks across all loaded days as flat result objects
-function searchAllTasks(query) {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  const results = [];
-  const dayKeys = Object.keys(state.days).sort().reverse(); // newest first
-
-  for (const dayKey of dayKeys) {
-    const tasks = (state.days[dayKey] && state.days[dayKey].tasks) || [];
-    collectMatchingTasks(tasks, dayKey, [], q, results);
-  }
-  return results;
-}
-
-function collectMatchingTasks(tasks, dayKey, ancestors, query, results) {
-  for (const task of tasks) {
-    const matchesText = task.text.toLowerCase().includes(query);
-    const matchesNote = (task.context && task.context.notes || [])
-      .some(n => n.text && n.text.toLowerCase().includes(query));
-
-    if (matchesText || matchesNote) {
-      results.push({
-        task,
-        dayKey,
-        ancestors: [...ancestors],
-        matchesNote: !matchesText && matchesNote,
+    function handleAttach(input) {
+      const task = getCtxTask();
+      if (!task) return;
+      Array.from(input.files).forEach(file => {
+        // Store metadata only (not binary data — would exceed localStorage)
+        task.context.attachments.push({ name: file.name, size: file.size, type: file.type, date: Date.now() });
       });
+      saveData();
+      renderContextPanel();
     }
-    if (task.children && task.children.length) {
-      collectMatchingTasks(task.children, dayKey, [...ancestors, task.text], query, results);
+
+    function deleteAttachment(index) {
+      const task = getCtxTask();
+      if (!task) return;
+      task.context.attachments.splice(index, 1);
+      saveData();
+      renderContextPanel();
     }
-  }
-}
 
-function highlightMatch(text, query) {
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return escHtml(text);
-  return escHtml(text.slice(0, idx))
-    + `<mark>${escHtml(text.slice(idx, idx + query.length))}</mark>`
-    + escHtml(text.slice(idx + query.length));
-}
+    // ─────────────────────────────────────────
+    // Summary
+    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────
+    // Search
+    // ─────────────────────────────────────────
 
-function formatSearchDate(dayKey) {
-  const d = new Date(dayKey + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-}
+    // ─────────────────────────────────────────
+    // Calendar Popover
+    // ─────────────────────────────────────────
 
-let _searchDebounce = null;
-function onSearchInput() {
-  clearTimeout(_searchDebounce);
-  _searchDebounce = setTimeout(runSearch, 120);
-}
+    // Tracks the month/year currently displayed in the popover (may differ from activeMonth)
+    let _calYear = null;
+    let _calMonth = null; // 1-based
 
-function runSearch() {
-  const query = document.getElementById('search-input').value;
-  const resultsEl = document.getElementById('search-results');
-  const metaEl = document.getElementById('search-meta');
-  _searchFocusIndex = -1;
+    function toggleCalendar(event) {
+      const pop = document.getElementById('cal-popover');
+      if (pop.classList.contains('open')) {
+        closeCalendar();
+        return;
+      }
+      // Initialise to active month
+      const [y, m] = state.activeMonth.split('-').map(Number);
+      _calYear = y;
+      _calMonth = m;
+      renderCalendar();
+      pop.classList.add('open');
 
-  if (!query.trim()) {
-    resultsEl.innerHTML = '';
-    metaEl.style.display = 'none';
-    return;
-  }
+      // Position below the button
+      const btn = document.getElementById('cal-btn');
+      const btnRect = btn.getBoundingClientRect();
+      pop.style.top = (btnRect.bottom + 6) + 'px';
+      // Align right edge of popover with right edge of button
+      const popWidth = 252;
+      let left = btnRect.right - popWidth;
+      if (left < 8) left = 8;
+      pop.style.left = left + 'px';
+    }
 
-  const results = searchAllTasks(query);
+    function closeCalendar() {
+      document.getElementById('cal-popover').classList.remove('open');
+    }
 
-  if (results.length === 0) {
-    resultsEl.innerHTML = `<div class="search-empty">No tasks matching "<strong>${escHtml(query)}</strong>"</div>`;
-    metaEl.style.display = 'none';
-    return;
-  }
+    function calNavYear(delta) {
+      _calYear += delta;
+      renderCalendar();
+    }
 
-  metaEl.textContent = `${results.length} result${results.length === 1 ? '' : 's'}`;
-  metaEl.style.display = 'block';
+    function calNavMonth(delta) {
+      _calMonth += delta;
+      if (_calMonth > 12) { _calMonth = 1; _calYear++; }
+      if (_calMonth < 1) { _calMonth = 12; _calYear--; }
+      renderCalendar();
+    }
 
-  const q = query.trim().toLowerCase();
-  resultsEl.innerHTML = results.map((r, i) => {
-    const { task, dayKey, ancestors, matchesNote } = r;
-    const statusIcon = task.status === 'done' ? '✓' : task.status === 'partial' ? '◑' : '○';
-    const badges = [];
-    if (task.status === 'done')    badges.push(`<span class="search-badge done">✓ Done</span>`);
-    if (task.status === 'partial') badges.push(`<span class="search-badge partial">◑ Partial</span>`);
-    if (task.important)            badges.push(`<span class="search-badge important">⭐ Important</span>`);
-    if (task.recurring && !task.closed) badges.push(`<span class="search-badge recurring">🔁 Recurring</span>`);
+    function renderCalendar() {
+      const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      document.getElementById('cal-year-label').textContent = _calYear;
+      document.getElementById('cal-month-label').textContent = MONTHS[_calMonth - 1];
 
-    const crumbHtml = ancestors.length
-      ? `<span class="search-result-crumb">${ancestors.map(a => escHtml(a)).join(' › ')} › </span>`
-      : '';
-    const noteHint = matchesNote ? `<span style="color:var(--text3);font-style:italic;"> (matched in note)</span>` : '';
+      const today = todayKey();
+      const activeDay = state.activeDay;
+      const ym = `${_calYear}-${String(_calMonth).padStart(2, '0')}`;
 
-    return `<div class="search-result" data-index="${i}" data-day="${escHtml(dayKey)}" data-id="${escHtml(task.id)}"
+      // First day of month (0=Sun … 6=Sat)
+      const firstDow = new Date(_calYear, _calMonth - 1, 1).getDay();
+      const daysInMonth = new Date(_calYear, _calMonth, 0).getDate();
+
+      // Previous month fill
+      const prevMonthDays = new Date(_calYear, _calMonth - 1, 0).getDate();
+
+      const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+      let html = DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+      // Leading days from previous month
+      for (let i = firstDow - 1; i >= 0; i--) {
+        const day = prevMonthDays - i;
+        const prevYm = _calMonth === 1
+          ? `${_calYear - 1}-12`
+          : `${_calYear}-${String(_calMonth - 1).padStart(2, '0')}`;
+        const key = `${prevYm}-${String(day).padStart(2, '0')}`;
+        html += calDayCell(key, day, true, today, activeDay);
+      }
+
+      // Current month days
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = `${ym}-${String(d).padStart(2, '0')}`;
+        html += calDayCell(key, d, false, today, activeDay);
+      }
+
+      // Trailing days from next month
+      const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+      const trailing = totalCells - firstDow - daysInMonth;
+      for (let d = 1; d <= trailing; d++) {
+        const nextYm = _calMonth === 12
+          ? `${_calYear + 1}-01`
+          : `${_calYear}-${String(_calMonth + 1).padStart(2, '0')}`;
+        const key = `${nextYm}-${String(d).padStart(2, '0')}`;
+        html += calDayCell(key, d, true, today, activeDay);
+      }
+
+      document.getElementById('cal-grid').innerHTML = html;
+    }
+
+    function calDayCell(key, dayNum, otherMonth, today, activeDay) {
+      const hasTasks = state.days[key] && state.days[key].tasks && state.days[key].tasks.length > 0;
+      const isToday = key === today;
+      const isSelected = key === activeDay;
+      const classes = [
+        'cal-day',
+        otherMonth ? 'other-month' : '',
+        isToday ? 'today' : '',
+        isSelected ? 'selected' : '',
+        hasTasks ? 'has-tasks' : '',
+      ].filter(Boolean).join(' ');
+      return `<div class="${classes}" onclick="calSelectDay('${key}')" title="${key}">
+    ${dayNum}
+    <span class="cal-dot"></span>
+  </div>`;
+    }
+
+    async function calSelectDay(key) {
+      closeCalendar();
+      const month = key.slice(0, 7);
+      if (month !== state.activeMonth) {
+        await selectMonth(month);
+      }
+      selectDay(key);
+    }
+
+    // Close calendar when clicking outside
+    document.addEventListener('click', e => {
+      const pop = document.getElementById('cal-popover');
+      const btn = document.getElementById('cal-btn');
+      if (pop.classList.contains('open') && !pop.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        closeCalendar();
+      }
+    });
+
+    let _searchFocusIndex = -1;
+
+    async function openSearchModal() {
+      // Load all known months so search covers all history
+      const known = await loadKnownMonths();
+      for (const m of known) await loadMonth(m);
+
+      document.getElementById('search-overlay').classList.add('open');
+      const inp = document.getElementById('search-input');
+      inp.value = '';
+      document.getElementById('search-results').innerHTML = '';
+      document.getElementById('search-meta').style.display = 'none';
+      _searchFocusIndex = -1;
+      setTimeout(() => inp.focus(), 50);
+    }
+
+    function closeSearchModal() {
+      document.getElementById('search-overlay').classList.remove('open');
+      document.getElementById('search-input').value = '';
+      document.getElementById('search-results').innerHTML = '';
+      document.getElementById('search-meta').style.display = 'none';
+      _searchFocusIndex = -1;
+    }
+
+    // Collect all tasks across all loaded days as flat result objects
+    function searchAllTasks(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      const results = [];
+      const dayKeys = Object.keys(state.days).sort().reverse(); // newest first
+
+      for (const dayKey of dayKeys) {
+        const tasks = (state.days[dayKey] && state.days[dayKey].tasks) || [];
+        collectMatchingTasks(tasks, dayKey, [], q, results);
+      }
+      return results;
+    }
+
+    function collectMatchingTasks(tasks, dayKey, ancestors, query, results) {
+      for (const task of tasks) {
+        const matchesText = task.text.toLowerCase().includes(query);
+        const matchesNote = (task.context && task.context.notes || [])
+          .some(n => n.text && n.text.toLowerCase().includes(query));
+
+        if (matchesText || matchesNote) {
+          results.push({
+            task,
+            dayKey,
+            ancestors: [...ancestors],
+            matchesNote: !matchesText && matchesNote,
+          });
+        }
+        if (task.children && task.children.length) {
+          collectMatchingTasks(task.children, dayKey, [...ancestors, task.text], query, results);
+        }
+      }
+    }
+
+    function highlightMatch(text, query) {
+      const idx = text.toLowerCase().indexOf(query.toLowerCase());
+      if (idx === -1) return escHtml(text);
+      return escHtml(text.slice(0, idx))
+        + `<mark>${escHtml(text.slice(idx, idx + query.length))}</mark>`
+        + escHtml(text.slice(idx + query.length));
+    }
+
+    function formatSearchDate(dayKey) {
+      const d = new Date(dayKey + 'T00:00:00');
+      return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    let _searchDebounce = null;
+    function onSearchInput() {
+      clearTimeout(_searchDebounce);
+      _searchDebounce = setTimeout(runSearch, 120);
+    }
+
+    function runSearch() {
+      const query = document.getElementById('search-input').value;
+      const resultsEl = document.getElementById('search-results');
+      const metaEl = document.getElementById('search-meta');
+      _searchFocusIndex = -1;
+
+      if (!query.trim()) {
+        resultsEl.innerHTML = '';
+        metaEl.style.display = 'none';
+        return;
+      }
+
+      const results = searchAllTasks(query);
+
+      if (results.length === 0) {
+        resultsEl.innerHTML = `<div class="search-empty">No tasks matching "<strong>${escHtml(query)}</strong>"</div>`;
+        metaEl.style.display = 'none';
+        return;
+      }
+
+      metaEl.textContent = `${results.length} result${results.length === 1 ? '' : 's'}`;
+      metaEl.style.display = 'block';
+
+      const q = query.trim().toLowerCase();
+      resultsEl.innerHTML = results.map((r, i) => {
+        const { task, dayKey, ancestors, matchesNote } = r;
+        const statusIcon = task.status === 'done' ? '✓' : task.status === 'partial' ? '◑' : '○';
+        const badges = [];
+        if (task.status === 'done') badges.push(`<span class="search-badge done">✓ Done</span>`);
+        if (task.status === 'partial') badges.push(`<span class="search-badge partial">◑ Partial</span>`);
+        if (task.important) badges.push(`<span class="search-badge important">⭐ Important</span>`);
+        if (task.recurring && !task.closed) badges.push(`<span class="search-badge recurring">🔁 Recurring</span>`);
+
+        const crumbHtml = ancestors.length
+          ? `<span class="search-result-crumb">${ancestors.map(a => escHtml(a)).join(' › ')} › </span>`
+          : '';
+        const noteHint = matchesNote ? `<span style="color:var(--text3);font-style:italic;"> (matched in note)</span>` : '';
+
+        return `<div class="search-result" data-index="${i}" data-day="${escHtml(dayKey)}" data-id="${escHtml(task.id)}"
                  onclick="jumpToSearchResult('${escHtml(dayKey)}','${escHtml(task.id)}')"
                  onmouseenter="setSearchFocus(${i})">
       <div class="search-result-icon">${statusIcon}</div>
@@ -1636,246 +2958,247 @@ function runSearch() {
         </div>
       </div>
     </div>`;
-  }).join('');
-}
-
-function setSearchFocus(index) {
-  _searchFocusIndex = index;
-  document.querySelectorAll('.search-result').forEach((el, i) => {
-    el.classList.toggle('focused', i === index);
-  });
-}
-
-function onSearchKey(e) {
-  const items = document.querySelectorAll('.search-result');
-  if (e.key === 'Escape') {
-    closeSearchModal();
-  } else if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    const next = Math.min(_searchFocusIndex + 1, items.length - 1);
-    setSearchFocus(next);
-    items[next] && items[next].scrollIntoView({ block: 'nearest' });
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    const prev = Math.max(_searchFocusIndex - 1, 0);
-    setSearchFocus(prev);
-    items[prev] && items[prev].scrollIntoView({ block: 'nearest' });
-  } else if (e.key === 'Enter') {
-    if (_searchFocusIndex >= 0 && items[_searchFocusIndex]) {
-      const el = items[_searchFocusIndex];
-      jumpToSearchResult(el.dataset.day, el.dataset.id);
-    } else if (items.length === 1) {
-      const el = items[0];
-      jumpToSearchResult(el.dataset.day, el.dataset.id);
+      }).join('');
     }
-  }
-}
 
-async function jumpToSearchResult(dayKey, taskId) {
-  closeSearchModal();
-  // Switch to the right month if needed
-  const month = dayKey.slice(0, 7);
-  if (!_loadedMonths.has(month)) await loadMonth(month);
-  state.activeMonth = month;
-  state.activeDay = dayKey;
-  render();
-  // Expand ancestors and scroll to + highlight the task
-  setTimeout(() => {
-    // Ensure the task's parent chain is expanded
-    expandToTask(state.days[dayKey] && state.days[dayKey].tasks || [], taskId);
-    renderTaskArea();
-    setTimeout(() => {
-      const el = document.getElementById(`tr-${taskId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('search-highlight');
-        setTimeout(() => el.classList.remove('search-highlight'), 1800);
-      }
-    }, 80);
-  }, 80);
-}
+    function setSearchFocus(index) {
+      _searchFocusIndex = index;
+      document.querySelectorAll('.search-result').forEach((el, i) => {
+        el.classList.toggle('focused', i === index);
+      });
+    }
 
-// Expand any collapsed ancestor so the target task is visible
-function expandToTask(tasks, targetId) {
-  for (const t of tasks) {
-    if (t.id === targetId) return true;
-    if (t.children && t.children.length) {
-      if (expandToTask(t.children, targetId)) {
-        _collapsed.delete(t.id); // ensure parent is expanded
-        return true;
+    function onSearchKey(e) {
+      const items = document.querySelectorAll('.search-result');
+      if (e.key === 'Escape') {
+        closeSearchModal();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = Math.min(_searchFocusIndex + 1, items.length - 1);
+        setSearchFocus(next);
+        items[next] && items[next].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = Math.max(_searchFocusIndex - 1, 0);
+        setSearchFocus(prev);
+        items[prev] && items[prev].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        if (_searchFocusIndex >= 0 && items[_searchFocusIndex]) {
+          const el = items[_searchFocusIndex];
+          jumpToSearchResult(el.dataset.day, el.dataset.id);
+        } else if (items.length === 1) {
+          const el = items[0];
+          jumpToSearchResult(el.dataset.day, el.dataset.id);
+        }
       }
     }
-  }
-  return false;
-}
 
-// Keyboard shortcut: Cmd/Ctrl+K
-document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault();
-    if (document.getElementById('search-overlay').classList.contains('open')) {
+    async function jumpToSearchResult(dayKey, taskId) {
       closeSearchModal();
-    } else {
-      openSearchModal();
+      // Switch to the right month if needed
+      const month = dayKey.slice(0, 7);
+      if (!_loadedMonths.has(month)) await loadMonth(month);
+      state.activeMonth = month;
+      state.activeDay = dayKey;
+      render();
+      // Expand ancestors and scroll to + highlight the task
+      setTimeout(() => {
+        // Ensure the task's parent chain is expanded
+        expandToTask(state.days[dayKey] && state.days[dayKey].tasks || [], taskId);
+        renderTaskArea();
+        setTimeout(() => {
+          const el = document.getElementById(`tr-${taskId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('search-highlight');
+            setTimeout(() => el.classList.remove('search-highlight'), 1800);
+          }
+        }, 80);
+      }, 80);
     }
-  }
-});
 
-function openSummaryModal() {
-  document.getElementById('modal-overlay').classList.add('open');
-}
-
-function closeSummaryModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.getElementById('sum-output').innerHTML = 'Select a period and click Generate.';
-}
-
-document.getElementById('sum-period').addEventListener('change', function() {
-  document.getElementById('sum-custom').style.display = this.value === 'custom' ? 'flex' : 'none';
-});
-
-function dateToKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function summaryDateRange(period) {
-  const today = new Date(todayKey() + 'T00:00:00');
-  let fromKey, toKey;
-  if (period === 'week') {
-    const day = today.getDay();
-    const diff = (day === 0) ? 6 : day - 1;
-    const from = new Date(today); from.setDate(today.getDate() - diff);
-    fromKey = dateToKey(from); toKey = todayKey();
-  } else if (period === 'month') {
-    fromKey = `${todayKey().slice(0,7)}-01`; toKey = todayKey();
-  } else if (period === 'quarter') {
-    const m = today.getMonth();
-    const qStart = Math.floor(m / 3) * 3;
-    fromKey = dateToKey(new Date(today.getFullYear(), qStart, 1)); toKey = todayKey();
-  } else if (period === 'year') {
-    fromKey = `${today.getFullYear()}-01-01`; toKey = todayKey();
-  } else {
-    fromKey = document.getElementById('sum-from').value;
-    toKey   = document.getElementById('sum-to').value;
-  }
-  return { fromKey, toKey };
-}
-
-// Collect all day data objects in range (including months not yet loaded from disk)
-async function loadMissingMonthsForRange(fromKey, toKey) {
-  // Determine which months overlap the range
-  const fromMonth = fromKey.slice(0, 7);
-  const toMonth   = toKey.slice(0, 7);
-  let cur = fromMonth;
-  while (cur <= toMonth) {
-    if (!Object.keys(state.days).some(k => k.startsWith(cur))) {
-      await loadMonth(cur);
+    // Expand any collapsed ancestor so the target task is visible
+    function expandToTask(tasks, targetId) {
+      for (const t of tasks) {
+        if (t.id === targetId) return true;
+        if (t.children && t.children.length) {
+          if (expandToTask(t.children, targetId)) {
+            _collapsed.delete(t.id); // ensure parent is expanded
+            return true;
+          }
+        }
+      }
+      return false;
     }
-    const [y, m] = cur.split('-').map(Number);
-    const next = m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
-    cur = next;
-  }
-}
 
-async function generateSummary() {
-  const period = document.getElementById('sum-period').value;
-  const { fromKey, toKey } = summaryDateRange(period);
-  if (!fromKey || !toKey) {
-    document.getElementById('sum-output').textContent = 'Please set a date range.';
-    return;
-  }
-
-  // Load any months not yet in memory
-  await loadMissingMonthsForRange(fromKey, toKey);
-
-  // Collect day data in range
-  const daysInRange = Object.keys(state.days)
-    .filter(k => k >= fromKey && k <= toKey)
-    .sort();
-
-  if (!daysInRange.length) {
-    document.getElementById('sum-output').innerHTML = '<span style="color:var(--text3)">No tasks found in this period.</span>';
-    return;
-  }
-
-  const daysPayload = {};
-  daysInRange.forEach(k => { daysPayload[k] = state.days[k]; });
-
-  // Parse optional topics
-  const topicsRaw = document.getElementById('sum-topics').value;
-  const topics = topicsRaw.split('\n').map(s => s.trim()).filter(Boolean);
-
-  // Show loading state
-  const el = document.getElementById('sum-output');
-  el.className = 'summary-output loading';
-  el.textContent = '✦ Generating summary…';
-  document.getElementById('sum-generate-btn').disabled = true;
-
-  try {
-    const resp = await fetch('/summarize', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fromKey, toKey, period, topics, days: daysPayload }),
+    // Keyboard shortcut: Cmd/Ctrl+K
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (document.getElementById('search-overlay').classList.contains('open')) {
+          closeSearchModal();
+        } else {
+          openSearchModal();
+        }
+      }
     });
-    const data = await resp.json();
 
-    el.className = 'summary-output';
-    if (data.error) {
-      el.innerHTML = `<span class="sum-error">⚠ ${escHtml(data.error)}</span>`;
-    } else {
-      renderSummaryText(el, data.summary || 'No summary generated.');
+    function openSummaryModal() {
+      document.getElementById('modal-overlay').classList.add('open');
     }
-  } catch (err) {
-    el.className = 'summary-output';
-    el.innerHTML = `<span class="sum-error">⚠ Could not reach server: ${escHtml(String(err))}</span>`;
-  } finally {
-    document.getElementById('sum-generate-btn').disabled = false;
-  }
-}
 
-function renderSummaryText(el, text) {
-  // Split on the stats line (starts with "Period:") and render as paragraphs
-  const statsMatch = text.match(/\n?(Period:.+)$/s);
-  let prose = text;
-  let statsLine = '';
-  if (statsMatch) {
-    prose = text.slice(0, statsMatch.index).trim();
-    statsLine = statsMatch[1].trim();
-  }
+    function closeSummaryModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+      document.getElementById('sum-output').innerHTML = 'Select a period and click Generate.';
+    }
 
-  // Split prose into paragraphs and escape HTML
-  const paragraphs = prose.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
-  let html = paragraphs.map(p =>
-    `<p>${escHtml(p).replace(/\n/g, '<br>')}</p>`
-  ).join('');
+    document.getElementById('sum-period').addEventListener('change', function () {
+      document.getElementById('sum-custom').style.display = this.value === 'custom' ? 'flex' : 'none';
+    });
 
-  if (statsLine) {
-    html += `<div class="sum-stats">${escHtml(statsLine)}</div>`;
-  }
+    function dateToKey(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
 
-  el.innerHTML = html;
-}
+    function summaryDateRange(period) {
+      const today = new Date(todayKey() + 'T00:00:00');
+      let fromKey, toKey;
+      if (period === 'week') {
+        const day = today.getDay();
+        const diff = (day === 0) ? 6 : day - 1;
+        const from = new Date(today); from.setDate(today.getDate() - diff);
+        fromKey = dateToKey(from); toKey = todayKey();
+      } else if (period === 'month') {
+        fromKey = `${todayKey().slice(0, 7)}-01`; toKey = todayKey();
+      } else if (period === 'quarter') {
+        const m = today.getMonth();
+        const qStart = Math.floor(m / 3) * 3;
+        fromKey = dateToKey(new Date(today.getFullYear(), qStart, 1)); toKey = todayKey();
+      } else if (period === 'year') {
+        fromKey = `${today.getFullYear()}-01-01`; toKey = todayKey();
+      } else {
+        fromKey = document.getElementById('sum-from').value;
+        toKey = document.getElementById('sum-to').value;
+      }
+      return { fromKey, toKey };
+    }
 
-// Keep gatherStats for backwards compatibility (used by countDescendants etc.)
-function gatherStats(task, dayInfo, depth = 0) {
-  if (task.excludeFromSummary) return;
-  const entry = { text: task.text, status: task.status, depth };
-  dayInfo.tasks.push(entry);
-  if (task.status === 'done') dayInfo.done++;
-  else if (task.status === 'partial') dayInfo.partial++;
-  else dayInfo.pending++;
-  task.children.forEach(c => gatherStats(c, dayInfo, depth + 1));
-}
+    // Collect all day data objects in range (including months not yet loaded from disk)
+    async function loadMissingMonthsForRange(fromKey, toKey) {
+      // Determine which months overlap the range
+      const fromMonth = fromKey.slice(0, 7);
+      const toMonth = toKey.slice(0, 7);
+      let cur = fromMonth;
+      while (cur <= toMonth) {
+        if (!Object.keys(state.days).some(k => k.startsWith(cur))) {
+          await loadMonth(cur);
+        }
+        const [y, m] = cur.split('-').map(Number);
+        const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+        cur = next;
+      }
+    }
 
-function renderSummary(s) {
-  // Legacy stub — no longer called; generateSummary() renders directly
-  return;
-}
+    async function generateSummary() {
+      const period = document.getElementById('sum-period').value;
+      const { fromKey, toKey } = summaryDateRange(period);
+      if (!fromKey || !toKey) {
+        document.getElementById('sum-output').textContent = 'Please set a date range.';
+        return;
+      }
 
-// ─────────────────────────────────────────
-// Boot
-// ─────────────────────────────────────────
-init();
-</script>
+      // Load any months not yet in memory
+      await loadMissingMonthsForRange(fromKey, toKey);
+
+      // Collect day data in range
+      const daysInRange = Object.keys(state.days)
+        .filter(k => k >= fromKey && k <= toKey)
+        .sort();
+
+      if (!daysInRange.length) {
+        document.getElementById('sum-output').innerHTML = '<span style="color:var(--text3)">No tasks found in this period.</span>';
+        return;
+      }
+
+      const daysPayload = {};
+      daysInRange.forEach(k => { daysPayload[k] = state.days[k]; });
+
+      // Parse optional topics
+      const topicsRaw = document.getElementById('sum-topics').value;
+      const topics = topicsRaw.split('\n').map(s => s.trim()).filter(Boolean);
+
+      // Show loading state
+      const el = document.getElementById('sum-output');
+      el.className = 'summary-output loading';
+      el.textContent = '✦ Generating summary…';
+      document.getElementById('sum-generate-btn').disabled = true;
+
+      try {
+        const resp = await fetch('/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromKey, toKey, period, topics, days: daysPayload }),
+        });
+        const data = await resp.json();
+
+        el.className = 'summary-output';
+        if (data.error) {
+          el.innerHTML = `<span class="sum-error">⚠ ${escHtml(data.error)}</span>`;
+        } else {
+          renderSummaryText(el, data.summary || 'No summary generated.');
+        }
+      } catch (err) {
+        el.className = 'summary-output';
+        el.innerHTML = `<span class="sum-error">⚠ Could not reach server: ${escHtml(String(err))}</span>`;
+      } finally {
+        document.getElementById('sum-generate-btn').disabled = false;
+      }
+    }
+
+    function renderSummaryText(el, text) {
+      // Split on the stats line (starts with "Period:") and render as paragraphs
+      const statsMatch = text.match(/\n?(Period:.+)$/s);
+      let prose = text;
+      let statsLine = '';
+      if (statsMatch) {
+        prose = text.slice(0, statsMatch.index).trim();
+        statsLine = statsMatch[1].trim();
+      }
+
+      // Split prose into paragraphs and escape HTML
+      const paragraphs = prose.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+      let html = paragraphs.map(p =>
+        `<p>${escHtml(p).replace(/\n/g, '<br>')}</p>`
+      ).join('');
+
+      if (statsLine) {
+        html += `<div class="sum-stats">${escHtml(statsLine)}</div>`;
+      }
+
+      el.innerHTML = html;
+    }
+
+    // Keep gatherStats for backwards compatibility (used by countDescendants etc.)
+    function gatherStats(task, dayInfo, depth = 0) {
+      if (task.excludeFromSummary) return;
+      const entry = { text: task.text, status: task.status, depth };
+      dayInfo.tasks.push(entry);
+      if (task.status === 'done') dayInfo.done++;
+      else if (task.status === 'partial') dayInfo.partial++;
+      else dayInfo.pending++;
+      task.children.forEach(c => gatherStats(c, dayInfo, depth + 1));
+    }
+
+    function renderSummary(s) {
+      // Legacy stub — no longer called; generateSummary() renders directly
+      return;
+    }
+
+    // ─────────────────────────────────────────
+    // Boot
+    // ─────────────────────────────────────────
+    init();
+  </script>
 </body>
+
 </html>

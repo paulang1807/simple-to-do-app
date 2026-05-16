@@ -1,4 +1,4 @@
-# Daily Task Manager
+# Checkpoint
 
 A personal daily task tracker with nested subtasks, rich context, recurring tasks, and work summaries. All data is stored as plain JSON files on your own disk — no cloud account, no database.
 
@@ -22,7 +22,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Moving Subtasks Between Parents](#moving-subtasks-between-parents)
    - [Copying Tasks Between Days](#copying-tasks-between-days)
    - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
-   - [Monthly Tabs](#monthly-tabs)
+   - [Calendar Picker](#calendar-picker)
    - [Searching Tasks](#searching-tasks)
    - [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)
    - [Work Summary](#work-summary)
@@ -34,14 +34,14 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
 
 ## What It Does
 
-Daily Task Manager helps you track what you work on each day. You can:
+Checkpoint helps you track what you work on each day. You can:
 
 - Create tasks with unlimited nesting levels
 - Mark tasks as done, partially done, or pending
 - Flag important tasks and recurring tasks
 - Roll incomplete tasks forward to the next day with a single click
 - Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides) and files to any task
-- Browse tasks by month using tabs
+- Browse tasks by month using the calendar picker
 - Search across all tasks and notes instantly with keyboard navigation
 - Generate summaries of work done over a week, month, quarter, or year
 
@@ -87,7 +87,7 @@ The server will start and automatically open your default browser to `http://loc
 ```
   Port 3456 is in use — using port 3457 instead.
 
-  Daily Task Manager is running!
+  Checkpoint is running!
   Open this URL in your browser:
 
       http://localhost:3457
@@ -103,7 +103,23 @@ uv run server.py --port 8080
 uv run server.py -p 8080
 ```
 
-That's it. No `npm install`, no build step, no database setup. The `data/` folder is created automatically on first run.
+That's it. No `npm install`, no complex setup, no database. The `data/` folder is created automatically on first run.
+
+### Building the macOS App Bundle (Optional)
+
+If you prefer to run Checkpoint as a standalone macOS application instead of a background web server, you can build a native `.app` bundle:
+
+```bash
+./build.sh
+```
+
+This script will package the Python server and the web UI into a self-contained `Checkpoint.app` inside the `dist/` directory, complete with a custom app icon.
+
+> [!NOTE]
+> **Troubleshooting:** If the build fails during the cleanup phase with an `rm: dist: Directory not empty` error, it is typically because macOS (or Finder) is actively accessing a hidden file like `.DS_Store` inside the directory while it's being deleted. You can bypass this by manually forcefully removing the directory first:
+> ```bash
+> rm -rf dist && ./build.sh
+> ```
 
 ### Configuring AI Summaries
 
@@ -142,28 +158,11 @@ If no API key is configured, summary generation will return an error explaining 
 
 ![Main view](docs/01-main-view.png)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  📋 Daily Tasks    🔍 Search  ⬇ Export  ⬆ Import  📊 Summarize  │  ← Header
-├─────────────────────────────────────────────────────────────────┤
-│  April 2026  │  May 2026  │  ...                                │  ← Month tabs
-├──────────────┬──────────────────────────────────────────────────┤
-│              │  Friday, April 24, 2026  TODAY                   │
-│  1 Wed       │  ⏩ Move to Apr 25   ⊟ Collapse All  ⊞ Expand All│
-│  2 Thu       ├──────────────────────────────────────────────────┤
-│  ...         │  ☐  Task A                                       │
-│● 24 Fri ●   │  ▾ ☐  Task B (with subtasks)                    │
-│  25 Sat      │      ☐  Subtask B1                               │
-│  ...         │      ☐  Subtask B2                               │
-│              ├──────────────────────────────────────────────────┤
-│              │  + Add a task…                              [Add] │
-└──────────────┴──────────────────────────────────────────────────┘
-```
+
 
 | Area | Purpose |
 |---|---|
-| **Header** | App title, Search tasks, Export/Import data, open Summarize modal |
-| **Month tabs** | Switch between months; each tab covers one calendar month |
+| **Header** | App title, Search tasks, open Calendar picker, Export/Import data, open Summarize modal |
 | **Day sidebar** | All days of the active month; blue dot = has tasks; ● = today |
 | **Task area** | Tasks for the selected day, action buttons in the header row |
 | **Context panel** | Slides in from the right when you click 📎 on a task |
@@ -375,16 +374,26 @@ Context (notes, links, attachments) is included in work summaries.
 
 ---
 
-### Monthly Tabs
+### Calendar Picker
 
-The tab bar at the top shows one tab per month that has data, plus the current month.
+Click **📅 Calendar** in the header to open the calendar popover.
 
-- Click a tab to switch months
-- The day sidebar updates to show all days for that month
-- Days with tasks have a **blue dot**
-- Today is highlighted in blue with a **●** marker
+The popover shows a full month grid (Sunday–Saturday) with independent year and month navigation:
 
-Switching to a month loads its data file from disk on demand.
+| Control | Action |
+|---|---|
+| **‹ / ›** next to the year | Step back or forward one year |
+| **‹ / ›** next to the month | Step back or forward one month |
+| Click a day | Jump to that day — switches month in the sidebar if needed |
+| Click outside | Close the popover |
+
+**Day indicators in the grid:**
+- Blue dot below the number — day has tasks
+- Blue highlighted number + underline dot — today
+- Filled blue cell — currently selected day
+- Faded number — day belongs to the previous or next month (still clickable)
+
+Navigating to a month with no data still shows the full grid — all days are clickable and the sidebar updates to show that month's days.
 
 ---
 
@@ -543,6 +552,16 @@ The `data/` directory is excluded from git (via `.gitignore`), so your personal 
 
 ## Project Structure
 
+```
+todo-app/
+├── index.html       # The entire front-end — one self-contained HTML file
+├── server.py        # Minimal Python HTTP server (no dependencies)
+├── .gitignore       # Excludes data/ and other non-source files
+├── README.md        # This file
+└── data/            # Auto-created on first run; gitignored
+    └── YYYY-MM.json # One file per month
+```
+
 ### Source Files (Tracked in Git)
 These are the files you receive when you first clone the repository:
 
@@ -567,7 +586,7 @@ You will see these files and folders appear based on your actions:
 | | `icon.icns` & `*.spec` | Generated icon bundle and build specifications. |
 | **Running tests** | `.pytest_cache/` | Cache to speed up subsequent test runs. |
 
----
+**`server.py`** handles the following routes:
 
 | Method | Path | Purpose |
 |---|---|---|

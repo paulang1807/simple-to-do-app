@@ -3,7 +3,7 @@
 # dependencies = ["anthropic>=0.50", "openai>=1.0", "google-genai>=1.0"]
 # ///
 """
-Daily Task Manager — file server
+Checkpoint — file server
 Serves index.html and handles GET/PUT /data/YYYY-MM, GET /months, POST /summarize.
 Data is stored as data/YYYY-MM.json, one file per month.
 

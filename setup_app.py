@@ -4,7 +4,7 @@ import sys
 import shutil
 from pathlib import Path
 
-APP_NAME = "Daily Task Manager"
+APP_NAME = "Checkpoint"
 MAIN_SCRIPT = "launcher.py"
 ICON_PNG = "app_icon.png" 
 ICON_ICNS = "icon.icns"
@@ -58,7 +58,7 @@ def build():
     
     run(" ".join(cmd))
 
-    print("\nBuild complete! Check the 'dist' folder for Daily Task Manager.app")
+    print("\nBuild complete! Check the 'dist' folder for Checkpoint.app")
 
 if __name__ == "__main__":
     build()

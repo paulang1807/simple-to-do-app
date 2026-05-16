@@ -3,7 +3,7 @@
 # dependencies = ["playwright"]
 # ///
 """
-Capture screenshots of the Daily Task Manager for the README.
+Capture screenshots of Checkpoint for the README.
 Run with:  uv run docs/capture.py
 The server must be running on localhost:3456 before running this script.
 
@@ -236,9 +236,21 @@ def run():
         shot(page, "11-summary-result", "Summary output")
         page.evaluate("closeSummaryModal()")
 
-        # ── 11. Month tabs ────────────────────────────────────────────────────
+        # ── 11. Calendar popover ──────────────────────────────────────────────
         page.evaluate("() => new Promise(r => setTimeout(r, 200))")
-        shot(page, "12-month-tabs", "Month tab navigation")
+        page.evaluate("""() => {
+            const [y, m] = state.activeMonth.split('-').map(Number);
+            _calYear = y; _calMonth = m;
+            renderCalendar();
+            const pop = document.getElementById('cal-popover');
+            const btn = document.getElementById('cal-btn');
+            const btnRect = btn.getBoundingClientRect();
+            pop.style.top  = (btnRect.bottom + 6) + 'px';
+            pop.style.left = (btnRect.right - 252) + 'px';
+            pop.classList.add('open');
+        }""")
+        page.evaluate("() => new Promise(r => setTimeout(r, 300))")
+        shot(page, "12-calendar-popover", "Calendar picker — navigate by month and year")
 
         browser.close()
         print("\nDone! Screenshots saved to docs/")

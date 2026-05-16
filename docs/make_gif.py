@@ -3,7 +3,7 @@
 # dependencies = ["Pillow"]
 # ///
 """
-Assemble the captured screenshots into an annotated animated GIF.
+Assemble the Checkpoint screenshots into an annotated animated GIF.
 Run with:  uv run docs/make_gif.py
 """
 
@@ -24,6 +24,7 @@ FRAMES = [
     ("08-collapse-all.png",       "Collapse All / Expand All in one click"),
     ("09-move-button.png",        "Move incomplete tasks to next day with one click"),
     ("11-summary-result.png",     "Work summary — week, month, quarter or year"),
+    ("12-calendar-popover.png",   "Calendar picker — navigate by month and year"),
 ]
 
 # Thumbnail width for the GIF (height scaled proportionally)

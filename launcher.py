@@ -30,7 +30,7 @@ def start_server(port):
 
 def main():
     # Set up macOS Application Support directory
-    app_name = "Daily Task Manager"
+    app_name = "Checkpoint"
     app_support = Path.home() / "Library" / "Application Support" / app_name
     app_support.mkdir(parents=True, exist_ok=True)
     
