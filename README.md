@@ -47,12 +47,26 @@ Daily Task Manager helps you track what you work on each day. You can:
 
 ---
 
-## Setup
+## How to Run
 
-### Prerequisites
+There are two ways to use Daily Task Manager:
 
-- [uv](https://github.com/astral-sh/uv) — a fast Python package manager
-- Python 3.11 or later (managed automatically by uv)
+### 1. macOS Standalone App (Recommended)
+Launch from your Applications folder with a native window and dock icon.
+- Download the latest **Daily Task Manager.app** from the [Releases](#) section.
+- Drag it to your `/Applications` folder.
+- Double-click to launch.
+- **Data storage**: `~/Library/Application Support/Daily Task Manager/data`
+
+### 2. Terminal (For Developers)
+Run via the command line using `uv`.
+- Prerequisites: [uv](https://github.com/astral-sh/uv) and Python 3.11+
+- Command: `uv run server.py`
+- **Data storage**: `./data/` folder in the project directory.
+
+---
+
+## Setup (Terminal Version)
 
 ### Install uv (if not already installed)
 
@@ -60,22 +74,13 @@ Daily Task Manager helps you track what you work on each day. You can:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### Clone and run
-
 ```bash
 git clone <your-repo-url>
 cd todo-app
 uv run server.py
 ```
 
-The server prints the exact URL to open:
-
-```
-  Daily Task Manager is running!
-  Open this URL in your browser:
-
-      http://localhost:3456
-```
+The server will start and automatically open your default browser to `http://localhost:3456` (or the next available port).
 
 **If port 3456 is already in use**, the server automatically picks the next available port and tells you:
 
@@ -471,6 +476,30 @@ This makes it easy to write status updates, retrospectives, or performance revie
 
 ---
 
+## Development & Rebuilding
+
+If you modify the source code (e.g., `index.html` or `server.py`) and want to see those changes in the macOS app, you need to rebuild the bundle.
+
+### Rebuilding the macOS App
+We provide an automation script that handles the environment setup and bundling:
+```bash
+./build.sh
+```
+This script will:
+1. Create/update a dedicated build virtual environment (`.venv_build`).
+2. Install all necessary dependencies (`pyinstaller`, `pywebview`, etc.).
+3. Generate the native macOS icons from `app_icon.png`.
+4. Bundle everything into `dist/Daily Task Manager.app`.
+
+### Testing Changes
+For faster development cycles, it is recommended to test your changes using the terminal version first:
+```bash
+uv run server.py
+```
+Once you are satisfied with the changes, run `./build.sh` to update your standalone app. The build process uses `app_icon.png` (a premium, transparent source image) to generate the high-resolution native icons.
+
+---
+
 ## Data Storage
 
 Each month's tasks are stored in a separate JSON file under the `data/` directory:
@@ -514,17 +543,31 @@ The `data/` directory is excluded from git (via `.gitignore`), so your personal 
 
 ## Project Structure
 
-```
-todo-app/
-├── index.html       # The entire front-end — one self-contained HTML file
-├── server.py        # Minimal Python HTTP server (no dependencies)
-├── .gitignore       # Excludes data/ and other non-source files
-├── README.md        # This file
-└── data/            # Auto-created on first run; gitignored
-    └── YYYY-MM.json # One file per month
-```
+### Source Files (Tracked in Git)
+These are the files you receive when you first clone the repository:
 
-**`server.py`** handles the following routes:
+- `index.html` — The entire front-end (HTML/JS/CSS).
+- `server.py` — The Python backend for data storage and AI summaries.
+- `launcher.py` — The entry point for the bundled macOS application.
+- `build.sh` — Main automation script for rebuilding the `.app` bundle.
+- `setup_app.py` — Configuration script used by the build process.
+- `app_icon.png` — Premium transparent source image for the app icon.
+- `README.md` — This documentation.
+- `docs/` — Screenshots and documentation assets.
+
+### Generated Files (Ignored by Git)
+You will see these files and folders appear based on your actions:
+
+| Action | Created Files/Folders | Purpose |
+| :--- | :--- | :--- |
+| **Running the app** | `data/` | Stores your local task JSON files. |
+| **Configuring AI** | `.env` | Stores your private API keys (create this manually). |
+| **Running `./build.sh`** | `.venv_build/` | Isolated environment for build tools. |
+| | `build/` & `dist/` | Temporary build files and final `.app` bundle. |
+| | `icon.icns` & `*.spec` | Generated icon bundle and build specifications. |
+| **Running tests** | `.pytest_cache/` | Cache to speed up subsequent test runs. |
+
+---
 
 | Method | Path | Purpose |
 |---|---|---|

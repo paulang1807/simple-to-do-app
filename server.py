@@ -25,9 +25,35 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 DEFAULT_PORT = 3456
-BASE_DIR = Path(__file__).parent
-DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+def get_app_paths():
+    """Return (base_dir, data_dir) based on environment or defaults."""
+    # If running in a PyInstaller bundle, sys._MEIPASS is the path to resources
+    # If running in a PyInstaller bundle, sys._MEIPASS is the path to resources
+    if hasattr(sys, "_MEIPASS"):
+        base_dir = Path(sys._MEIPASS).resolve()
+        # On macOS, if index.html is not in base_dir, check Resources
+        if not (base_dir / "index.html").exists():
+            # Try to find it in the bundle's Resources
+            resources_dir = base_dir.parent / "Resources"
+            if (resources_dir / "index.html").exists():
+                base_dir = resources_dir
+    else:
+        base_dir = Path(__file__).parent.resolve()
+
+    # Data directory priority:
+    # 1. Environment variable (set by launcher)
+    # 2. Standard macOS Application Support (if requested via env)
+    # 3. Local 'data' folder
+    env_data_dir = os.getenv("APP_DATA_DIR")
+    if env_data_dir:
+        data_dir = Path(env_data_dir)
+    else:
+        data_dir = base_dir / "data"
+
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir, data_dir
+
+BASE_DIR, DATA_DIR = get_app_paths()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -36,18 +62,20 @@ DATA_DIR.mkdir(exist_ok=True)
 
 def _load_dotenv():
     """Load .env file into os.environ (does not override existing env vars)."""
-    env_file = BASE_DIR / ".env"
-    if not env_file.exists():
-        return
-    for line in env_file.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        k = k.strip()
-        v = v.strip().strip('"').strip("'")
-        if k and k not in os.environ:
-            os.environ[k] = v
+    # Look for .env in the same place as data, or in the base dir
+    search_paths = [DATA_DIR / ".env", BASE_DIR / ".env"]
+    for env_file in search_paths:
+        if env_file.exists():
+            for line in env_file.read_text().splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                k = k.strip()
+                v = v.strip().strip('"').strip("'")
+                if k and k not in os.environ:
+                    os.environ[k] = v
+            break # Stop after first .env found
 
 _load_dotenv()
 
@@ -137,10 +165,6 @@ def detect_provider() -> tuple[str, str]:
     Raises RuntimeError if none are configured.
     """
 
-    google_key = (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
-    if google_key:
-        return "google", google_key
-        
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
     if anthropic_key:
         return "anthropic", anthropic_key
@@ -148,6 +172,10 @@ def detect_provider() -> tuple[str, str]:
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     if openai_key:
         return "openai", openai_key
+
+    google_key = (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
+    if google_key:
+        return "google", google_key
 
     raise RuntimeError(
         "No LLM credentials found.\n\n"
@@ -407,11 +435,17 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/":
             path = "/index.html"
-        file_path = BASE_DIR / path.lstrip("/")
-        try:
-            file_path.resolve().relative_to(BASE_DIR.resolve())
-        except ValueError:
-            self.send_text(403, "Forbidden")
+        file_path = (BASE_DIR / path.lstrip("/")).resolve()
+        # Security: ensure file is within BASE_DIR or is a bundled asset
+        # We allow files within BASE_DIR. If in a bundle, we are less restrictive 
+        # about the exact prefix as long as it's part of the bundle.
+        is_safe = str(file_path).startswith(str(BASE_DIR))
+        if not is_safe and hasattr(sys, "_MEIPASS"):
+            # Allow anything in the bundle's parent (Contents)
+            is_safe = str(file_path).startswith(str(BASE_DIR.parent))
+
+        if not is_safe:
+            self.send_text(403, f"Forbidden: {file_path} is not in {BASE_DIR}")
             return
         if not file_path.exists() or not file_path.is_file():
             self.send_text(404, "Not found")
