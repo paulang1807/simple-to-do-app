@@ -9,7 +9,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
 ## Table of Contents
 
 1. [What It Does](#what-it-does)
-2. [Setup](#setup)
+2. [Setup](#setup-terminal-version)
 3. [Interface Overview](#interface-overview)
 4. [Features](#features)
    - [Adding Tasks & Subtasks](#adding-tasks--subtasks)
