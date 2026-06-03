@@ -1,0 +1,54 @@
+{
+  "YYYY-MM-DD": {
+    "tasks": [
+      {
+        "id": "task_id_string",
+        "text": "Task description text",
+        "status": "pending",
+        "important": false,
+        "recurring": false,
+        "closed": false,
+        "excludeFromSummary": false,
+        "children": [
+          {
+            "id": "subtask_id_string",
+            "text": "Subtask description text",
+            "status": "pending",
+            "important": false,
+            "recurring": false,
+            "closed": false,
+            "excludeFromSummary": false,
+            "children": [],
+            "context": {
+              "notes": [],
+              "links": [],
+              "attachments": []
+            }
+          }
+        ],
+        "context": {
+          "notes": [
+            {
+              "text": "Optional note text"
+            }
+          ],
+          "links": [
+            {
+              "type": "Link",
+              "label": "Link label",
+              "url": "https://example.com"
+            }
+          ],
+          "attachments": [
+            {
+              "name": "filename.pdf",
+              "size": 1024,
+              "type": "application/pdf",
+              "date": 1717378900000
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -56,7 +56,7 @@ Launch from your Applications folder with a native window and dock icon.
 - Download the latest **Checkpoint.app** from the [Releases](#) section.
 - Drag it to your `/Applications` folder.
 - Double-click to launch.
-- **Data storage**: `~/Library/Application Support/Checkpoint/data`
+- **Data storage**: `~/Library/Application Support/Checkpoint/`
 
 ### 2. Terminal (For Developers)
 Run via the command line using `uv`.
@@ -512,15 +512,23 @@ Once you are satisfied with the changes, run `./build.sh` to update your standal
 
 ## Data Storage
 
-Each month's tasks are stored in a separate JSON file under the `data/` directory:
+Depending on how you run the application, each month's tasks are stored in a separate JSON file:
 
-```
-todo-app/
-└── data/
-    ├── 2026-04.json
-    ├── 2026-05.json
-    └── ...
-```
+- **macOS Standalone App:** Stored under the system Application Support directory:
+  ```
+  ~/Library/Application Support/Checkpoint/
+  ├── 2026-05.json
+  ├── 2026-06.json
+  └── ...
+  ```
+- **Terminal/Developer Mode:** Stored locally under the project directory:
+  ```
+  todo-app/
+  └── data/
+      ├── 2026-05.json
+      ├── 2026-06.json
+      └── ...
+  ```
 
 Each file contains a map of date strings to day objects:
 
@@ -559,6 +567,7 @@ todo-app/
 ├── server.py        # Minimal Python HTTP server (no dependencies)
 ├── .gitignore       # Excludes data/ and other non-source files
 ├── README.md        # This file
+├── data.sample.json # Structural template for task data
 └── data/            # Auto-created on first run; gitignored
     └── YYYY-MM.json # One file per month
 ```
@@ -572,6 +581,7 @@ These are the files you receive when you first clone the repository:
 - `build.sh` — Main automation script for rebuilding the `.app` bundle.
 - `setup_app.py` — Configuration script used by the build process.
 - `app_icon.png` — Premium transparent source image for the app icon.
+- `data.sample.json` — A clean, structural sample of the task data JSON format.
 - `README.md` — This documentation.
 - `docs/` — Screenshots and documentation assets.
 

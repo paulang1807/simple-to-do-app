@@ -6,6 +6,13 @@ import socket
 import webbrowser
 from pathlib import Path
 
+# Set up macOS Application Support directory and export APP_DATA_DIR env var
+# before importing server, so server.py resolves its DATA_DIR correctly.
+app_name = "Checkpoint"
+app_support = Path.home() / "Library" / "Application Support" / app_name
+app_support.mkdir(parents=True, exist_ok=True)
+os.environ["APP_DATA_DIR"] = str(app_support)
+
 # Add current dir to path so we can import server
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import server
@@ -29,14 +36,6 @@ def start_server(port):
     httpd.serve_forever()
 
 def main():
-    # Set up macOS Application Support directory
-    app_name = "Checkpoint"
-    app_support = Path.home() / "Library" / "Application Support" / app_name
-    app_support.mkdir(parents=True, exist_ok=True)
-    
-    # Export env var for server.py to pick up
-    os.environ["APP_DATA_DIR"] = str(app_support)
-    
     # Find a port and start server in background
     port = find_free_port()
     server_thread = threading.Thread(target=start_server, args=(port,), daemon=True)
