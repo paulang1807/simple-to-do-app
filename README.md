@@ -24,6 +24,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
    - [Calendar Picker](#calendar-picker)
    - [Searching Tasks](#searching-tasks)
+   - [Archiving Tasks](#archiving-tasks)
    - [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)
    - [Work Summary](#work-summary)
    - [Export & Import](#export--import)
@@ -43,6 +44,7 @@ Checkpoint helps you track what you work on each day. You can:
 - Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides) and files to any task
 - Browse tasks by month using the calendar picker
 - Search across all tasks and notes instantly with keyboard navigation
+- Archive tasks and subtasks out of the active view, and restore them to the current day
 - Generate summaries of work done over a week, month, quarter, or year
 
 ---
@@ -146,7 +148,7 @@ If no API key is configured, summary generation will return an error explaining 
 
 | Area | Purpose |
 |---|---|
-| **Header** | App title, Search tasks, open Calendar picker, Export/Import data, open Summarize modal |
+| **Header** | App title, Search tasks, open Archive view, open Calendar picker, Export/Import data, open Summarize modal |
 | **Day sidebar** | All days of the active month; blue dot = has tasks; ● = today |
 | **Task area** | Tasks for the selected day, action buttons in the header row |
 | **Context panel** | Slides in from the right when you click 📎 on a task |
@@ -419,6 +421,37 @@ Search loads all months on first open so results are complete regardless of whic
 
 ---
 
+### Archiving Tasks
+
+Use the archive to remove tasks or subtasks from the active view without deleting them. Archived items are stored separately and can be restored at any time.
+
+**To archive a task or subtask:** hover the row and click **📦** — the task disappears from the current view immediately.
+
+**Archiving behaviour:**
+
+| What you archive | Current view | Archive |
+|---|---|---|
+| **Top-level task** | Task and all its subtasks are removed | Entire task tree stored as one entry |
+| **Subtask** | Subtask (and its children) removed from parent; parent remains | Stored with the parent name as a breadcrumb |
+
+**Viewing the archive:** click **📦 Archive** in the header. The archive modal shows all archived items — no dates, just the tasks grouped logically:
+- Subtasks from the same parent are **merged under a single parent header**
+- Top-level tasks each appear as their own card
+- Status and flag badges (Done, Partial, Important, Recurring) are shown on each item
+
+**Restoring an archived item:** click **↩ Restore** on any entry in the archive modal.
+
+| What you restore | Where it lands |
+|---|---|
+| **Top-level task** | Added as a top-level task on today in the active month |
+| **Subtask** (had a parent breadcrumb) | Added as a child of a new wrapper task named after the original parent; if a wrapper with that name already exists on today, the subtask is merged into it |
+
+The restored item is removed from the archive and saved to disk. If today is in the currently active month the task area updates immediately.
+
+**Archive storage:** archived tasks are saved in `data/archive.json`, separate from the monthly data files, so they persist across restarts and are never mixed into the day-by-day task data.
+
+---
+
 ### Excluding Tasks from Summaries
 
 By default every task and subtask is included in work summaries. You can exclude individual tasks or entire subtask hierarchies when they aren't relevant to a summary (e.g. admin tasks, recurring housekeeping items).
@@ -512,13 +545,14 @@ Once you are satisfied with the changes, run `./build.sh` to update your standal
 
 ## Data Storage
 
-Depending on how you run the application, each month's tasks are stored in a separate JSON file:
+Depending on how you run the application, each month's tasks are stored in a separate JSON file. Archived tasks are stored in a single `archive.json` file:
 
 - **macOS Standalone App:** Stored under the system Application Support directory:
   ```
   ~/Library/Application Support/Checkpoint/
   ├── 2026-05.json
   ├── 2026-06.json
+  ├── archive.json
   └── ...
   ```
 - **Terminal/Developer Mode:** Stored locally under the project directory:
@@ -527,10 +561,11 @@ Depending on how you run the application, each month's tasks are stored in a sep
   └── data/
       ├── 2026-05.json
       ├── 2026-06.json
+      ├── archive.json
       └── ...
   ```
 
-Each file contains a map of date strings to day objects:
+Each monthly file contains a map of date strings to day objects:
 
 ```json
 {
@@ -555,6 +590,20 @@ Each file contains a map of date strings to day objects:
 }
 ```
 
+`archive.json` is a flat array of task objects. Each entry carries an `archiveParent` field (`null` for top-level tasks, or `{id, text}` of the original parent for archived subtasks):
+
+```json
+[
+  {
+    "id": "xyz789",
+    "text": "Archived subtask",
+    "status": "pending",
+    "archiveParent": { "id": "abc123", "text": "Parent task" },
+    ...
+  }
+]
+```
+
 The `data/` directory is excluded from git (via `.gitignore`), so your personal tasks are never committed. Each person who clones the repo starts with a blank slate.
 
 ---
@@ -570,6 +619,7 @@ todo-app/
 ├── data.sample.json # Structural template for task data
 └── data/            # Auto-created on first run; gitignored
     └── YYYY-MM.json # One file per month
+    └── archive.json # Archived tasks (created on first archive action)
 ```
 
 ### Source Files (Tracked in Git)
@@ -605,6 +655,8 @@ You will see these files and folders appear based on your actions:
 | `GET` | `/months` | List months that have data files |
 | `GET` | `/data/YYYY-MM` | Load a month's task data |
 | `PUT` | `/data/YYYY-MM` | Save a month's task data |
+| `GET` | `/archive` | Load the archive list |
+| `PUT` | `/archive` | Save the archive list |
 | `POST` | `/summarize` | Generate an AI summary for a date range |
 
 **`index.html`** contains all JavaScript and CSS inline — no build tools, no npm, no bundler required.
@@ -629,6 +681,7 @@ You will see these files and folders appear based on your actions:
 
 - **Daily workflow:** At the end of each day click **⏩ Move to [tomorrow]** to carry forward any incomplete work. Partial tasks leave a record behind so you never lose track of what was started.
 - **Recurring checklist items** (e.g. daily standup, DQ checks): Mark them 🔁 Recurring and they roll forward automatically every day until closed.
+- **Archiving vs deleting:** Use 📦 Archive for tasks you want to keep but remove from the active view — shelved ideas, deferred work, or completed projects you may want to revisit. Use 🗑 Delete only for tasks you're certain you don't need.
 - **End-of-week/month summaries:** Use 📊 Summarize → "This Week" or "This Month" to quickly compile what was accomplished, including any Jira/Slack/Doc links you attached.
 - **Backup regularly:** Use ⬇ Export to save a JSON snapshot. You can re-import it at any time.
 

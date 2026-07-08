@@ -4,8 +4,9 @@
 # ///
 """
 Checkpoint — file server
-Serves index.html and handles GET/PUT /data/YYYY-MM, GET /months, POST /summarize.
+Serves index.html and handles GET/PUT /data/YYYY-MM, GET /months, GET/PUT /archive, POST /summarize.
 Data is stored as data/YYYY-MM.json, one file per month.
+Archived tasks are stored as data/archive.json (flat list of task objects).
 
 LLM auth (first match wins):
   1. Anthropic  — ANTHROPIC_API_KEY
@@ -54,6 +55,7 @@ def get_app_paths():
     return base_dir, data_dir
 
 BASE_DIR, DATA_DIR = get_app_paths()
+ARCHIVE_FILE = DATA_DIR / "archive.json"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -433,6 +435,13 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, json.loads(data_file.read_text()))
             return
 
+        if path == "/archive":
+            if ARCHIVE_FILE.exists():
+                self.send_json(200, json.loads(ARCHIVE_FILE.read_text()))
+            else:
+                self.send_json(200, [])
+            return
+
         if path == "/":
             path = "/index.html"
         file_path = (BASE_DIR / path.lstrip("/")).resolve()
@@ -476,6 +485,21 @@ class Handler(BaseHTTPRequestHandler):
                 return
             data_file = DATA_DIR / f"{month}.json"
             data_file.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+            self.send_json(200, {"ok": True})
+            return
+
+        if path == "/archive":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length)
+            try:
+                data = json.loads(body)
+            except json.JSONDecodeError as e:
+                self.send_text(400, f"Invalid JSON: {e}")
+                return
+            if not isinstance(data, list):
+                self.send_text(400, "Expected a JSON array")
+                return
+            ARCHIVE_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False))
             self.send_json(200, {"ok": True})
             return
 

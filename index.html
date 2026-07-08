@@ -1336,6 +1336,138 @@
       background: rgba(255, 255, 255, 0.7);
     }
 
+    /* ── Archive Modal ── */
+    #archive-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #archive-overlay.open {
+      display: flex;
+    }
+
+    #archive-modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      width: 720px;
+      max-width: 95vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    #archive-modal-head {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #archive-modal-head h2 {
+      flex: 1;
+      font-size: 18px;
+    }
+
+    #archive-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .archive-group {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .archive-group-header {
+      padding: 10px 14px;
+      background: var(--surface3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .archive-group-header .archive-group-icon {
+      color: var(--text3);
+      font-size: 12px;
+    }
+
+    .archive-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .archive-item:last-child {
+      border-bottom: none;
+    }
+
+    .archive-item-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .archive-item-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .archive-item-children {
+      padding: 0 14px 8px 38px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .archive-child-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .archive-child-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    .archive-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    .badge-archived {
+      background: rgba(90, 97, 128, 0.2);
+      color: var(--text3);
+    }
+
     /* ── Empty state ── */
     .empty-state {
       text-align: center;
@@ -1414,6 +1546,8 @@
       <span id="save-toast" style="font-size:12px;color:var(--success);opacity:0;transition:opacity 0.4s;">✓
         Saved</span>
       <button class="btn btn-secondary btn-sm" onclick="openSearchModal()" title="Search tasks (⌘K)">🔍 Search</button>
+      <button class="btn btn-secondary btn-sm" onclick="openArchiveModal()" title="View archived tasks">📦
+        Archive</button>
       <button class="btn btn-secondary btn-sm" id="cal-btn" onclick="toggleCalendar(event)" title="Open calendar">📅
         Calendar</button>
       <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Export all data as JSON">⬇ Export</button>
@@ -1440,6 +1574,19 @@
           <button class="btn-icon" onclick="closeContextPanel()" title="Close">✕</button>
         </div>
         <div id="cp-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archive Modal -->
+  <div id="archive-overlay" onclick="if(event.target===this)closeArchiveModal()">
+    <div id="archive-modal">
+      <div id="archive-modal-head">
+        <h2>📦 Archive</h2>
+        <button class="btn-icon" onclick="closeArchiveModal()">✕</button>
+      </div>
+      <div id="archive-modal-body">
+        <div class="archive-empty">Loading…</div>
       </div>
     </div>
   </div>
@@ -1873,6 +2020,7 @@
         <button class="btn-icon btn-sm" onclick="toggleExcludeFromSummary('${state.activeDay}','${task.id}')" title="${isExcluded ? 'Include in summary' : 'Exclude from summary'}" style="${isExcluded ? 'color:var(--text3)' : ''}">∅</button>
         <button class="btn-icon btn-sm" onclick="copyTask('${task.id}')" title="Copy task">📋</button>
         <button class="btn-icon btn-sm" onclick="addSubtask('${state.activeDay}','${task.id}')" title="Add subtask">⤷</button>
+        <button class="btn-icon btn-sm" onclick="archiveTask('${state.activeDay}','${task.id}')" title="Archive task" style="color:var(--text3)">📦</button>
         <button class="btn-icon btn-sm" onclick="deleteTask('${state.activeDay}','${task.id}')" title="Delete" style="color:var(--danger)">🗑</button>
       </div>
     </div>`;
@@ -3192,6 +3340,214 @@
     function renderSummary(s) {
       // Legacy stub — no longer called; generateSummary() renders directly
       return;
+    }
+
+    // ─────────────────────────────────────────
+    // Archive
+    // ─────────────────────────────────────────
+
+    // In-memory archive list: flat array of task objects with optional archiveParent:{id,text}
+    let _archiveList = [];
+
+    async function loadArchive() {
+      try {
+        const res = await fetch('/archive');
+        _archiveList = res.ok ? await res.json() : [];
+      } catch { _archiveList = []; }
+    }
+
+    async function saveArchive() {
+      try {
+        await fetch('/archive', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(_archiveList, null, 2),
+        });
+      } catch (e) { console.warn('saveArchive failed:', e); }
+      showSaveToast();
+    }
+
+    // Find the immediate parent of a task id within a task list
+    function findParentTask(tasks, childId) {
+      for (const t of tasks) {
+        if (t.children && t.children.some(c => c.id === childId)) return t;
+        const found = findParentTask(t.children || [], childId);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    async function archiveTask(dayKey, taskId) {
+      const day = state.days[dayKey];
+      if (!day) return;
+
+      const parent = findParentTask(day.tasks, taskId);
+      const task = findTask(day.tasks, taskId);
+      if (!task) return;
+
+      // Stamp archiveParent on the task (null if top-level)
+      const archived = JSON.parse(JSON.stringify(task));
+      archived.archiveParent = parent ? { id: parent.id, text: parent.text } : null;
+
+      _archiveList.push(archived);
+
+      // Remove from current day — subtask removed from parent, top-level removed from root
+      day.tasks = removeTask(day.tasks, taskId);
+
+      // If removing a subtask left the parent with no children and no other content, that's fine — parent stays
+      await saveMonth(monthOf(dayKey));
+      await saveArchive();
+
+      // Close context panel if it was showing the archived task
+      if (state.contextTaskId === taskId) {
+        state.contextTaskId = null;
+        document.getElementById('context-panel').classList.remove('open');
+      }
+
+      renderDayList();
+      renderTaskArea();
+    }
+
+    async function restoreArchivedTask(archiveId) {
+      const idx = _archiveList.findIndex(t => t.id === archiveId);
+      if (idx === -1) return;
+
+      const archived = _archiveList[idx];
+      const today = todayKey();
+      await loadMonth(monthOf(today));
+      ensureDay(today);
+
+      // Build the task to restore — strip archive metadata, fresh id to avoid collisions
+      const restored = JSON.parse(JSON.stringify(archived));
+      delete restored.archiveParent;
+
+      if (archived.archiveParent) {
+        // Subtask: restore wrapped in a parent shell, or merge into existing wrapper on today
+        const parentText = archived.archiveParent.text;
+        const todayTasks = state.days[today].tasks;
+        const existingWrapper = todayTasks.find(t => t.text === parentText && !t.archived);
+        if (existingWrapper) {
+          existingWrapper.children.push(restored);
+        } else {
+          const wrapper = makeTask(parentText);
+          wrapper.children = [restored];
+          todayTasks.push(wrapper);
+        }
+      } else {
+        // Top-level task: push directly
+        state.days[today].tasks.push(restored);
+      }
+
+      // Remove from archive
+      _archiveList.splice(idx, 1);
+
+      const activeMonth = state.activeMonth;
+      const todayMonth = monthOf(today);
+      await saveMonth(todayMonth);
+      if (todayMonth !== activeMonth) await saveMonth(activeMonth);
+      await saveArchive();
+
+      // If today is in the current month, re-render so restored task appears
+      if (todayMonth === state.activeMonth) {
+        state.activeDay = today;
+        render();
+      }
+
+      renderArchiveModal();
+    }
+
+    async function openArchiveModal() {
+      document.getElementById('archive-overlay').classList.add('open');
+      await loadArchive();
+      renderArchiveModal();
+    }
+
+    function closeArchiveModal() {
+      document.getElementById('archive-overlay').classList.remove('open');
+    }
+
+    function renderArchiveModal() {
+      const body = document.getElementById('archive-modal-body');
+
+      if (_archiveList.length === 0) {
+        body.innerHTML = '<div class="archive-empty">No archived tasks.</div>';
+        return;
+      }
+
+      // Group: top-level tasks by their own id; subtasks by archiveParent.id
+      // Each group: { groupKey, parentText (label), items: [task, ...] }
+      const groupMap = new Map(); // groupKey → {parentText, items}
+
+      for (const task of _archiveList) {
+        if (task.archiveParent) {
+          const key = 'parent-' + task.archiveParent.id;
+          if (!groupMap.has(key)) groupMap.set(key, { parentText: task.archiveParent.text, items: [] });
+          groupMap.get(key).items.push(task);
+        } else {
+          // Top-level: each is its own group
+          const key = 'task-' + task.id;
+          groupMap.set(key, { parentText: null, items: [task] });
+        }
+      }
+
+      let html = '';
+      for (const [, group] of groupMap) {
+        html += `<div class="archive-group">`;
+
+        if (group.parentText) {
+          // Subtask group — show parent name as header
+          html += `<div class="archive-group-header">
+        <span class="archive-group-icon">⤷</span>
+        <span>${escHtml(group.parentText)}</span>
+      </div>`;
+          html += `<div class="archive-item-children">`;
+          for (const task of group.items) {
+            html += renderArchiveItem(task, true);
+          }
+          html += `</div>`;
+        } else {
+          // Single top-level task
+          const task = group.items[0];
+          html += renderArchiveItem(task, false);
+          // Render the task's own subtrees inside the group card
+          if (task.children && task.children.length) {
+            html += `<div class="archive-item-children">`;
+            task.children.forEach(c => { html += renderArchiveChildTree(c); });
+            html += `</div>`;
+          }
+        }
+
+        html += `</div>`;
+      }
+
+      body.innerHTML = html;
+    }
+
+    function renderArchiveItem(task, isChild) {
+      const badges = archiveBadges(task);
+      const containerClass = isChild ? 'archive-child-item' : 'archive-item';
+      const textClass = isChild ? 'archive-child-text' : 'archive-item-text';
+      return `<div class="${containerClass}">
+    <span class="${textClass}">${escHtml(task.text)}</span>
+    <div class="archive-item-badges">${badges}</div>
+    <button class="btn btn-secondary btn-sm" onclick="restoreArchivedTask('${task.id}')" title="Restore to today in active month">↩ Restore</button>
+  </div>`;
+    }
+
+    function renderArchiveChildTree(task) {
+      return `<div class="archive-child-item" style="margin-left:16px;">
+    <span class="archive-child-text">${escHtml(task.text)}</span>
+    <div class="archive-item-badges">${archiveBadges(task)}</div>
+  </div>`;
+    }
+
+    function archiveBadges(task) {
+      let b = '';
+      if (task.status === 'done') b += `<span class="badge badge-done">Done</span>`;
+      if (task.status === 'partial') b += `<span class="badge badge-partial">Partial</span>`;
+      if (task.important) b += `<span class="badge badge-important">⭐</span>`;
+      if (task.recurring && !task.closed) b += `<span class="badge badge-recurring">🔁</span>`;
+      return b;
     }
 
     // ─────────────────────────────────────────
