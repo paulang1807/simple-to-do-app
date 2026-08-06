@@ -22,6 +22,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Moving Subtasks Between Parents](#moving-subtasks-between-parents)
    - [Copying Tasks Between Days](#copying-tasks-between-days)
    - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
+   - [Copying & Pasting Context Between Tasks](#copying--pasting-context-between-tasks)
    - [Calendar Picker](#calendar-picker)
    - [Searching Tasks](#searching-tasks)
    - [Archiving Tasks](#archiving-tasks)
@@ -45,6 +46,7 @@ Checkpoint helps you track what you work on each day. You can:
 - Roll incomplete tasks forward to the next day with a single click
 - Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides, Qlik Sense, Tableau, Claude AI, Cursor Canvas, and more) and files to any task
 - Expand any note into a full-screen modal for comfortable reading and editing
+- Copy, cut, and paste entire context (notes, links, attachments) between tasks via right-click on the Context badge
 - Browse tasks by month using the calendar picker
 - Search across all tasks and notes instantly with keyboard navigation
 - Filter the task list by status, importance, recurrence, or exclusion — combinations supported
@@ -379,6 +381,33 @@ To **delete a link**, click **🗑** on the link card.
 Click **📎 Attach File** to attach one or more files. File name and size are recorded. The `📎 Context` badge appears on the task row whenever any context exists.
 
 Context (notes, links, attachments) is included in work summaries.
+
+---
+
+### Copying & Pasting Context Between Tasks
+
+You can copy or cut the entire context (notes, links, and attachments) from one task and paste it onto any other task or subtask in the main task view.
+
+**To copy or cut context:**
+- **Right-click** the `📎 Context` badge on any task row, **or** hover the row and right-click the **📎** action button (works on tasks with or without existing context)
+- A menu appears with three options:
+  - **📋 Copy Context** — copies the context to the clipboard; the source task is unchanged
+  - **✂️ Cut Context** — copies the context to the clipboard and immediately clears the source task's context (notes, links, and attachments are all removed)
+  - **📌 Paste Context** — pastes the clipboard contents onto the right-clicked task (only enabled when the clipboard has content)
+
+**To paste:**
+- Right-click the `📎 Context` badge on the destination task
+- Click **📌 Paste Context**
+- If the target task already has context, a prompt asks how to paste:
+  - **Merge** — appends clipboard notes, links, and attachments to the existing ones
+  - **Replace** — overwrites the target's context entirely with the clipboard contents
+- If the target task has no existing context, the paste happens immediately without a prompt
+
+**Behaviour:**
+- The clipboard persists for the duration of the session — you can paste the same context onto multiple tasks
+- Cut immediately saves the cleared source; Paste immediately saves the destination
+- A brief toast notification confirms each action ("Context copied", "Context cut", "Context pasted")
+- Dismiss the menu at any time by clicking elsewhere or pressing **Esc**
 
 ---
 

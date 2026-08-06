@@ -2010,6 +2010,110 @@
       font-size: 14px;
     }
 
+    /* ── Context clipboard menu ── */
+    #ctx-menu {
+      position: fixed;
+      z-index: 600;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 4px 0;
+      min-width: 180px;
+      display: none;
+    }
+
+    #ctx-menu.open {
+      display: block;
+    }
+
+    .ctx-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.1s;
+      white-space: nowrap;
+    }
+
+    .ctx-menu-item:hover {
+      background: var(--surface2);
+    }
+
+    .ctx-menu-item.disabled {
+      color: var(--text3);
+      cursor: default;
+    }
+
+    .ctx-menu-item.disabled:hover {
+      background: transparent;
+    }
+
+    .ctx-menu-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 3px 0;
+    }
+
+    .ctx-menu-icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Paste-confirm modal ── */
+    #paste-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 700;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #paste-confirm-overlay.open {
+      display: flex;
+    }
+
+    #paste-confirm-modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      width: 400px;
+      max-width: 95vw;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #paste-confirm-modal h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+
+    #paste-confirm-modal p {
+      font-size: 13px;
+      color: var(--text2);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    #paste-confirm-modal .paste-confirm-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
     /* ── Empty state ── */
     .empty-state {
       text-align: center;
@@ -2166,6 +2270,30 @@
       </div>
       <div id="archive-modal-body">
         <div class="archive-empty">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context clipboard right-click menu -->
+  <div id="ctx-menu">
+    <div class="ctx-menu-item" id="ctx-menu-copy" onclick="ctxMenuCopy()"><span class="ctx-menu-icon">📋</span> Copy
+      Context</div>
+    <div class="ctx-menu-item" id="ctx-menu-cut" onclick="ctxMenuCut()"><span class="ctx-menu-icon">✂️</span> Cut
+      Context</div>
+    <div class="ctx-menu-sep"></div>
+    <div class="ctx-menu-item" id="ctx-menu-paste" onclick="ctxMenuPaste()"><span class="ctx-menu-icon">📌</span> Paste
+      Context</div>
+  </div>
+
+  <!-- Paste-confirm modal -->
+  <div id="paste-confirm-overlay">
+    <div id="paste-confirm-modal">
+      <h3>Paste Context</h3>
+      <p id="paste-confirm-msg">This task already has context. How would you like to paste?</p>
+      <div class="paste-confirm-btns">
+        <button class="btn btn-secondary btn-sm" onclick="closePasteConfirm()">Cancel</button>
+        <button class="btn btn-secondary btn-sm" onclick="executePaste('merge')">Merge</button>
+        <button class="btn btn-primary btn-sm" onclick="executePaste('replace')">Replace</button>
       </div>
     </div>
   </div>
@@ -2339,6 +2467,137 @@
 
     // Clipboard: holds a copied task (with subtasks) until pasted or overwritten
     let _clipboard = null;
+
+    // Context clipboard: holds copied/cut context { notes, links, attachments }
+    let _ctxClipboard = null;
+    // Pending paste target: { dayKey, taskId }
+    let _pasteTarget = null;
+
+    function showCtxMenu(event, dayKey, taskId) {
+      event.preventDefault();
+      event.stopPropagation();
+      hideCtxPreview();
+      _ctxMenuTarget = { dayKey, taskId };
+
+      const pasteItem = document.getElementById('ctx-menu-paste');
+      if (_ctxClipboard) {
+        pasteItem.classList.remove('disabled');
+      } else {
+        pasteItem.classList.add('disabled');
+      }
+
+      const menu = document.getElementById('ctx-menu');
+      menu.style.left = Math.min(event.clientX, window.innerWidth - 200) + 'px';
+      menu.style.top = '-9999px';
+      menu.classList.add('open');
+      const menuH = menu.offsetHeight;
+      const top = event.clientY + menuH > window.innerHeight ? event.clientY - menuH : event.clientY;
+      menu.style.top = Math.max(0, top) + 'px';
+
+      setTimeout(() => document.addEventListener('click', _hideCtxMenuOnClick, { once: true }), 0);
+    }
+
+    let _ctxMenuTarget = null;
+
+    function _hideCtxMenuOnClick() {
+      document.getElementById('ctx-menu').classList.remove('open');
+    }
+
+    function hideCtxMenu() {
+      document.getElementById('ctx-menu').classList.remove('open');
+      document.removeEventListener('click', _hideCtxMenuOnClick);
+    }
+
+    function ctxMenuCopy() {
+      hideCtxMenu();
+      if (!_ctxMenuTarget) return;
+      const { dayKey, taskId } = _ctxMenuTarget;
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task || !task.context) return;
+      _ctxClipboard = JSON.parse(JSON.stringify(task.context));
+      showToast('Context copied');
+    }
+
+    function ctxMenuCut() {
+      hideCtxMenu();
+      if (!_ctxMenuTarget) return;
+      const { dayKey, taskId } = _ctxMenuTarget;
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task || !task.context) return;
+      _ctxClipboard = JSON.parse(JSON.stringify(task.context));
+      task.context = { notes: [], links: [], attachments: [] };
+      saveData();
+      renderTaskArea();
+      if (state.contextTaskId === taskId) renderContextPanel();
+      showToast('Context cut');
+    }
+
+    function ctxMenuPaste() {
+      hideCtxMenu();
+      if (!_ctxClipboard || !_ctxMenuTarget) return;
+      const { dayKey, taskId } = _ctxMenuTarget;
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task) return;
+      if (!task.context) task.context = { notes: [], links: [], attachments: [] };
+
+      const hasExisting =
+        (task.context.notes && task.context.notes.length > 0) ||
+        (task.context.links && task.context.links.length > 0) ||
+        (task.context.attachments && task.context.attachments.length > 0);
+
+      _pasteTarget = { dayKey, taskId };
+
+      if (hasExisting) {
+        document.getElementById('paste-confirm-overlay').classList.add('open');
+      } else {
+        executePaste('replace');
+      }
+    }
+
+    function executePaste(mode) {
+      closePasteConfirm();
+      if (!_ctxClipboard || !_pasteTarget) return;
+      const { dayKey, taskId } = _pasteTarget;
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task) return;
+      if (!task.context) task.context = { notes: [], links: [], attachments: [] };
+
+      const src = _ctxClipboard;
+      if (mode === 'replace') {
+        task.context = JSON.parse(JSON.stringify(src));
+      } else {
+        task.context.notes = [...(task.context.notes || []), ...JSON.parse(JSON.stringify(src.notes || []))];
+        task.context.links = [...(task.context.links || []), ...JSON.parse(JSON.stringify(src.links || []))];
+        task.context.attachments = [...(task.context.attachments || []), ...JSON.parse(JSON.stringify(src.attachments || []))];
+      }
+
+      saveData();
+      renderTaskArea();
+      if (state.contextTaskId === taskId) renderContextPanel();
+      _pasteTarget = null;
+      showToast('Context pasted');
+    }
+
+    function closePasteConfirm() {
+      document.getElementById('paste-confirm-overlay').classList.remove('open');
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('save-toast');
+      if (!el) return;
+      el.textContent = '✓ ' + msg;
+      el.style.opacity = '1';
+      clearTimeout(el._toastTimer);
+      el._toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+    }
 
     function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
@@ -2629,7 +2888,7 @@
         badges += `<span class="badge badge-subtask-counts" title="Subtask counts">${parts.join(' · ')}</span>`;
       }
       if (isExcluded) badges += `<span class="badge badge-excluded" title="Excluded from summary">∅ Excluded</span>`;
-      if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" onmouseenter="showCtxPreview(event,'${task.id}')" onmouseleave="hideCtxPreview()">📎 Context</span>`;
+      if (hasCtx) badges += `<span class="badge badge-ctx" onclick="openContext('${state.activeDay}','${task.id}')" oncontextmenu="showCtxMenu(event,'${state.activeDay}','${task.id}')" onmouseenter="showCtxPreview(event,'${task.id}')" onmouseleave="hideCtxPreview()">📎 Context</span>`;
 
       let html = `<div class="task-block" id="tb-${task.id}" draggable="true"
     data-id="${task.id}" data-day="${state.activeDay}"
@@ -2654,7 +2913,7 @@
       <div class="task-badges">${badges}</div>
       <div class="task-actions">
         <button class="btn-icon btn-sm star-btn ${isImportant ? 'on' : ''}" onclick="toggleImportant('${state.activeDay}','${task.id}')" title="${isImportant ? 'Unmark important' : 'Mark as important'}">★</button>
-        <button class="btn-icon btn-sm" onclick="openContext('${state.activeDay}','${task.id}')" title="Context">📎</button>
+        <button class="btn-icon btn-sm" onclick="openContext('${state.activeDay}','${task.id}')" oncontextmenu="showCtxMenu(event,'${state.activeDay}','${task.id}')" title="Context (right-click to copy/cut/paste)">📎</button>
         <button class="btn-icon btn-sm" onclick="togglePartial('${state.activeDay}','${task.id}')" title="Mark partial">◑</button>
         <button class="btn-icon btn-sm" onclick="toggleRecurring('${state.activeDay}','${task.id}')" title="${isRecurring ? 'Disable recurring' : 'Make recurring'}" style="${isRecurring ? 'color:var(--accent)' : ''}">🔁</button>
         ${isRecurring && !isClosed ? `<button class="btn-icon btn-sm" onclick="closeRecurring('${state.activeDay}','${task.id}')" title="Close recurring (stop repeating)" style="color:var(--warn)">⏹</button>` : ''}
@@ -3317,6 +3576,7 @@
         <div class="link-label">${escHtml(link.label || link.type)}</div>
         <a class="link-url" href="${escHtml(link.url)}" target="_blank" rel="noopener">${escHtml(link.url)}</a>
       </div>
+      <button class="btn-icon" id="copy-link-btn-${i}" onclick="copyLinkUrl('${escHtml(link.url)}', ${i})" title="Copy URL">📋</button>
       <button class="btn-icon" onclick="toggleEditLink(${i})" title="Edit">✏️</button>
       <button class="btn-icon" onclick="deleteLink(${i})" title="Delete">🗑</button>
     </div>
@@ -3491,6 +3751,16 @@
       task.context.links.splice(index, 1);
       saveData();
       renderContextPanel();
+    }
+
+    function copyLinkUrl(url, index) {
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById(`copy-link-btn-${index}`);
+        if (!btn) return;
+        btn.textContent = '✓';
+        btn.style.color = 'var(--success)';
+        setTimeout(() => { btn.textContent = '📋'; btn.style.color = ''; }, 1500);
+      });
     }
 
     function toggleEditLink(index) {
@@ -3881,6 +4151,10 @@
         } else {
           openSearchModal();
         }
+      }
+      if (e.key === 'Escape') {
+        hideCtxMenu();
+        closePasteConfirm();
       }
     });
 
