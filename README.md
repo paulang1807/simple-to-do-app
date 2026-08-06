@@ -25,6 +25,8 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Calendar Picker](#calendar-picker)
    - [Searching Tasks](#searching-tasks)
    - [Archiving Tasks](#archiving-tasks)
+   - [Filtering Tasks](#filtering-tasks)
+   - [Contexts View](#contexts-view)
    - [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)
    - [Work Summary](#work-summary)
    - [Export & Import](#export--import)
@@ -41,10 +43,13 @@ Checkpoint helps you track what you work on each day. You can:
 - Mark tasks as done, partially done, or pending
 - Flag important tasks and recurring tasks
 - Roll incomplete tasks forward to the next day with a single click
-- Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides) and files to any task
+- Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides, Qlik Sense, Tableau, Claude AI, Cursor Canvas, and more) and files to any task
+- Expand any note into a full-screen modal for comfortable reading and editing
 - Browse tasks by month using the calendar picker
 - Search across all tasks and notes instantly with keyboard navigation
-- Archive tasks and subtasks out of the active view, and restore them to the current day
+- Filter the task list by status, importance, recurrence, or exclusion — combinations supported
+- Archive tasks and subtasks out of the active view, with context visible in the archive
+- Browse all context items (notes, links, attachments) across a date range in the Contexts View
 - Generate summaries of work done over a week, month, quarter, or year
 
 ---
@@ -148,7 +153,7 @@ If no API key is configured, summary generation will return an error explaining 
 
 | Area | Purpose |
 |---|---|
-| **Header** | App title, Search tasks, open Archive view, open Calendar picker, Export/Import data, open Summarize modal |
+| **Header** | App title, Search tasks, open Contexts view, open Archive view, open Calendar picker, Export/Import data, open Summarize modal |
 | **Day sidebar** | All days of the active month; blue dot = has tasks; ● = today |
 | **Task area** | Tasks for the selected day, action buttons in the header row |
 | **Context panel** | Slides in from the right when you click 📎 on a task |
@@ -341,6 +346,8 @@ The panel slides in from the right and shows:
 #### Notes
 Free-form text notes. Click **+ Add Note** to create one. Notes auto-save on blur. Click **Delete** to remove a note.
 
+For long notes, click the **⛶ Expand** button in the top-right corner of the note card to open the note in a large modal. The modal is fully editable and saves automatically when closed.
+
 #### Links
 Attach URLs categorised by type:
 
@@ -352,7 +359,15 @@ Attach URLs categorised by type:
 | Google Sheets | 📊 |
 | Google Slides | 📽️ |
 | GitHub | 🐙 |
-| Other | 🔗 |
+| Cursor Canvas | *(Cursor logo)* |
+| Claude AI | *(Anthropic logo)* |
+| Local File | 📁 |
+| Qlik Sense | *(Qlik logo)* |
+| Tableau | *(Tableau logo)* |
+| Wiki | 📖 |
+| NotebookLM | *(NotebookLM logo)* |
+| GitHub Pages | 🌐 |
+| Other Link | 🔗 |
 
 Click **+ Add Link**, select the type, enter an optional label and the URL, then click **Save**.
 
@@ -436,8 +451,9 @@ Use the archive to remove tasks or subtasks from the active view without deletin
 
 **Viewing the archive:** click **📦 Archive** in the header. The archive modal shows all archived items — no dates, just the tasks grouped logically:
 - Subtasks from the same parent are **merged under a single parent header**
-- Top-level tasks each appear as their own card
+- Top-level tasks each appear as their own card, with their subtask hierarchy shown beneath
 - Status and flag badges (Done, Partial, Important, Recurring) are shown on each item
+- If a task or subtask has context (notes, links, or attachments), a **📎 Context** button appears — click it to expand the context inline within the archive card. Click **📎 Hide** to collapse it again.
 
 **Restoring an archived item:** click **↩ Restore** on any entry in the archive modal.
 
@@ -449,6 +465,54 @@ Use the archive to remove tasks or subtasks from the active view without deletin
 The restored item is removed from the archive and saved to disk. If today is in the currently active month the task area updates immediately.
 
 **Archive storage:** archived tasks are saved in `data/archive.json`, separate from the monthly data files, so they persist across restarts and are never mixed into the day-by-day task data.
+
+---
+
+### Filtering Tasks
+
+A filter bar sits between the day header and the task list. Click any chip to show only tasks matching that criterion; click again to deactivate it.
+
+| Filter | Shows |
+|---|---|
+| ⭐ **Important** | Tasks (or subtasks) marked important |
+| 🔁 **Recurring** | Tasks (or subtasks) marked recurring |
+| ◑ **Partial** | Tasks (or subtasks) with partial status |
+| ✓ **Done** | Tasks (or subtasks) marked done |
+| ○ **Pending** | Tasks (or subtasks) still pending |
+| ∅ **Excluded** | Tasks (or subtasks) excluded from summaries |
+
+**Combining filters:** multiple chips can be active at once — results must match **all** active filters. For example, activating ⭐ Important and ✓ Done shows only tasks that are both important and done.
+
+**Subtree pruning:** when a filter is active, only the specific branches that match are shown. Non-matching siblings are hidden — so if one subtask matches but its sibling does not, only the matching subtask appears under the parent.
+
+**Result count:** when any filter is active, a "N of M shown" count appears and a **✕ Clear** button resets all filters at once.
+
+---
+
+### Contexts View
+
+Click **🔗 Contexts** in the header to open a full-screen table of every note, link, and attachment across all tasks in a date range.
+
+**Default range:** the current month (first day to last day). You can change the start and end dates to any range — data for months not yet loaded is fetched automatically.
+
+**What each row shows:**
+
+| Column | Content |
+|---|---|
+| **Date** | The day the task belongs to |
+| **Task** | Breadcrumb path from the top-level task down to the task that owns the context item (bold = deepest task) |
+| **Type** | Type chip — 🔵 Jira, 💬 Slack, 📄 Google Docs, 📊 Google Sheets, 📽️ Google Slides, 🐙 GitHub, 🔗 Link, 📝 Note, 📎 Attachment |
+| **Content** | Label + URL (clickable) for links; text preview for notes; filename for attachments |
+
+**Searching:** type in the search box to filter rows. Matches against task and subtask text (highlighted in the breadcrumb column), note content, and link labels. Matching text is highlighted in the results. The count in the header updates to show how many rows matched. A **✕** button appears inside the search box when there is text — click it to clear the search instantly.
+
+**Editing a link:** click the ✏️ pencil icon on any link row to open an inline edit form. You can change:
+- **Type** — dropdown with all supported link types
+- **Label** — the display name shown in the content column
+
+Click **Save** to persist the change (it saves back to the source month file and updates the context panel if it is open). Click **Cancel** to discard. Note and attachment rows are read-only in this view.
+
+**Jumping to a task:** click the **↗** icon on any row to close the Contexts View, navigate to the day that contains the task, expand any collapsed ancestors, and scroll the task into view with a brief highlight.
 
 ---
 

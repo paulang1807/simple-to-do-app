@@ -202,7 +202,94 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
+    }
+
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      min-height: 28px;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text3);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--text3);
+      color: var(--text2);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .filter-chip.fc-important.active {
+      background: #c8972a;
+      border-color: #c8972a;
+    }
+
+    .filter-chip.fc-recurring.active {
+      background: #4a90d9;
+      border-color: #4a90d9;
+    }
+
+    .filter-chip.fc-partial.active {
+      background: #c87c2a;
+      border-color: #c87c2a;
+    }
+
+    .filter-chip.fc-done.active {
+      background: #3a9e6e;
+      border-color: #3a9e6e;
+    }
+
+    .filter-chip.fc-pending.active {
+      background: #6c7a8a;
+      border-color: #6c7a8a;
+    }
+
+    .filter-chip.fc-excluded.active {
+      background: #7a6a9e;
+      border-color: #7a6a9e;
+    }
+
+    .filter-clear {
+      font-size: 11px;
+      color: var(--text3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 4px;
+      margin-left: 2px;
+    }
+
+    .filter-clear:hover {
+      color: var(--text);
+    }
+
+    .filter-count {
+      font-size: 11px;
+      color: var(--text3);
+      margin-left: 4px;
     }
 
     .day-header h2 {
@@ -712,9 +799,11 @@
     }
 
     .note-card {
+      position: relative;
       background: var(--surface2);
       border-radius: var(--radius);
       padding: 10px;
+      padding-top: 30px;
       border: 1px solid var(--border);
     }
 
@@ -729,6 +818,7 @@
       min-height: 60px;
       font-family: inherit;
       line-height: 1.5;
+      box-sizing: border-box;
     }
 
     .note-card .note-actions {
@@ -736,6 +826,110 @@
       justify-content: flex-end;
       gap: 4px;
       margin-top: 6px;
+    }
+
+    .note-expand-btn {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 11px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      line-height: 1.4;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .note-expand-btn:hover {
+      color: var(--text);
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    #note-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #note-modal-overlay.open {
+      display: flex;
+    }
+
+    #note-modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      width: 700px;
+      max-width: 95vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    #note-modal-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #note-modal-head h3 {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin: 0;
+    }
+
+    #note-modal-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    #note-modal-textarea {
+      flex: 1;
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.65;
+      padding: 12px;
+      outline: none;
+      resize: none;
+      min-height: 300px;
+      box-sizing: border-box;
+    }
+
+    #note-modal-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    #note-modal-foot {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
     }
 
     .link-card {
@@ -1463,9 +1657,357 @@
       font-size: 14px;
     }
 
+    .archive-ctx-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 11px;
+      padding: 2px 7px;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .archive-ctx-toggle:hover {
+      color: var(--text);
+      border-color: var(--text3);
+    }
+
+    .archive-ctx-panel {
+      padding: 8px 14px 10px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .archive-ctx-section {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text3);
+      margin-bottom: 2px;
+    }
+
+    .archive-ctx-note {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 10px;
+      font-size: 12px;
+      color: var(--text2);
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .archive-ctx-link {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .archive-ctx-link a {
+      color: var(--accent);
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .archive-ctx-link a:hover {
+      text-decoration: underline;
+    }
+
+    .archive-ctx-att {
+      font-size: 12px;
+      color: var(--text2);
+    }
+
     .badge-archived {
       background: rgba(90, 97, 128, 0.2);
       color: var(--text3);
+    }
+
+    /* ── Contexts View Modal ── */
+    #ctx-view-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #ctx-view-overlay.open {
+      display: flex;
+    }
+
+    #ctx-view-modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      width: 900px;
+      max-width: 96vw;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    #ctx-view-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #ctx-view-head h2 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    #ctx-view-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    #ctx-view-controls input[type="date"] {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    #ctx-view-controls input[type="date"]:focus {
+      border-color: var(--accent);
+    }
+
+    #ctx-view-search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      align-items: center;
+    }
+
+    #ctx-view-search {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 28px 5px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    #ctx-view-search:focus {
+      border-color: var(--accent);
+    }
+
+    #ctx-view-search::placeholder {
+      color: var(--text3);
+    }
+
+    #ctx-view-search-clear {
+      position: absolute;
+      right: 7px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px;
+      display: none;
+    }
+
+    #ctx-view-search-clear:hover {
+      color: var(--text);
+    }
+
+    #ctx-view-search-clear.visible {
+      display: block;
+    }
+
+    #ctx-view-meta {
+      font-size: 12px;
+      color: var(--text3);
+      white-space: nowrap;
+    }
+
+    #ctx-view-body {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .ctxv-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .ctxv-table th {
+      position: sticky;
+      top: 0;
+      background: var(--surface2);
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text3);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .ctxv-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .ctxv-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .ctxv-table tr:hover td {
+      background: var(--surface2);
+    }
+
+    .ctxv-date {
+      color: var(--accent2);
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .ctxv-task {
+      color: var(--text2);
+      font-size: 12px;
+      max-width: 180px;
+    }
+
+    .ctxv-task .ctxv-task-link {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .ctxv-task .ctxv-task-link:hover {
+      text-decoration: underline;
+    }
+
+    .ctxv-task .ctxv-crumb {
+      color: var(--text3);
+    }
+
+    .ctxv-type {
+      white-space: nowrap;
+    }
+
+    .ctxv-type-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .ctxv-type-link {
+      background: rgba(108, 142, 245, 0.15);
+      color: var(--accent);
+    }
+
+    .ctxv-type-note {
+      background: rgba(76, 175, 136, 0.15);
+      color: var(--success);
+    }
+
+    .ctxv-type-att {
+      background: rgba(240, 160, 75, 0.15);
+      color: var(--warn);
+    }
+
+    .ctxv-content {
+      max-width: 320px;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .ctxv-url {
+      font-size: 11px;
+      color: var(--accent);
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 280px;
+    }
+
+    .ctxv-note-text {
+      color: var(--text2);
+      font-size: 12px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .ctxv-actions {
+      white-space: nowrap;
+    }
+
+    .ctxv-edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ctxv-edit-form select,
+    .ctxv-edit-form input {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 8px;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      width: 100%;
+    }
+
+    .ctxv-edit-form select:focus,
+    .ctxv-edit-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .ctxv-edit-btns {
+      display: flex;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .ctxv-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+      font-size: 14px;
     }
 
     /* ── Empty state ── */
@@ -1546,6 +2088,7 @@
       <span id="save-toast" style="font-size:12px;color:var(--success);opacity:0;transition:opacity 0.4s;">✓
         Saved</span>
       <button class="btn btn-secondary btn-sm" onclick="openSearchModal()" title="Search tasks (⌘K)">🔍 Search</button>
+      <button class="btn btn-secondary btn-sm" onclick="openCtxView()" title="View all contexts">🔗 Contexts</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal()" title="View archived tasks">📦
         Archive</button>
       <button class="btn btn-secondary btn-sm" id="cal-btn" onclick="toggleCalendar(event)" title="Open calendar">📅
@@ -1578,7 +2121,43 @@
     </div>
   </div>
 
+  <!-- Contexts View Modal -->
+  <div id="ctx-view-overlay" onclick="if(event.target===this)closeCtxView()">
+    <div id="ctx-view-modal">
+      <div id="ctx-view-head">
+        <h2>🔗 Contexts</h2>
+        <div id="ctx-view-controls">
+          <input type="date" id="ctx-view-from" onchange="refreshCtxView()" />
+          <span style="font-size:12px;color:var(--text3);">to</span>
+          <input type="date" id="ctx-view-to" onchange="refreshCtxView()" />
+          <div id="ctx-view-search-wrap">
+            <input type="text" id="ctx-view-search" placeholder="Search…" oninput="updateCtxSearch()" />
+            <button id="ctx-view-search-clear" onclick="clearCtxSearch()" title="Clear search">✕</button>
+          </div>
+          <span id="ctx-view-meta"></span>
+        </div>
+        <button class="btn-icon" onclick="closeCtxView()">✕</button>
+      </div>
+      <div id="ctx-view-body"></div>
+    </div>
+  </div>
+
   <!-- Archive Modal -->
+  <div id="note-modal-overlay" onclick="if(event.target===this)closeNoteModal()">
+    <div id="note-modal">
+      <div id="note-modal-head">
+        <h3 id="note-modal-title"></h3>
+        <button class="btn-icon" onclick="closeNoteModal()">✕</button>
+      </div>
+      <div id="note-modal-body">
+        <textarea id="note-modal-textarea" placeholder="Note…"></textarea>
+      </div>
+      <div id="note-modal-foot">
+        <button class="btn btn-secondary btn-sm" onclick="closeNoteModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div id="archive-overlay" onclick="if(event.target===this)closeArchiveModal()">
     <div id="archive-modal">
       <div id="archive-modal-head">
@@ -1755,6 +2334,7 @@
       activeDay: null,
       contextTaskId: null,
       contextDayKey: null,
+      taskFilters: new Set(), // active filter chips
     };
 
     // Clipboard: holds a copied task (with subtasks) until pasted or overwritten
@@ -1900,6 +2480,26 @@
       const hasIncomplete = tasks.some(t => hasIncompleteDeep(t));
       const nextDay = nextDayKey(key);
 
+      const FILTER_DEFS = [
+        { key: 'important', label: '⭐ Important', cls: 'fc-important' },
+        { key: 'recurring', label: '🔁 Recurring', cls: 'fc-recurring' },
+        { key: 'partial', label: '◑ Partial', cls: 'fc-partial' },
+        { key: 'done', label: '✓ Done', cls: 'fc-done' },
+        { key: 'pending', label: '○ Pending', cls: 'fc-pending' },
+        { key: 'excluded', label: '∅ Excluded', cls: 'fc-excluded' },
+      ];
+      const activeFilters = state.taskFilters;
+      const filterChips = FILTER_DEFS.map(f =>
+        `<button class="filter-chip ${f.cls}${activeFilters.has(f.key) ? ' active' : ''}" onclick="toggleTaskFilter('${f.key}')">${f.label}</button>`
+      ).join('');
+      const clearBtn = activeFilters.size > 0
+        ? `<button class="filter-clear" onclick="clearTaskFilters()" title="Clear all filters">✕ Clear</button>` : '';
+
+      // Apply filters: prune each top-level task to only matching branches
+      const visibleTasks = activeFilters.size === 0 ? tasks : tasks.map(t => pruneTaskToFilters(t, activeFilters)).filter(Boolean);
+      const filteredCount = activeFilters.size > 0
+        ? `<span class="filter-count">${visibleTasks.length} of ${tasks.length} shown</span>` : '';
+
       let html = `<div class="day-header fade-in">
     <h2>${dateLabel}</h2>
     ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
@@ -1910,11 +2510,15 @@
     <button class="btn btn-secondary btn-sm" onclick="expandAll()" title="Expand all tasks">⊞ Expand All</button>
   </div>`;
 
+      html += `<div class="filter-bar">${filterChips}${clearBtn}${filteredCount}</div>`;
+
       html += `<div class="task-list fade-in" id="tl-${key}">`;
       if (tasks.length === 0) {
         html += `<div class="empty-state"><div class="icon">📝</div><p>No tasks yet. Add one below!</p></div>`;
+      } else if (visibleTasks.length === 0) {
+        html += `<div class="empty-state"><div class="icon">🔍</div><p>No tasks match the active filters.</p></div>`;
       } else {
-        tasks.forEach(t => { html += renderTaskBlock(t, 0); });
+        visibleTasks.forEach(t => { html += renderTaskBlock(t, 0); });
       }
       html += `</div>`;
 
@@ -1924,6 +2528,43 @@
   </div>`;
 
       document.getElementById('task-area').innerHTML = html;
+    }
+
+    function taskNodeMatchesFilters(task, filters) {
+      if (filters.has('important') && !task.important) return false;
+      if (filters.has('recurring') && !task.recurring) return false;
+      if (filters.has('excluded') && !task.excludeFromSummary) return false;
+      if (filters.has('done') && task.status !== 'done') return false;
+      if (filters.has('partial') && task.status !== 'partial') return false;
+      if (filters.has('pending') && task.status !== 'pending') return false;
+      return true;
+    }
+
+    // Returns a shallow-copied task with children pruned to only matching branches,
+    // or null if neither this node nor any descendant matches the filters.
+    function pruneTaskToFilters(task, filters) {
+      const prunedChildren = (task.children || [])
+        .map(c => pruneTaskToFilters(c, filters))
+        .filter(Boolean);
+      const selfMatches = taskNodeMatchesFilters(task, filters);
+      if (!selfMatches && prunedChildren.length === 0) return null;
+      return { ...task, children: prunedChildren };
+    }
+
+    function toggleTaskFilter(key) {
+      if (state.taskFilters.has(key)) {
+        state.taskFilters.delete(key);
+        // Remove mutually exclusive status filters when toggling one off is fine
+      } else {
+        // done / partial / pending are status filters — allow combining freely
+        state.taskFilters.add(key);
+      }
+      renderTaskArea();
+    }
+
+    function clearTaskFilters() {
+      state.taskFilters.clear();
+      renderTaskArea();
     }
 
     function hasIncompleteDeep(task) {
@@ -2653,7 +3294,8 @@
     <div class="cp-section-title">Notes</div>`;
       ctx.notes.forEach((note, i) => {
         html += `<div class="note-card">
-      <textarea onblur="updateNote('${i}',this.value)">${escHtml(note.text)}</textarea>
+      <button class="note-expand-btn" onclick="openNoteModal(${i})" title="Expand note">⛶ Expand</button>
+      <textarea id="note-ta-${i}" onblur="updateNote('${i}',this.value)">${escHtml(note.text)}</textarea>
       <div class="note-actions">
         <button class="btn btn-danger btn-sm" onclick="deleteNote(${i})">Delete</button>
       </div>
@@ -2665,7 +3307,7 @@
       // Links
       html += `<div class="cp-section">
     <div class="cp-section-title">Links</div>`;
-      const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Link'];
+      const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Link'];
       ctx.links.forEach((link, i) => {
         const icon = linkIcon(link.type);
         const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t === link.type ? ' selected' : ''}>${t}</option>`).join('');
@@ -2696,6 +3338,14 @@
       <option value="Google Sheets">Google Sheets</option>
       <option value="Google Slides">Google Slides</option>
       <option value="GitHub">GitHub</option>
+      <option value="Cursor Canvas">Cursor Canvas</option>
+      <option value="Claude AI">Claude AI</option>
+      <option value="Local File">Local File</option>
+      <option value="Qlik Sense">Qlik Sense</option>
+      <option value="Tableau">Tableau</option>
+      <option value="Wiki">Wiki</option>
+      <option value="NotebookLM">NotebookLM</option>
+      <option value="GitHub Pages">GitHub Pages</option>
       <option value="Link">Other Link</option>
     </select>
     <input id="link-label" placeholder="Label (optional)" />
@@ -2729,8 +3379,16 @@
     }
 
     function linkIcon(type) {
-      const map = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'GitHub': '🐙', 'Link': '🔗' };
-      return map[type] || '🔗';
+      const svgMap = {
+        'Qlik Sense': `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0"><circle cx="8" cy="8" r="8" fill="#52CC6C"/><path d="M8 3.2a4.8 4.8 0 1 0 3.394 8.194l1.006 1.006.849-.849-1.006-1.006A4.8 4.8 0 0 0 8 3.2zm0 1.2a3.6 3.6 0 1 1-2.545 6.145L8 8v-3.6zm1.2 0v3.103l1.697 1.697A3.594 3.594 0 0 0 11.6 8a3.6 3.6 0 0 0-2.4-3.4z" fill="white"/></svg>`,
+        'Tableau': `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect x="7" y="1" width="2" height="14" rx="1" fill="#E97627"/><rect x="1" y="7" width="14" height="2" rx="1" fill="#E97627"/><rect x="4.5" y="4.5" width="2" height="7" rx="1" fill="#5B9BD5"/><rect x="9.5" y="4.5" width="2" height="7" rx="1" fill="#5B9BD5"/><rect x="4.5" y="4.5" width="7" height="2" rx="1" fill="#5B9BD5"/><rect x="4.5" y="9.5" width="7" height="2" rx="1" fill="#5B9BD5"/></svg>`,
+        'Claude AI': `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M8 1.5L13.5 5v6L8 14.5 2.5 11V5L8 1.5z" fill="#D4A27F"/><path d="M5.5 9.5L8 5l2.5 4.5H5.5z" fill="#1A1A1A" opacity="0.7"/></svg>`,
+        'Cursor Canvas': `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="16" height="16" rx="4" fill="#1A1A1A"/><path d="M4 3l2.5 9 2-3.5L12 7 4 3z" fill="white"/><path d="M8.5 8.5l2 3.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+        'NotebookLM': `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect x="3" y="1" width="10" height="14" rx="1.5" fill="#4285F4"/><rect x="5" y="1" width="2" height="14" fill="#1A73E8"/><rect x="5.5" y="4" width="5" height="1.2" rx="0.6" fill="white"/><rect x="5.5" y="6.5" width="5" height="1.2" rx="0.6" fill="white"/><rect x="5.5" y="9" width="3.5" height="1.2" rx="0.6" fill="white"/></svg>`,
+      };
+      if (svgMap[type]) return svgMap[type];
+      const emojiMap = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'GitHub': '🐙', 'Local File': '📁', 'Wiki': '📖', 'GitHub Pages': '🌐', 'Link': '🔗' };
+      return emojiMap[type] || '🔗';
     }
 
     function fileIcon(name) {
@@ -2778,6 +3436,41 @@
       task.context.notes.splice(index, 1);
       saveData();
       renderContextPanel();
+    }
+
+    let _noteModalIndex = null;
+
+    function openNoteModal(index) {
+      // Flush any unsaved edits from the inline textarea first
+      const ta = document.getElementById(`note-ta-${index}`);
+      if (ta) updateNote(index, ta.value);
+
+      const task = getCtxTask();
+      if (!task) return;
+      const note = task.context.notes[index];
+      if (!note) return;
+
+      _noteModalIndex = index;
+      document.getElementById('note-modal-title').textContent = task.text;
+      document.getElementById('note-modal-textarea').value = note.text;
+      document.getElementById('note-modal-overlay').classList.add('open');
+      setTimeout(() => {
+        const mta = document.getElementById('note-modal-textarea');
+        mta.focus();
+        mta.setSelectionRange(mta.value.length, mta.value.length);
+      }, 50);
+    }
+
+    function closeNoteModal() {
+      const mta = document.getElementById('note-modal-textarea');
+      if (_noteModalIndex !== null && mta) {
+        updateNote(_noteModalIndex, mta.value);
+        // Sync the inline textarea so the panel reflects edits without a full re-render
+        const inlineTa = document.getElementById(`note-ta-${_noteModalIndex}`);
+        if (inlineTa) inlineTa.value = mta.value;
+      }
+      _noteModalIndex = null;
+      document.getElementById('note-modal-overlay').classList.remove('open');
     }
 
     function saveLink() {
@@ -3343,6 +4036,260 @@
     }
 
     // ─────────────────────────────────────────
+    // Contexts View
+    // ─────────────────────────────────────────
+
+    const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Link'];
+
+    async function openCtxView() {
+      document.getElementById('ctx-view-overlay').classList.add('open');
+      // Default range: first → last day of active month
+      const [y, m] = state.activeMonth.split('-').map(Number);
+      const lastDay = new Date(y, m, 0).getDate();
+      const fromKey = `${state.activeMonth}-01`;
+      const toKey = `${state.activeMonth}-${String(lastDay).padStart(2, '0')}`;
+      document.getElementById('ctx-view-from').value = fromKey;
+      document.getElementById('ctx-view-to').value = toKey;
+      document.getElementById('ctx-view-search').value = '';
+      const clearBtn = document.getElementById('ctx-view-search-clear');
+      if (clearBtn) clearBtn.classList.remove('visible');
+      await loadMissingMonthsForRange(fromKey, toKey);
+      renderCtxView();
+    }
+
+    function closeCtxView() {
+      document.getElementById('ctx-view-overlay').classList.remove('open');
+    }
+
+    function updateCtxSearch() {
+      const q = document.getElementById('ctx-view-search').value;
+      const clearBtn = document.getElementById('ctx-view-search-clear');
+      if (clearBtn) clearBtn.classList.toggle('visible', q.length > 0);
+      refreshCtxView();
+    }
+
+    function clearCtxSearch() {
+      const input = document.getElementById('ctx-view-search');
+      input.value = '';
+      const clearBtn = document.getElementById('ctx-view-search-clear');
+      if (clearBtn) clearBtn.classList.remove('visible');
+      input.focus();
+      refreshCtxView();
+    }
+
+    async function refreshCtxView() {
+      const fromKey = document.getElementById('ctx-view-from').value;
+      const toKey = document.getElementById('ctx-view-to').value;
+      if (fromKey && toKey && fromKey <= toKey) {
+        await loadMissingMonthsForRange(fromKey, toKey);
+      }
+      renderCtxView();
+    }
+
+    // Recursively collect context entries from a task tree.
+    // Each entry: { dayKey, taskId, taskPath (string), itemType, itemIndex, item, monthKey }
+    function collectCtxEntries(tasks, dayKey, ancestors, out) {
+      for (const task of tasks) {
+        if (!task.context) { if (task.children) collectCtxEntries(task.children, dayKey, [...ancestors, task.text], out); continue; }
+        const path = [...ancestors, task.text];
+        const ctx = task.context;
+        ctx.notes.forEach((n, i) => {
+          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'note', itemIndex: i, item: n, monthKey: monthOf(dayKey) });
+        });
+        ctx.links.forEach((l, i) => {
+          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'link', itemIndex: i, item: l, monthKey: monthOf(dayKey) });
+        });
+        ctx.attachments.forEach((a, i) => {
+          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'att', itemIndex: i, item: a, monthKey: monthOf(dayKey) });
+        });
+        if (task.children && task.children.length) collectCtxEntries(task.children, dayKey, path, out);
+      }
+    }
+
+    function ctxEntryMatchesQuery(entry, q) {
+      if (!q) return true;
+      const taskText = entry.taskPath.join(' › ').toLowerCase();
+      if (taskText.includes(q)) return true;
+      if (entry.itemType === 'note') return (entry.item.text || '').toLowerCase().includes(q);
+      if (entry.itemType === 'link') return (entry.item.label || '').toLowerCase().includes(q) || (entry.item.url || '').toLowerCase().includes(q);
+      if (entry.itemType === 'att') return (entry.item.name || '').toLowerCase().includes(q);
+      return false;
+    }
+
+    // Unique key identifying an editable link row in the rendered table
+    let _ctxViewEditKey = null; // 'dayKey|taskId|linkIndex' of currently open inline edit
+
+    function renderCtxView() {
+      const fromKey = document.getElementById('ctx-view-from').value;
+      const toKey = document.getElementById('ctx-view-to').value;
+      const q = document.getElementById('ctx-view-search').value.trim().toLowerCase();
+      const body = document.getElementById('ctx-view-body');
+      const meta = document.getElementById('ctx-view-meta');
+
+      if (!fromKey || !toKey || fromKey > toKey) {
+        body.innerHTML = '<div class="ctxv-empty">Set a valid date range.</div>';
+        meta.textContent = '';
+        return;
+      }
+
+      // Collect all entries in range
+      const allEntries = [];
+      Object.keys(state.days).sort().reverse().forEach(dayKey => {
+        if (dayKey < fromKey || dayKey > toKey) return;
+        const tasks = (state.days[dayKey] && state.days[dayKey].tasks) || [];
+        collectCtxEntries(tasks, dayKey, [], allEntries);
+      });
+
+      const filtered = q ? allEntries.filter(e => ctxEntryMatchesQuery(e, q)) : allEntries;
+      const taskCount = new Set(filtered.map(e => e.dayKey + '|' + e.taskId)).size;
+
+      meta.textContent = filtered.length
+        ? `${filtered.length} item${filtered.length === 1 ? '' : 's'} across ${taskCount} task${taskCount === 1 ? '' : 's'}`
+        : '';
+
+      if (filtered.length === 0) {
+        body.innerHTML = '<div class="ctxv-empty">No context items found.</div>';
+        return;
+      }
+
+      let html = `<table class="ctxv-table">
+    <thead><tr>
+      <th>Date</th>
+      <th>Task</th>
+      <th>Type</th>
+      <th>Content</th>
+      <th></th>
+    </tr></thead>
+    <tbody>`;
+
+      filtered.forEach(entry => {
+        const editKey = `${entry.dayKey}|${entry.taskId}|${entry.itemIndex}`;
+        const isEditing = entry.itemType === 'link' && _ctxViewEditKey === editKey;
+
+        // Date cell
+        const d = new Date(entry.dayKey + 'T00:00:00');
+        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+        // Task breadcrumb
+        const crumbParts = entry.taskPath.slice(0, -1).map(p => `<span class="ctxv-crumb">${q ? highlightCtx(p, q) : escHtml(p)} › </span>`).join('');
+        const taskName = q ? highlightCtx(entry.taskPath[entry.taskPath.length - 1], q) : escHtml(entry.taskPath[entry.taskPath.length - 1]);
+
+        // Type chip
+        const typeChip = entry.itemType === 'link'
+          ? `<span class="ctxv-type-chip ctxv-type-link">${linkIcon(entry.item.type)} ${escHtml(entry.item.type)}</span>`
+          : entry.itemType === 'note'
+            ? `<span class="ctxv-type-chip ctxv-type-note">📝 Note</span>`
+            : `<span class="ctxv-type-chip ctxv-type-att">📎 File</span>`;
+
+        // Content cell
+        let contentHtml = '';
+        if (entry.itemType === 'link') {
+          if (isEditing) {
+            const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t === entry.item.type ? ' selected' : ''}>${t}</option>`).join('');
+            contentHtml = `<div class="ctxv-edit-form">
+          <select id="ctxe-type-${editKey}">${typeOpts}</select>
+          <input id="ctxe-label-${editKey}" value="${escHtml(entry.item.label || '')}" placeholder="Label" />
+          <div class="ctxv-edit-btns">
+            <button class="btn btn-primary btn-sm" onclick="saveCtxLink('${escHtml(editKey)}')">Save</button>
+            <button class="btn btn-secondary btn-sm" onclick="cancelCtxEdit()">Cancel</button>
+          </div>
+        </div>`;
+          } else {
+            const hl = q ? highlightCtx(entry.item.label || entry.item.type, q) : escHtml(entry.item.label || entry.item.type);
+            contentHtml = `<span>${hl}</span><a class="ctxv-url" href="${escHtml(entry.item.url)}" target="_blank" rel="noopener">${escHtml(entry.item.url)}</a>`;
+          }
+        } else if (entry.itemType === 'note') {
+          const hl = q ? highlightCtx(entry.item.text || '', q) : escHtml(entry.item.text || '');
+          contentHtml = `<span class="ctxv-note-text">${hl}</span>`;
+        } else {
+          contentHtml = `<span>${escHtml(entry.item.name || '')}</span> <span style="color:var(--text3);font-size:11px;">${fmtSize(entry.item.size)}</span>`;
+        }
+
+        // Actions cell
+        const actionsHtml = entry.itemType === 'link' && !isEditing
+          ? `<button class="btn-icon btn-sm" onclick="openCtxLinkEdit('${escHtml(editKey)}')" title="Edit link">✏️</button>`
+          : '';
+
+        html += `<tr data-edit-key="${escHtml(editKey)}">
+      <td class="ctxv-date">${dateStr}</td>
+      <td class="ctxv-task"><span class="ctxv-task-link" onclick="jumpToCtxTask('${escHtml(entry.dayKey)}','${escHtml(entry.taskId)}')" title="Go to task">${crumbParts}${taskName}</span></td>
+      <td class="ctxv-type">${typeChip}</td>
+      <td class="ctxv-content">${contentHtml}</td>
+      <td class="ctxv-actions">${actionsHtml}</td>
+    </tr>`;
+      });
+
+      html += '</tbody></table>';
+      body.innerHTML = html;
+    }
+
+    function highlightCtx(text, q) {
+      if (!q) return escHtml(text);
+      const idx = text.toLowerCase().indexOf(q);
+      if (idx === -1) return escHtml(text);
+      return escHtml(text.slice(0, idx))
+        + `<mark style="background:transparent;color:var(--accent);font-weight:700;">${escHtml(text.slice(idx, idx + q.length))}</mark>`
+        + escHtml(text.slice(idx + q.length));
+    }
+
+    function openCtxLinkEdit(editKey) {
+      _ctxViewEditKey = editKey;
+      renderCtxView();
+      // Focus the label input after render
+      setTimeout(() => {
+        const inp = document.getElementById(`ctxe-label-${editKey}`);
+        if (inp) inp.focus();
+      }, 30);
+    }
+
+    function cancelCtxEdit() {
+      _ctxViewEditKey = null;
+      renderCtxView();
+    }
+
+    async function saveCtxLink(editKey) {
+      const [dayKey, taskId, idxStr] = editKey.split('|');
+      const idx = Number(idxStr);
+      const day = state.days[dayKey];
+      if (!day) return;
+      const task = findTask(day.tasks, taskId);
+      if (!task || !task.context.links[idx]) return;
+
+      const type = document.getElementById(`ctxe-type-${editKey}`).value;
+      const label = document.getElementById(`ctxe-label-${editKey}`).value.trim() || type;
+      task.context.links[idx] = { ...task.context.links[idx], type, label };
+
+      await saveMonth(monthOf(dayKey));
+
+      // If the context panel is open on this task, refresh it too
+      if (state.contextTaskId === taskId) renderContextPanel();
+
+      _ctxViewEditKey = null;
+      renderCtxView();
+    }
+
+    async function jumpToCtxTask(dayKey, taskId) {
+      closeCtxView();
+      const month = monthOf(dayKey);
+      if (!_loadedMonths.has(month)) await loadMonth(month);
+      state.activeMonth = month;
+      state.activeDay = dayKey;
+      render();
+      setTimeout(() => {
+        expandToTask(state.days[dayKey] && state.days[dayKey].tasks || [], taskId);
+        renderTaskArea();
+        setTimeout(() => {
+          const el = document.getElementById(`tr-${taskId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('search-highlight');
+            setTimeout(() => el.classList.remove('search-highlight'), 1800);
+          }
+        }, 80);
+      }, 80);
+    }
+
+    // ─────────────────────────────────────────
     // Archive
     // ─────────────────────────────────────────
 
@@ -3523,22 +4470,83 @@
       body.innerHTML = html;
     }
 
+    function archiveCtxCount(task) {
+      if (!task.context) return 0;
+      return (task.context.notes || []).length + (task.context.links || []).length + (task.context.attachments || []).length;
+    }
+
+    function renderArchiveCtxPanel(task) {
+      const ctx = task.context;
+      if (!ctx) return '';
+      let html = `<div class="archive-ctx-panel">`;
+      if (ctx.notes && ctx.notes.length) {
+        html += `<div class="archive-ctx-section">Notes</div>`;
+        ctx.notes.forEach(n => {
+          html += `<div class="archive-ctx-note">${escHtml(n.text || '')}</div>`;
+        });
+      }
+      if (ctx.links && ctx.links.length) {
+        html += `<div class="archive-ctx-section">Links</div>`;
+        ctx.links.forEach(l => {
+          html += `<div class="archive-ctx-link">${linkIcon(l.type)} <a href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.label || l.type)}</a><span style="color:var(--text3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.url)}</span></div>`;
+        });
+      }
+      if (ctx.attachments && ctx.attachments.length) {
+        html += `<div class="archive-ctx-section">Attachments</div>`;
+        ctx.attachments.forEach(a => {
+          html += `<div class="archive-ctx-att">📎 ${escHtml(a.name || '')} <span style="color:var(--text3);font-size:11px;">${fmtSize(a.size)}</span></div>`;
+        });
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function toggleArchiveCtx(taskId) {
+      const panel = document.getElementById('actx-' + taskId);
+      const btn = document.getElementById('actx-btn-' + taskId);
+      if (!panel) return;
+      const isOpen = panel.style.display !== 'none';
+      panel.style.display = isOpen ? 'none' : 'flex';
+      if (btn) btn.textContent = isOpen ? '📎 Context' : '📎 Hide';
+    }
+
     function renderArchiveItem(task, isChild) {
       const badges = archiveBadges(task);
       const containerClass = isChild ? 'archive-child-item' : 'archive-item';
       const textClass = isChild ? 'archive-child-text' : 'archive-item-text';
+      const ctxCount = archiveCtxCount(task);
+      const ctxToggle = ctxCount > 0
+        ? `<button id="actx-btn-${task.id}" class="archive-ctx-toggle" onclick="toggleArchiveCtx('${task.id}')" title="Show context">📎 Context</button>`
+        : '';
+      const ctxPanel = ctxCount > 0
+        ? `<div id="actx-${task.id}" style="display:none;">${renderArchiveCtxPanel(task)}</div>`
+        : '';
       return `<div class="${containerClass}">
-    <span class="${textClass}">${escHtml(task.text)}</span>
-    <div class="archive-item-badges">${badges}</div>
-    <button class="btn btn-secondary btn-sm" onclick="restoreArchivedTask('${task.id}')" title="Restore to today in active month">↩ Restore</button>
-  </div>`;
+      <span class="${textClass}">${escHtml(task.text)}</span>
+      <div class="archive-item-badges">${badges}</div>
+      ${ctxToggle}
+      <button class="btn btn-secondary btn-sm" onclick="restoreArchivedTask('${task.id}')" title="Restore to today in active month">↩ Restore</button>
+    </div>${ctxPanel}`;
     }
 
-    function renderArchiveChildTree(task) {
-      return `<div class="archive-child-item" style="margin-left:16px;">
+    function renderArchiveChildTree(task, indent) {
+      const ml = (indent || 0);
+      const ctxCount = archiveCtxCount(task);
+      const ctxToggle = ctxCount > 0
+        ? `<button id="actx-btn-${task.id}" class="archive-ctx-toggle" onclick="toggleArchiveCtx('${task.id}')" title="Show context">📎 Context</button>`
+        : '';
+      const ctxPanel = ctxCount > 0
+        ? `<div id="actx-${task.id}" style="display:none;">${renderArchiveCtxPanel(task)}</div>`
+        : '';
+      let html = `<div class="archive-child-item" style="margin-left:${ml}px;">
     <span class="archive-child-text">${escHtml(task.text)}</span>
     <div class="archive-item-badges">${archiveBadges(task)}</div>
-  </div>`;
+    ${ctxToggle}
+  </div>${ctxPanel}`;
+      if (task.children && task.children.length) {
+        task.children.forEach(c => { html += renderArchiveChildTree(c, ml + 16); });
+      }
+      return html;
     }
 
     function archiveBadges(task) {
