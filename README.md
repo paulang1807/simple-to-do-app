@@ -23,9 +23,11 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Copying Tasks Between Days](#copying-tasks-between-days)
    - [Context: Notes, Links & Attachments](#context-notes-links--attachments)
    - [Copying & Pasting Context Between Tasks](#copying--pasting-context-between-tasks)
+   - [Link Repository](#link-repository)
    - [Calendar Picker](#calendar-picker)
    - [Searching Tasks](#searching-tasks)
    - [Archiving Tasks](#archiving-tasks)
+   - [Deleting Tasks](#deleting-tasks)
    - [Filtering Tasks](#filtering-tasks)
    - [Contexts View](#contexts-view)
    - [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)
@@ -47,6 +49,7 @@ Checkpoint helps you track what you work on each day. You can:
 - Attach notes, links (Jira, Slack, Google Docs/Sheets/Slides, Qlik Sense, Tableau, Claude AI, Cursor Canvas, and more) and files to any task
 - Expand any note into a full-screen modal for comfortable reading and editing
 - Copy, cut, and paste entire context (notes, links, attachments) between tasks via right-click on the Context badge
+- Maintain a standalone Link Repository for reference links organized by topic (independent of tasks)
 - Browse tasks by month using the calendar picker
 - Search across all tasks and notes instantly with keyboard navigation
 - Filter the task list by status, importance, recurrence, or exclusion — combinations supported
@@ -155,7 +158,7 @@ If no API key is configured, summary generation will return an error explaining 
 
 | Area | Purpose |
 |---|---|
-| **Header** | App title, Search tasks, open Contexts view, open Archive view, open Calendar picker, Export/Import data, open Summarize modal |
+| **Header** | App title, Search tasks, open Link Repository, open Contexts view, open Archive view, open Calendar picker, Export/Import data, open Summarize modal |
 | **Day sidebar** | All days of the active month; blue dot = has tasks; ● = today |
 | **Task area** | Tasks for the selected day, action buttons in the header row |
 | **Context panel** | Slides in from the right when you click 📎 on a task |
@@ -181,6 +184,8 @@ If no API key is configured, summary generation will return an error explaining 
 - Or press **Enter** while the task text field is focused — this also opens the subtask input
 
 Tasks can be nested to any depth. Each level is indented with a vertical guide line.
+
+**Editing task text:** click directly on any task's text to edit it inline. The change saves automatically when you click away.
 
 ---
 
@@ -237,7 +242,7 @@ A recurring task automatically rolls forward to the next day every time you move
 
 ![Move to next day](docs/09-move-button.png)
 
-Click **⏩ Move to [next date]** in the day header to roll incomplete work forward.
+Click **⏩ Move to [next date]** in the day header to roll incomplete work forward. This button appears on today and any past day that has incomplete tasks — so you can catch up work from previous days too. After moving, the view automatically switches to the destination day.
 
 The rules applied to each task:
 
@@ -371,11 +376,21 @@ Attach URLs categorised by type:
 | GitHub Pages | 🌐 |
 | Other Link | 🔗 |
 
-Click **+ Add Link**, select the type, enter an optional label and the URL, then click **Save**.
+Click **+ Add Link**, select the type, enter an optional label and the URL, and optionally add one or more **topics** to tag the link. Then click **Save**.
 
-To **edit an existing link**, hover the link card and click **✏️** — an inline form opens pre-filled with the current type, label, and URL. Make changes and click **Save**, or **Cancel** to discard.
+**Adding topics (tags):** type in the topic field inside the add or edit form and press **Enter** or **,** to confirm each tag. Existing topics from the Link Repository appear as autocomplete suggestions as you type — the same tag vocabulary is shared across task context links and the Link Repository. Click **×** on a tag pill to remove it.
 
-To **delete a link**, click **🗑** on the link card.
+**Link Repository promotion:** if you add at least one topic to a context link, the link is automatically saved to the Link Repository and the task context stores a reference to it. This means the link lives in exactly one place — editing it in the Link Repository updates it everywhere it appears, and vice versa. Links added without any topics stay as inline context entries.
+
+A **🗂** indicator appears on link cards that are stored in the Link Repository.
+
+To **copy a link's URL** to the clipboard, click **📋** on the link card. The button briefly shows ✓ to confirm.
+
+To **edit an existing link**, hover the link card and click **✏️** — an inline form opens pre-filled with the current type, label, URL, and topics. Make changes and click **Save**, or **Cancel** to discard.
+
+To **delete a link from the context**, click **🗑** on the link card. This removes the link from the task's context only — if the link was promoted to the Link Repository, it remains there and can be managed from the **🗂 Links** modal.
+
+To **delete a link from the Link Repository entirely**, open the 🗂 Links modal and click 🗑 on the card there.
 
 #### Attachments
 Click **📎 Attach File** to attach one or more files. File name and size are recorded. The `📎 Context` badge appears on the task row whenever any context exists.
@@ -408,6 +423,65 @@ You can copy or cut the entire context (notes, links, and attachments) from one 
 - Cut immediately saves the cleared source; Paste immediately saves the destination
 - A brief toast notification confirms each action ("Context copied", "Context cut", "Context pasted")
 - Dismiss the menu at any time by clicking elsewhere or pressing **Esc**
+
+---
+
+### Link Repository
+
+Click **🗂 Links** in the header to open the Link Repository — a standalone collection of reference links that are not tied to any specific task or day.
+
+Use this to store documentation URLs, Jira boards, Slack channels, dashboards, or any other links you want to reference across multiple tasks or projects.
+
+#### Adding a Link
+
+Click **+ Add Link** in the top-right of the modal:
+
+1. Select the **link type** from the dropdown (same types as context links: Jira, Slack, Google Docs, GitHub, etc.)
+2. Enter an optional **label** — the display name for the link
+3. Enter the **URL**
+4. Add one or more **topics** to categorise the link:
+   - Click inside the topic field and type a topic name
+   - Press **Enter** or **,** to confirm the topic as a tag pill
+   - Type the beginning of an existing topic to get autocomplete suggestions — click a suggestion or press **↑ / ↓ + Enter** to select
+   - Click **×** on any pill to remove it
+   - A link can belong to multiple topics at once
+5. Click **Save Link**
+
+#### Browsing Links
+
+The modal has a two-panel layout:
+
+| Panel | Content |
+|---|---|
+| **Sidebar (left)** | **All Links** (shows everything) followed by each topic sorted alphabetically, with a count badge |
+| **Main area (right)** | Link cards for the selected topic |
+
+Click a topic in the sidebar to filter to just that topic's links. Click **All Links** to see everything.
+
+Each link card shows:
+- The type icon and label (or the URL if no label is set)
+- The URL as a clickable link
+- Topic pills showing which topics the link belongs to
+- A **📋 Copy URL** button to copy the link address to the clipboard
+
+#### Searching
+
+Type in the **Search links, labels, topics…** box to filter links across all topics. Matches against:
+- Link labels
+- URLs
+- Topic names
+
+Search applies on top of the active topic filter — so you can search within a specific topic by selecting it first, then typing.
+
+Click **✕** inside the search box to clear the search.
+
+#### Editing a Link
+
+Click **✏️** on any link card to expand an inline edit form pre-filled with the current type, label, URL, and topics. Make changes and click **Save** to persist, or **Cancel** to discard. Topics can be added and removed the same way as when adding a new link.
+
+#### Deleting a Link
+
+Click **🗑** on any link card to remove it permanently.
 
 ---
 
@@ -497,6 +571,14 @@ The restored item is removed from the archive and saved to disk. If today is in 
 
 ---
 
+### Deleting Tasks
+
+Hover a task row and click **🗑** to permanently delete it along with all its subtasks and context. Unlike archiving, deletion cannot be undone.
+
+Use 🗑 only for tasks you are certain you no longer need. For tasks you want to keep out of the active view, use **📦 Archive** instead — archived tasks can be restored at any time.
+
+---
+
 ### Filtering Tasks
 
 A filter bar sits between the day header and the task list. Click any chip to show only tasks matching that criterion; click again to deactivate it.
@@ -539,9 +621,9 @@ Click **🔗 Contexts** in the header to open a full-screen table of every note,
 - **Type** — dropdown with all supported link types
 - **Label** — the display name shown in the content column
 
-Click **Save** to persist the change (it saves back to the source month file and updates the context panel if it is open). Click **Cancel** to discard. Note and attachment rows are read-only in this view.
+The URL cannot be changed from this view — open the task's context panel to edit the full link including its URL and topics. Click **Save** to persist the change (it saves back to the source month file and updates the context panel if it is open). Click **Cancel** to discard. Note and attachment rows are read-only in this view.
 
-**Jumping to a task:** click the **↗** icon on any row to close the Contexts View, navigate to the day that contains the task, expand any collapsed ancestors, and scroll the task into view with a brief highlight.
+**Jumping to a task:** click the **task breadcrumb** in the Task column to close the Contexts View, navigate to the day that contains the task, expand any collapsed ancestors, and scroll the task into view with a brief highlight.
 
 ---
 
@@ -646,6 +728,7 @@ Depending on how you run the application, each month's tasks are stored in a sep
   ├── 2026-05.json
   ├── 2026-06.json
   ├── archive.json
+  ├── link-repo.json
   └── ...
   ```
 - **Terminal/Developer Mode:** Stored locally under the project directory:
@@ -655,6 +738,7 @@ Depending on how you run the application, each month's tasks are stored in a sep
       ├── 2026-05.json
       ├── 2026-06.json
       ├── archive.json
+    ├── link-repo.json
       └── ...
   ```
 
@@ -697,6 +781,20 @@ Each monthly file contains a map of date strings to day objects:
 ]
 ```
 
+`link-repo.json` is a flat array of link objects. Each entry has an `id`, `type`, `label`, `url`, and a `topics` array (strings):
+
+```json
+[
+  {
+    "id": "lr-abc123",
+    "type": "Jira",
+    "label": "OIFD-6264",
+    "url": "https://jira.cloud.intuit.com/browse/OIFD-6264",
+    "topics": ["Governance", "Data Quality"]
+  }
+]
+```
+
 The `data/` directory is excluded from git (via `.gitignore`), so your personal tasks are never committed. Each person who clones the repo starts with a blank slate.
 
 ---
@@ -711,8 +809,9 @@ todo-app/
 ├── README.md        # This file
 ├── data.sample.json # Structural template for task data
 └── data/            # Auto-created on first run; gitignored
-    └── YYYY-MM.json # One file per month
-    └── archive.json # Archived tasks (created on first archive action)
+    ├── YYYY-MM.json     # One file per month
+    ├── archive.json     # Archived tasks (created on first archive action)
+    └── link-repo.json   # Link repository (created on first link save)
 ```
 
 ### Source Files (Tracked in Git)
@@ -751,6 +850,8 @@ You will see these files and folders appear based on your actions:
 | `GET` | `/archive` | Load the archive list |
 | `PUT` | `/archive` | Save the archive list |
 | `POST` | `/summarize` | Generate an AI summary for a date range |
+| `GET` | `/link-repo` | Load the link repository |
+| `PUT` | `/link-repo` | Save the link repository |
 
 **`index.html`** contains all JavaScript and CSS inline — no build tools, no npm, no bundler required.
 
@@ -767,6 +868,9 @@ You will see these files and folders appear based on your actions:
 | `Enter` (in task input) | Save task / add another |
 | `Enter` (in task text field) | Open subtask input below |
 | `Esc` (in subtask input) | Close subtask input |
+| `Esc` | Close Link Repository modal |
+| `Esc` | Dismiss context copy/cut/paste menu |
+| `Enter` / `,` (in topic field) | Confirm a topic tag |
 
 ---
 

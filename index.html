@@ -2010,6 +2010,477 @@
       font-size: 14px;
     }
 
+    .ctx-tag-filter-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .ctx-tag-filter-chip:hover {
+      background: var(--surface3);
+    }
+
+    .ctx-tag-filter-chip.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ── Link Repository Modal ── */
+    #link-repo-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #link-repo-overlay.open {
+      display: flex;
+    }
+
+    #link-repo-modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      width: 980px;
+      max-width: 97vw;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+    }
+
+    #link-repo-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #link-repo-head h2 {
+      font-size: 17px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    #link-repo-search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      align-items: center;
+    }
+
+    #link-repo-search {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 28px 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    #link-repo-search:focus {
+      border-color: var(--accent);
+    }
+
+    #link-repo-search::placeholder {
+      color: var(--text3);
+    }
+
+    #link-repo-search-clear {
+      position: absolute;
+      right: 7px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 14px;
+      line-height: 1;
+      padding: 2px;
+      display: none;
+    }
+
+    #link-repo-search-clear:hover {
+      color: var(--text);
+    }
+
+    #link-repo-search-clear.visible {
+      display: block;
+    }
+
+    #link-repo-type-filter {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #link-repo-type-filter:focus {
+      border-color: var(--accent);
+    }
+
+    #link-repo-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #link-repo-sidebar {
+      width: 200px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .lr-topic-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text2);
+      transition: all 0.12s;
+      user-select: none;
+    }
+
+    .lr-topic-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .lr-topic-item.active {
+      background: var(--surface3);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .lr-topic-count {
+      font-size: 11px;
+      color: var(--text3);
+      background: var(--surface3);
+      border-radius: 10px;
+      padding: 1px 7px;
+      flex-shrink: 0;
+    }
+
+    .lr-topic-item.active .lr-topic-count {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    #link-repo-main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .lr-add-form {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lr-add-form-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .lr-add-form select,
+    .lr-add-form input[type="text"],
+    .lr-add-form input[type="url"] {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .lr-add-form select:focus,
+    .lr-add-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .lr-add-form select {
+      flex-shrink: 0;
+    }
+
+    .lr-add-form input[type="text"] {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .lr-add-form input[type="url"] {
+      flex: 2;
+      min-width: 160px;
+    }
+
+    .lr-topic-input-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      min-height: 34px;
+      cursor: text;
+    }
+
+    .lr-topic-input-wrap:focus-within {
+      border-color: var(--accent);
+    }
+
+    .lr-topic-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .lr-topic-tag button {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      padding: 0 0 0 2px;
+      opacity: 0.8;
+    }
+
+    .lr-topic-tag button:hover {
+      opacity: 1;
+    }
+
+    .lr-topic-type-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 12px;
+      min-width: 80px;
+      flex: 1;
+      padding: 1px 0;
+    }
+
+    .lr-suggestions {
+      position: absolute;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      z-index: 50;
+      min-width: 160px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .lr-suggestion-item {
+      padding: 7px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text2);
+    }
+
+    .lr-suggestion-item:hover,
+    .lr-suggestion-item.focused {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .lr-add-form-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .lr-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lr-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .lr-card-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .lr-card-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .lr-card-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .lr-card-url {
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    .lr-card-url:hover {
+      text-decoration: underline;
+    }
+
+    .lr-card-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .lr-card-topic {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: rgba(108, 142, 245, 0.15);
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .lr-card-topic:hover {
+      background: rgba(108, 142, 245, 0.3);
+    }
+
+    .lr-card-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .lr-edit-form {
+      margin-top: 8px;
+      background: var(--surface3);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .lr-edit-form-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .lr-edit-form select,
+    .lr-edit-form input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 9px;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+    }
+
+    .lr-edit-form select:focus,
+    .lr-edit-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .lr-edit-form select {
+      flex-shrink: 0;
+    }
+
+    .lr-edit-form input[type="text"] {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .lr-edit-form input[type="url"] {
+      flex: 2;
+      min-width: 140px;
+    }
+
+    .lr-edit-form-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .lr-empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    .lr-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text3);
+      margin-bottom: 4px;
+    }
+
     /* ── Context clipboard menu ── */
     #ctx-menu {
       position: fixed;
@@ -2192,7 +2663,9 @@
       <span id="save-toast" style="font-size:12px;color:var(--success);opacity:0;transition:opacity 0.4s;">✓
         Saved</span>
       <button class="btn btn-secondary btn-sm" onclick="openSearchModal()" title="Search tasks (⌘K)">🔍 Search</button>
-      <button class="btn btn-secondary btn-sm" onclick="openCtxView()" title="View all contexts">🔗 Contexts</button>
+      <button class="btn btn-secondary btn-sm" onclick="openLinkRepo()" title="Link repository">🗂 Links</button>
+      <button class="btn btn-secondary btn-sm" onclick="openCtxView()" title="View all task contexts">📎
+        Contexts</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal()" title="View archived tasks">📦
         Archive</button>
       <button class="btn btn-secondary btn-sm" id="cal-btn" onclick="toggleCalendar(event)" title="Open calendar">📅
@@ -2238,11 +2711,36 @@
             <input type="text" id="ctx-view-search" placeholder="Search…" oninput="updateCtxSearch()" />
             <button id="ctx-view-search-clear" onclick="clearCtxSearch()" title="Clear search">✕</button>
           </div>
+          <div id="ctx-tag-filter-wrap">
+            <button id="ctx-tag-filter-btn" class="ctx-tag-filter-chip" onclick="cycleCtxTagFilter()"
+              title="Filter by topic tags">🏷 All</button>
+          </div>
           <span id="ctx-view-meta"></span>
         </div>
         <button class="btn-icon" onclick="closeCtxView()">✕</button>
       </div>
       <div id="ctx-view-body"></div>
+    </div>
+  </div>
+
+  <!-- Link Repository Modal -->
+  <div id="link-repo-overlay" onclick="if(event.target===this)closeLinkRepo()">
+    <div id="link-repo-modal">
+      <div id="link-repo-head">
+        <h2>🗂 Link Repository</h2>
+        <div id="link-repo-search-wrap">
+          <input type="text" id="link-repo-search" placeholder="Search links, labels, topics…"
+            oninput="lrUpdateSearch()" />
+          <button id="link-repo-search-clear" onclick="lrClearSearch()" title="Clear">✕</button>
+        </div>
+        <select id="link-repo-type-filter" onchange="lrSetTypeFilter(this.value)" title="Filter by link type"></select>
+        <button class="btn btn-primary btn-sm" onclick="lrShowAddForm()">+ Add Link</button>
+        <button class="btn-icon" onclick="closeLinkRepo()">✕</button>
+      </div>
+      <div id="link-repo-body">
+        <div id="link-repo-sidebar"></div>
+        <div id="link-repo-main"></div>
+      </div>
     </div>
   </div>
 
@@ -2679,15 +3177,495 @@
     }
 
     // ─────────────────────────────────────────
+    // Link Repository
+    // ─────────────────────────────────────────
+
+    let _lrLinks = [];           // in-memory store
+    let _lrActiveTopic = 'all';  // sidebar selection
+    let _lrTypeFilter = 'all';   // link type filter
+    let _lrSearch = '';          // search query
+    let _lrEditId = null;        // id of card currently being edited
+    let _lrSuggestFocused = 0;   // keyboard nav in topic suggestions
+
+    // Topic tag state for the add/edit forms
+    let _lrAddTags = [];
+    let _lrEditTags = [];
+
+    const LINK_REPO_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Link'];
+
+    async function loadLinkRepo() {
+      try {
+        const r = await fetch('/link-repo');
+        _lrLinks = await r.json();
+      } catch { _lrLinks = []; }
+    }
+
+    async function saveLinkRepo() {
+      await fetch('/link-repo', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(_lrLinks),
+      });
+    }
+
+    async function openLinkRepo() {
+      _lrActiveTopic = 'all';
+      _lrSearch = '';
+      _lrTypeFilter = 'all';
+      document.getElementById('link-repo-search').value = '';
+      document.getElementById('link-repo-search-clear').classList.remove('visible');
+      document.getElementById('link-repo-overlay').classList.add('open');
+      lrRender();
+    }
+
+    function lrSetTypeFilter(val) {
+      _lrTypeFilter = val;
+      lrRender();
+    }
+
+    function closeLinkRepo() {
+      document.getElementById('link-repo-overlay').classList.remove('open');
+    }
+
+    function lrUpdateSearch() {
+      const q = document.getElementById('link-repo-search').value;
+      _lrSearch = q;
+      document.getElementById('link-repo-search-clear').classList.toggle('visible', q.length > 0);
+      lrRender();
+    }
+
+    function lrClearSearch() {
+      document.getElementById('link-repo-search').value = '';
+      _lrSearch = '';
+      document.getElementById('link-repo-search-clear').classList.remove('visible');
+      document.getElementById('link-repo-search').focus();
+      lrRender();
+    }
+
+    // Resolve a stored context link (may be {linkRepoId} reference or inline {type,label,url})
+    function resolveLink(stored) {
+      if (stored && stored.linkRepoId) {
+        const repo = _lrLinks.find(l => l.id === stored.linkRepoId);
+        return repo || { type: 'Link', label: '(removed)', url: '', topics: [] };
+      }
+      return stored;
+    }
+
+    // All unique topics across link repo + context links (for shared typeahead)
+    function getAllTopics() {
+      const counts = {};
+      _lrLinks.forEach(l => (l.topics || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+      // Also count topics on inline context links
+      Object.values(state.days).forEach(day => {
+        (day.tasks || []).forEach(function scan(task) {
+          (task.context?.links || []).forEach(l => {
+            (l.topics || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+          });
+          (task.children || []).forEach(scan);
+        });
+      });
+      return counts;
+    }
+
+    function lrGetAllTopics() { return getAllTopics(); }
+
+    function lrFilteredLinks() {
+      const q = _lrSearch.trim().toLowerCase();
+      return _lrLinks.filter(l => {
+        const topicMatch = _lrActiveTopic === 'all' || (l.topics || []).includes(_lrActiveTopic);
+        if (!topicMatch) return false;
+        const typeMatch = _lrTypeFilter === 'all' || l.type === _lrTypeFilter;
+        if (!typeMatch) return false;
+        if (!q) return true;
+        return (
+          (l.label || '').toLowerCase().includes(q) ||
+          (l.url || '').toLowerCase().includes(q) ||
+          (l.type || '').toLowerCase().includes(q) ||
+          (l.topics || []).some(t => t.toLowerCase().includes(q))
+        );
+      });
+    }
+
+    function lrRender() {
+      lrRenderTypeFilter();
+      lrRenderSidebar();
+      lrRenderMain();
+    }
+
+    function lrRenderTypeFilter() {
+      const sel = document.getElementById('link-repo-type-filter');
+      if (!sel) return;
+      const types = [...new Set(_lrLinks.map(l => l.type || 'Link'))].sort();
+      let html = `<option value="all">All Types</option>`;
+      types.forEach(t => {
+        html += `<option value="${escHtml(t)}" ${_lrTypeFilter === t ? 'selected' : ''}>${escHtml(t)}</option>`;
+      });
+      sel.innerHTML = html;
+      sel.value = _lrTypeFilter;
+    }
+
+    function lrRenderSidebar() {
+      const counts = lrGetAllTopics();
+      const topics = Object.keys(counts).sort((a, b) => a.localeCompare(b));
+      const totalVisible = _lrSearch ? lrFilteredLinks().length : _lrLinks.length;
+      let html = `<div class="lr-topic-item ${_lrActiveTopic === 'all' ? 'active' : ''}" onclick="lrSetTopic('all')">
+    <span>All Links</span><span class="lr-topic-count">${totalVisible}</span>
+  </div>`;
+      topics.forEach(t => {
+        const cnt = _lrSearch
+          ? _lrLinks.filter(l => (l.topics || []).includes(t) && lrMatchesSearch(l)).length
+          : counts[t];
+        html += `<div class="lr-topic-item ${_lrActiveTopic === t ? 'active' : ''}" onclick="lrSetTopic(${sq(t)})">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(t)}</span>
+      <span class="lr-topic-count">${cnt}</span>
+    </div>`;
+      });
+      document.getElementById('link-repo-sidebar').innerHTML = html;
+    }
+
+    function lrMatchesSearch(l) {
+      const q = _lrSearch.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        (l.label || '').toLowerCase().includes(q) ||
+        (l.url || '').toLowerCase().includes(q) ||
+        (l.type || '').toLowerCase().includes(q) ||
+        (l.topics || []).some(t => t.toLowerCase().includes(q))
+      );
+    }
+
+    function lrSetTopic(t) {
+      _lrActiveTopic = t;
+      lrRender();
+    }
+
+    function lrRenderMain() {
+      const main = document.getElementById('link-repo-main');
+      const links = lrFilteredLinks();
+      const addFormHtml = `<div id="lr-add-form-wrap"></div>`;
+
+      if (!links.length) {
+        main.innerHTML = addFormHtml + `<div class="lr-empty">${_lrSearch ? 'No links match your search.' : _lrActiveTopic === 'all' ? 'No links yet. Click <b>+ Add Link</b> to get started.' : 'No links in this topic.'}</div>`;
+        lrRestoreAddForm();
+        return;
+      }
+
+      const typeOpts = LINK_REPO_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+      let cards = '';
+      links.forEach(l => {
+        const icon = linkIcon(l.type);
+        const topicTags = (l.topics || []).map(t =>
+          `<span class="lr-card-topic" onclick="lrSetTopic(${sq(t)})" title="Filter by ${escHtml(t)}">${escHtml(t)}</span>`
+        ).join('');
+        const isEditing = _lrEditId === l.id;
+        cards += `<div class="lr-card" id="lr-card-${l.id}">
+      <span class="lr-card-icon">${icon}</span>
+      <div class="lr-card-body">
+        <div class="lr-card-label">${escHtml(l.label || l.type)}</div>
+        <a class="lr-card-url" href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.url)}</a>
+        ${topicTags ? `<div class="lr-card-topics">${topicTags}</div>` : ''}
+        ${isEditing ? lrEditFormHtml(l, typeOpts) : ''}
+      </div>
+      <div class="lr-card-actions">
+        <button class="btn-icon" id="lr-copy-btn-${l.id}" onclick="lrCopyUrl(${sq(l.url)},${sq(l.id)})" title="Copy URL">📋</button>
+        <button class="btn-icon" onclick="lrToggleEdit(${sq(l.id)})" title="Edit">✏️</button>
+        <button class="btn-icon" onclick="lrDelete(${sq(l.id)})" title="Delete">🗑</button>
+      </div>
+    </div>`;
+      });
+
+      main.innerHTML = addFormHtml + `<div class="lr-cards">${cards}</div>`;
+      lrRestoreAddForm();
+
+      // Restore edit topic tag state if editing
+      if (_lrEditId) {
+        const l = _lrLinks.find(x => x.id === _lrEditId);
+        if (l) _lrEditTags = [...(l.topics || [])];
+        lrRenderEditTagsInForm();
+        const editTagInput = document.getElementById(`lr-edit-tag-input-${_lrEditId}`);
+        if (editTagInput) {
+          const eid = _lrEditId;
+          editTagInput.addEventListener('input', () => lrEditTagInput(eid, editTagInput.value));
+          editTagInput.addEventListener('keydown', e => lrEditTagKey(e, eid));
+        }
+      }
+    }
+
+    function lrEditFormHtml(l, typeOpts) {
+      const opts = LINK_REPO_TYPES.map(t => `<option value="${t}"${t === l.type ? ' selected' : ''}>${t}</option>`).join('');
+      return `<div class="lr-edit-form" id="lr-edit-form-${l.id}">
+    <div class="lr-edit-form-row">
+      <select id="lr-edit-type-${l.id}">${opts}</select>
+      <input type="text" id="lr-edit-label-${l.id}" placeholder="Label (optional)" value="${escHtml(l.label || '')}" />
+      <input type="url" id="lr-edit-url-${l.id}" placeholder="URL" value="${escHtml(l.url || '')}" />
+    </div>
+    <div style="position:relative;">
+      <div class="lr-topic-input-wrap" id="lr-edit-tags-wrap-${l.id}" onclick="document.getElementById('lr-edit-tag-input-${l.id}').focus()">
+        <span id="lr-edit-tags-${l.id}"></span>
+        <input class="lr-topic-type-input" id="lr-edit-tag-input-${l.id}" placeholder="Add topic…" />
+      </div>
+      <div class="lr-suggestions" id="lr-edit-suggestions-${l.id}" style="display:none;"></div>
+    </div>
+    <div class="lr-edit-form-actions">
+      <button class="btn btn-secondary btn-sm" onclick="lrCancelEdit()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="lrSaveEdit(${sq(l.id)})">Save</button>
+    </div>
+  </div>`;
+    }
+
+    let _lrAddFormVisible = false;
+    let _lrAddTags_arr = [];
+
+    // State for topic tags on the context-panel add/edit link forms
+    let _ctxAddTags = [];      // tags being built for the add-link form
+    let _ctxEditTags = [];     // tags being built for the currently open edit-link form
+    let _ctxEditTagIndex = -1; // which link index is being edited
+
+    function lrShowAddForm() {
+      _lrAddFormVisible = true;
+      _lrAddTags_arr = [];
+      lrRender();
+      setTimeout(() => {
+        const el = document.getElementById('lr-add-url');
+        if (el) el.focus();
+      }, 50);
+    }
+
+    function lrRestoreAddForm() {
+      const wrap = document.getElementById('lr-add-form-wrap');
+      if (!wrap) return;
+      if (!_lrAddFormVisible) { wrap.innerHTML = ''; return; }
+      const typeOpts = LINK_REPO_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+      wrap.innerHTML = `<div class="lr-add-form">
+    <div class="lr-section-title">New Link</div>
+    <div class="lr-add-form-row">
+      <select id="lr-add-type">${typeOpts}</select>
+      <input type="text" id="lr-add-label" placeholder="Label (optional)" />
+      <input type="url" id="lr-add-url" placeholder="https://…" />
+    </div>
+    <div style="position:relative;">
+      <div class="lr-topic-input-wrap" onclick="document.getElementById('lr-add-tag-input').focus()">
+        <span id="lr-add-tags"></span>
+        <input class="lr-topic-type-input" id="lr-add-tag-input" placeholder="Add topic…" />
+      </div>
+      <div class="lr-suggestions" id="lr-add-suggestions" style="display:none;"></div>
+    </div>
+    <div class="lr-add-form-actions">
+      <button class="btn btn-secondary btn-sm" onclick="lrHideAddForm()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="lrSaveAdd()">Save Link</button>
+    </div>
+  </div>`;
+      lrRenderAddTags();
+      const tagInput = document.getElementById('lr-add-tag-input');
+      if (tagInput) {
+        tagInput.addEventListener('input', () => lrAddTagInput(tagInput.value));
+        tagInput.addEventListener('keydown', e => lrAddTagKey(e));
+      }
+    }
+
+    function lrHideAddForm() {
+      _lrAddFormVisible = false;
+      _lrAddTags_arr = [];
+      lrRender();
+    }
+
+    function lrRenderAddTags() {
+      const span = document.getElementById('lr-add-tags');
+      if (!span) return;
+      span.innerHTML = _lrAddTags_arr.map((t, i) =>
+        `<span class="lr-topic-tag">${escHtml(t)}<button onclick="lrAddTagRemove(${i})">×</button></span>`
+      ).join('');
+    }
+
+    function lrAddTagRemove(i) {
+      _lrAddTags_arr.splice(i, 1);
+      lrRenderAddTags();
+    }
+
+    function lrAddTagInput(val) {
+      lrShowSuggestions('lr-add-suggestions', val, tag => lrAddTagSelect(tag));
+    }
+
+    function lrAddTagKey(event) {
+      const input = document.getElementById('lr-add-tag-input');
+      const sugBox = document.getElementById('lr-add-suggestions');
+      if (event.key === 'Enter' || event.key === ',') {
+        event.preventDefault();
+        const val = input.value.trim().replace(/,$/, '');
+        if (val && !_lrAddTags_arr.includes(val)) { _lrAddTags_arr.push(val); lrRenderAddTags(); }
+        input.value = '';
+        if (sugBox) sugBox.style.display = 'none';
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        lrMoveSuggestion('lr-add-suggestions', 1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        lrMoveSuggestion('lr-add-suggestions', -1);
+      } else if (event.key === 'Escape') {
+        if (sugBox) sugBox.style.display = 'none';
+      }
+    }
+
+    function lrAddTagSelect(tag) {
+      if (!_lrAddTags_arr.includes(tag)) _lrAddTags_arr.push(tag);
+      const input = document.getElementById('lr-add-tag-input');
+      if (input) { input.value = ''; input.focus(); }
+      const sugBox = document.getElementById('lr-add-suggestions');
+      if (sugBox) sugBox.style.display = 'none';
+      lrRenderAddTags();
+    }
+
+    async function lrSaveAdd() {
+      const type = document.getElementById('lr-add-type')?.value || 'Link';
+      const label = document.getElementById('lr-add-label')?.value.trim() || '';
+      const url = document.getElementById('lr-add-url')?.value.trim() || '';
+      const tagInput = document.getElementById('lr-add-tag-input')?.value.trim();
+      if (tagInput && !_lrAddTags_arr.includes(tagInput)) _lrAddTags_arr.push(tagInput);
+      if (!url) { document.getElementById('lr-add-url')?.focus(); return; }
+      _lrLinks.push({ id: uid(), type, label, url, topics: [..._lrAddTags_arr] });
+      _lrAddFormVisible = false;
+      _lrAddTags_arr = [];
+      await saveLinkRepo();
+      lrRender();
+      showToast('Link saved');
+    }
+
+    function lrToggleEdit(id) {
+      if (_lrEditId === id) { _lrEditId = null; }
+      else {
+        _lrEditId = id;
+        const l = _lrLinks.find(x => x.id === id);
+        _lrEditTags = l ? [...(l.topics || [])] : [];
+      }
+      lrRender();
+    }
+
+    function lrCancelEdit() {
+      _lrEditId = null;
+      lrRender();
+    }
+
+    function lrRenderEditTagsInForm() {
+      const id = _lrEditId;
+      if (!id) return;
+      const span = document.getElementById(`lr-edit-tags-${id}`);
+      if (!span) return;
+      span.innerHTML = _lrEditTags.map((t, i) =>
+        `<span class="lr-topic-tag">${escHtml(t)}<button onclick="lrEditTagRemove(${i})">×</button></span>`
+      ).join('');
+    }
+
+    function lrEditTagRemove(i) {
+      _lrEditTags.splice(i, 1);
+      lrRenderEditTagsInForm();
+    }
+
+    function lrEditTagInput(id, val) {
+      lrShowSuggestions(`lr-edit-suggestions-${id}`, val, tag => lrEditTagSelect(id, tag));
+    }
+
+    function lrEditTagKey(event, id) {
+      const input = document.getElementById(`lr-edit-tag-input-${id}`);
+      const sugBox = document.getElementById(`lr-edit-suggestions-${id}`);
+      if (event.key === 'Enter' || event.key === ',') {
+        event.preventDefault();
+        const val = input.value.trim().replace(/,$/, '');
+        if (val && !_lrEditTags.includes(val)) { _lrEditTags.push(val); lrRenderEditTagsInForm(); }
+        input.value = '';
+        if (sugBox) sugBox.style.display = 'none';
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        lrMoveSuggestion(`lr-edit-suggestions-${id}`, 1);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        lrMoveSuggestion(`lr-edit-suggestions-${id}`, -1);
+      } else if (event.key === 'Escape') {
+        if (sugBox) sugBox.style.display = 'none';
+      }
+    }
+
+    function lrEditTagSelect(id, tag) {
+      if (!_lrEditTags.includes(tag)) _lrEditTags.push(tag);
+      const input = document.getElementById(`lr-edit-tag-input-${id}`);
+      if (input) { input.value = ''; input.focus(); }
+      const sugBox = document.getElementById(`lr-edit-suggestions-${id}`);
+      if (sugBox) sugBox.style.display = 'none';
+      lrRenderEditTagsInForm();
+    }
+
+    async function lrSaveEdit(id) {
+      const l = _lrLinks.find(x => x.id === id);
+      if (!l) return;
+      const tagInput = document.getElementById(`lr-edit-tag-input-${id}`)?.value.trim();
+      if (tagInput && !_lrEditTags.includes(tagInput)) _lrEditTags.push(tagInput);
+      l.type = document.getElementById(`lr-edit-type-${id}`)?.value || l.type;
+      l.label = document.getElementById(`lr-edit-label-${id}`)?.value.trim() ?? l.label;
+      l.url = document.getElementById(`lr-edit-url-${id}`)?.value.trim() || l.url;
+      l.topics = [..._lrEditTags];
+      _lrEditId = null;
+      await saveLinkRepo();
+      lrRender();
+      showToast('Link updated');
+    }
+
+    async function lrDelete(id) {
+      _lrLinks = _lrLinks.filter(l => l.id !== id);
+      if (_lrEditId === id) _lrEditId = null;
+      await saveLinkRepo();
+      lrRender();
+      showToast('Link deleted');
+    }
+
+    function lrCopyUrl(url, id) {
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById(`lr-copy-btn-${id}`);
+        if (!btn) return;
+        btn.textContent = '✓';
+        btn.style.color = 'var(--success)';
+        setTimeout(() => { btn.textContent = '📋'; btn.style.color = ''; }, 1500);
+      });
+    }
+
+    function lrShowSuggestions(boxId, val, onSelect) {
+      const box = document.getElementById(boxId);
+      if (!box) return;
+      const q = val.trim().toLowerCase();
+      const allTopics = Object.keys(lrGetAllTopics());
+      const matches = q
+        ? allTopics.filter(t => t.toLowerCase().includes(q))
+        : allTopics;
+      if (!matches.length) { box.style.display = 'none'; return; }
+      box.innerHTML = matches.slice(0, 8).map((t, i) =>
+        `<div class="lr-suggestion-item" data-idx="${i}" data-topic="${escHtml(t)}" onmousedown="event.preventDefault()">${escHtml(t)}</div>`
+      ).join('');
+      box.querySelectorAll('.lr-suggestion-item').forEach(el => {
+        el.addEventListener('click', () => onSelect(el.dataset.topic));
+      });
+      box.style.display = 'block';
+    }
+
+    function lrMoveSuggestion(boxId, dir) {
+      const box = document.getElementById(boxId);
+      if (!box || box.style.display === 'none') return;
+      const items = box.querySelectorAll('.lr-suggestion-item');
+      let focused = box.querySelector('.lr-suggestion-item.focused');
+      let idx = focused ? parseInt(focused.dataset.idx) : -1;
+      if (focused) focused.classList.remove('focused');
+      idx = Math.max(0, Math.min(items.length - 1, idx + dir));
+      items[idx]?.classList.add('focused');
+      items[idx]?.scrollIntoView({ block: 'nearest' });
+    }
+
+    // ─────────────────────────────────────────
     // Init
     // ─────────────────────────────────────────
     async function init() {
       const today = todayKey();
       state.activeMonth = monthOf(today);
       state.activeDay = today;
-      // Load list of all months with data from server, then load current month
+      // Load list of all months with data from server, then load current month and link repo
       state.knownMonths = await loadKnownMonths();
-      await loadMonth(state.activeMonth);
+      await Promise.all([loadMonth(state.activeMonth), loadLinkRepo()]);
       ensureDay(today);
       render();
     }
@@ -3105,6 +4083,8 @@
     function escHtml(s) {
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+    // Produce a single-quoted JS string literal safe for use inside a double-quoted HTML attribute
+    function sq(v) { return "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"; }
 
     // ─────────────────────────────────────────
     // Navigation
@@ -3478,7 +4458,8 @@
       if (ctx.links && ctx.links.length) {
         html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Links</div>';
         ctx.links.slice(0, MAX_LINKS).forEach(lnk => {
-          html += `<div class="ctx-tooltip-link">${linkIcon(lnk.type)} <span>${escHtml(lnk.label || lnk.type || lnk.url || '')}</span></div>`;
+          const rl = resolveLink(lnk);
+          html += `<div class="ctx-tooltip-link">${linkIcon(rl.type)} <span>${escHtml(rl.label || rl.type || rl.url || '')}</span></div>`;
         });
         if (ctx.links.length > MAX_LINKS)
           html += `<div class="ctx-tooltip-more">+${ctx.links.length - MAX_LINKS} more…</div>`;
@@ -3567,16 +4548,23 @@
       html += `<div class="cp-section">
     <div class="cp-section-title">Links</div>`;
       const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Link'];
-      ctx.links.forEach((link, i) => {
+      const typeOptsAll = LINK_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+      ctx.links.forEach((stored, i) => {
+        const link = resolveLink(stored);
         const icon = linkIcon(link.type);
         const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t === link.type ? ' selected' : ''}>${t}</option>`).join('');
+        const topicPills = (link.topics || []).map(t =>
+          `<span class="lr-card-topic" style="cursor:default;font-size:10px;">${escHtml(t)}</span>`
+        ).join('');
+        const isRepoLink = !!stored.linkRepoId;
         html += `<div class="link-card" id="link-card-${i}">
       <span class="link-icon">${icon}</span>
       <div class="link-info">
-        <div class="link-label">${escHtml(link.label || link.type)}</div>
+        <div class="link-label">${escHtml(link.label || link.type)}${isRepoLink ? ' <span title="Saved in Link Repository" style="font-size:10px;opacity:0.6;">🗂</span>' : ''}</div>
         <a class="link-url" href="${escHtml(link.url)}" target="_blank" rel="noopener">${escHtml(link.url)}</a>
+        ${topicPills ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${topicPills}</div>` : ''}
       </div>
-      <button class="btn-icon" id="copy-link-btn-${i}" onclick="copyLinkUrl('${escHtml(link.url)}', ${i})" title="Copy URL">📋</button>
+      <button class="btn-icon" id="copy-link-btn-${i}" onclick="copyLinkUrl(${sq(link.url)}, ${i})" title="Copy URL">📋</button>
       <button class="btn-icon" onclick="toggleEditLink(${i})" title="Edit">✏️</button>
       <button class="btn-icon" onclick="deleteLink(${i})" title="Delete">🗑</button>
     </div>
@@ -3584,6 +4572,13 @@
       <select id="edit-link-type-${i}">${typeOpts}</select>
       <input id="edit-link-label-${i}" placeholder="Label (optional)" value="${escHtml(link.label || '')}" />
       <input id="edit-link-url-${i}" placeholder="URL" value="${escHtml(link.url)}" />
+      <div style="position:relative;">
+        <div class="lr-topic-input-wrap" onclick="document.getElementById('ctx-edit-tag-input-${i}').focus()" style="min-height:28px;">
+          <span id="ctx-edit-tags-${i}"></span>
+          <input class="lr-topic-type-input" id="ctx-edit-tag-input-${i}" placeholder="Add topic…" />
+        </div>
+        <div class="lr-suggestions" id="ctx-edit-suggestions-${i}" style="display:none;"></div>
+      </div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="saveEditLink(${i})">Save</button>
         <button class="btn btn-secondary btn-sm" onclick="toggleEditLink(${i})">Cancel</button>
@@ -3591,31 +4586,22 @@
     </div>`;
       });
       html += `<div class="add-link-form" id="add-link-form" style="display:none;">
-    <select id="link-type">
-      <option value="Jira">Jira</option>
-      <option value="Slack">Slack</option>
-      <option value="Google Docs">Google Docs</option>
-      <option value="Google Sheets">Google Sheets</option>
-      <option value="Google Slides">Google Slides</option>
-      <option value="GitHub">GitHub</option>
-      <option value="Cursor Canvas">Cursor Canvas</option>
-      <option value="Claude AI">Claude AI</option>
-      <option value="Local File">Local File</option>
-      <option value="Qlik Sense">Qlik Sense</option>
-      <option value="Tableau">Tableau</option>
-      <option value="Wiki">Wiki</option>
-      <option value="NotebookLM">NotebookLM</option>
-      <option value="GitHub Pages">GitHub Pages</option>
-      <option value="Link">Other Link</option>
-    </select>
+    <select id="link-type">${typeOptsAll}</select>
     <input id="link-label" placeholder="Label (optional)" />
     <input id="link-url" placeholder="URL" />
+    <div style="position:relative;">
+      <div class="lr-topic-input-wrap" onclick="document.getElementById('ctx-add-tag-input').focus()" style="min-height:28px;">
+        <span id="ctx-add-tags"></span>
+        <input class="lr-topic-type-input" id="ctx-add-tag-input" placeholder="Add topic…" />
+      </div>
+      <div class="lr-suggestions" id="ctx-add-suggestions" style="display:none;"></div>
+    </div>
     <div style="display:flex;gap:6px;">
       <button class="btn btn-primary btn-sm" onclick="saveLink()">Save</button>
-      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('add-link-form').style.display='none'">Cancel</button>
+      <button class="btn btn-secondary btn-sm" onclick="ctxCancelAddLink()">Cancel</button>
     </div>
   </div>
-  <button class="btn btn-secondary btn-sm" onclick="document.getElementById('add-link-form').style.display='flex'">+ Add Link</button>
+  <button class="btn btn-secondary btn-sm" onclick="ctxShowAddLink()">+ Add Link</button>
   </div>`;
 
       // Attachments
@@ -3636,6 +4622,106 @@
   </div>`;
 
       document.getElementById('cp-body').innerHTML = html;
+
+      // Wire up topic tag inputs for the add-link form and any open edit-link form
+      ctxWireAddTagInput();
+      ctx.links.forEach((_, i) => ctxWireEditTagInput(i));
+    }
+
+    // ── Context panel tag helpers ──────────────────────────────────────────────
+
+    function ctxRenderAddTags() {
+      const wrap = document.getElementById('ctx-add-tags');
+      if (!wrap) return;
+      wrap.innerHTML = _ctxAddTags.map((t, i) =>
+        `<span class="lr-topic-tag">${escHtml(t)}<span onclick="ctxAddTagRemove(${i})" style="cursor:pointer;margin-left:3px;">×</span></span>`
+      ).join('');
+    }
+
+    function ctxAddTagRemove(i) { _ctxAddTags.splice(i, 1); ctxRenderAddTags(); }
+
+    function ctxWireAddTagInput() {
+      const inp = document.getElementById('ctx-add-tag-input');
+      if (!inp) return;
+      ctxRenderAddTags();
+      inp.addEventListener('input', () => {
+        lrShowSuggestions('ctx-add-suggestions', inp.value, t => { ctxAddTagSelect(t); inp.value = ''; inp.focus(); });
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          const v = inp.value.trim().replace(/,$/, '');
+          if (v && !_ctxAddTags.includes(v)) _ctxAddTags.push(v);
+          inp.value = '';
+          ctxRenderAddTags();
+          document.getElementById('ctx-add-suggestions').style.display = 'none';
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          lrMoveSuggestion('ctx-add-suggestions', e.key === 'ArrowDown' ? 1 : -1);
+        } else if (e.key === 'Escape') {
+          document.getElementById('ctx-add-suggestions').style.display = 'none';
+        }
+      });
+    }
+
+    function ctxAddTagSelect(t) {
+      if (t && !_ctxAddTags.includes(t)) _ctxAddTags.push(t);
+      ctxRenderAddTags();
+      document.getElementById('ctx-add-suggestions').style.display = 'none';
+    }
+
+    function ctxRenderEditTags(i) {
+      const wrap = document.getElementById(`ctx-edit-tags-${i}`);
+      if (!wrap) return;
+      wrap.innerHTML = _ctxEditTags.map((t, j) =>
+        `<span class="lr-topic-tag">${escHtml(t)}<span onclick="ctxEditTagRemove(${i},${j})" style="cursor:pointer;margin-left:3px;">×</span></span>`
+      ).join('');
+    }
+
+    function ctxEditTagRemove(linkIdx, tagIdx) { _ctxEditTags.splice(tagIdx, 1); ctxRenderEditTags(linkIdx); }
+
+    function ctxWireEditTagInput(i) {
+      const inp = document.getElementById(`ctx-edit-tag-input-${i}`);
+      if (!inp) return;
+      // Initialize edit tags from current link topics when this form is first opened
+      if (_ctxEditTagIndex !== i) return; // only wire when this index is open
+      ctxRenderEditTags(i);
+      inp.addEventListener('input', () => {
+        lrShowSuggestions(`ctx-edit-suggestions-${i}`, inp.value, t => { ctxEditTagSelect(i, t); inp.value = ''; inp.focus(); });
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          const v = inp.value.trim().replace(/,$/, '');
+          if (v && !_ctxEditTags.includes(v)) _ctxEditTags.push(v);
+          inp.value = '';
+          ctxRenderEditTags(i);
+          document.getElementById(`ctx-edit-suggestions-${i}`).style.display = 'none';
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          lrMoveSuggestion(`ctx-edit-suggestions-${i}`, e.key === 'ArrowDown' ? 1 : -1);
+        } else if (e.key === 'Escape') {
+          document.getElementById(`ctx-edit-suggestions-${i}`).style.display = 'none';
+        }
+      });
+    }
+
+    function ctxEditTagSelect(i, t) {
+      if (t && !_ctxEditTags.includes(t)) _ctxEditTags.push(t);
+      ctxRenderEditTags(i);
+      document.getElementById(`ctx-edit-suggestions-${i}`).style.display = 'none';
+    }
+
+    function ctxShowAddLink() {
+      _ctxAddTags = [];
+      document.getElementById('add-link-form').style.display = 'flex';
+      ctxRenderAddTags();
+      ctxWireAddTagInput();
+    }
+
+    function ctxCancelAddLink() {
+      _ctxAddTags = [];
+      document.getElementById('add-link-form').style.display = 'none';
     }
 
     function linkIcon(type) {
@@ -3733,15 +4819,37 @@
       document.getElementById('note-modal-overlay').classList.remove('open');
     }
 
-    function saveLink() {
+    async function saveLink() {
       const task = getCtxTask();
       if (!task) return;
       const url = document.getElementById('link-url').value.trim();
       if (!url) return;
       const type = document.getElementById('link-type').value;
       const label = document.getElementById('link-label').value.trim() || type;
-      task.context.links.push({ type, label, url });
-      saveData();
+      // Flush any uncommitted text in the tag input
+      const tagInp = document.getElementById('ctx-add-tag-input');
+      if (tagInp) { const v = tagInp.value.trim(); if (v && !_ctxAddTags.includes(v)) _ctxAddTags.push(v); }
+      const topics = [..._ctxAddTags];
+      _ctxAddTags = [];
+
+      if (topics.length > 0) {
+        // Promote to link repo — find existing entry by URL or create new
+        if (!_lrLinks.length) await loadLinkRepo();
+        let entry = _lrLinks.find(l => l.url === url);
+        if (entry) {
+          // Merge topics
+          topics.forEach(t => { if (!entry.topics.includes(t)) entry.topics.push(t); });
+          entry.type = type; entry.label = label;
+        } else {
+          entry = { id: uid(), type, label, url, topics };
+          _lrLinks.push(entry);
+        }
+        await saveLinkRepo();
+        task.context.links.push({ linkRepoId: entry.id });
+      } else {
+        task.context.links.push({ type, label, url });
+      }
+      await saveData();
       renderContextPanel();
     }
 
@@ -3767,19 +4875,64 @@
       const form = document.getElementById(`link-edit-${index}`);
       if (!form) return;
       const visible = form.style.display !== 'none';
-      form.style.display = visible ? 'none' : 'flex';
-      if (!visible) document.getElementById(`edit-link-url-${index}`).focus();
+      if (visible) {
+        form.style.display = 'none';
+        _ctxEditTagIndex = -1;
+        _ctxEditTags = [];
+      } else {
+        form.style.display = 'flex';
+        // Initialize edit tags from the resolved link's current topics
+        const task = getCtxTask();
+        if (task) {
+          const stored = task.context.links[index];
+          const link = resolveLink(stored);
+          _ctxEditTags = [...(link.topics || [])];
+        }
+        _ctxEditTagIndex = index;
+        ctxWireEditTagInput(index);
+        document.getElementById(`edit-link-url-${index}`).focus();
+      }
     }
 
-    function saveEditLink(index) {
+    async function saveEditLink(index) {
       const task = getCtxTask();
       if (!task) return;
       const url = document.getElementById(`edit-link-url-${index}`).value.trim();
       if (!url) return;
       const type = document.getElementById(`edit-link-type-${index}`).value;
       const label = document.getElementById(`edit-link-label-${index}`).value.trim() || type;
-      task.context.links[index] = { type, label, url };
-      saveData();
+      // Flush uncommitted tag input text
+      const tagInp = document.getElementById(`ctx-edit-tag-input-${index}`);
+      if (tagInp) { const v = tagInp.value.trim(); if (v && !_ctxEditTags.includes(v)) _ctxEditTags.push(v); }
+      const topics = [..._ctxEditTags];
+
+      const stored = task.context.links[index];
+      if (stored.linkRepoId) {
+        // Update the repo entry directly
+        const entry = _lrLinks.find(l => l.id === stored.linkRepoId);
+        if (entry) { entry.type = type; entry.label = label; entry.url = url; entry.topics = topics; }
+        await saveLinkRepo();
+        // stored reference stays the same
+      } else if (topics.length > 0) {
+        // Promote inline link to repo
+        if (!_lrLinks.length) await loadLinkRepo();
+        let entry = _lrLinks.find(l => l.url === url);
+        if (entry) {
+          topics.forEach(t => { if (!entry.topics.includes(t)) entry.topics.push(t); });
+          entry.type = type; entry.label = label;
+        } else {
+          entry = { id: uid(), type, label, url, topics };
+          _lrLinks.push(entry);
+        }
+        await saveLinkRepo();
+        task.context.links[index] = { linkRepoId: entry.id };
+      } else {
+        // Stay inline
+        task.context.links[index] = { type, label, url };
+      }
+      _ctxEditTagIndex = -1;
+      _ctxEditTags = [];
+      await saveData();
       renderContextPanel();
     }
 
@@ -4155,6 +5308,7 @@
       if (e.key === 'Escape') {
         hideCtxMenu();
         closePasteConfirm();
+        if (document.getElementById('link-repo-overlay')?.classList.contains('open')) closeLinkRepo();
       }
     });
 
@@ -4235,8 +5389,22 @@
         return;
       }
 
+      // Build a resolved copy of the days payload — replace linkRepoId references with full link objects
       const daysPayload = {};
-      daysInRange.forEach(k => { daysPayload[k] = state.days[k]; });
+      daysInRange.forEach(k => {
+        const day = state.days[k];
+        function resolveTaskLinks(tasks) {
+          return (tasks || []).map(t => ({
+            ...t,
+            context: t.context ? {
+              ...t.context,
+              links: (t.context.links || []).map(l => resolveLink(l)),
+            } : t.context,
+            children: resolveTaskLinks(t.children),
+          }));
+        }
+        daysPayload[k] = { ...day, tasks: resolveTaskLinks(day.tasks) };
+      });
 
       // Parse optional topics
       const topicsRaw = document.getElementById('sum-topics').value;
@@ -4327,6 +5495,9 @@
       document.getElementById('ctx-view-search').value = '';
       const clearBtn = document.getElementById('ctx-view-search-clear');
       if (clearBtn) clearBtn.classList.remove('visible');
+      _ctxTagFilter = 'all';
+      const filterBtn = document.getElementById('ctx-tag-filter-btn');
+      if (filterBtn) { filterBtn.textContent = '🏷 All'; filterBtn.classList.remove('active'); }
       await loadMissingMonthsForRange(fromKey, toKey);
       renderCtxView();
     }
@@ -4351,6 +5522,17 @@
       refreshCtxView();
     }
 
+    function cycleCtxTagFilter() {
+      _ctxTagFilter = _ctxTagFilter === 'all' ? 'tagged' : _ctxTagFilter === 'tagged' ? 'untagged' : 'all';
+      const btn = document.getElementById('ctx-tag-filter-btn');
+      if (btn) {
+        const labels = { all: '🏷 All', tagged: '🏷 Tagged', untagged: '🏷 Untagged' };
+        btn.textContent = labels[_ctxTagFilter];
+        btn.classList.toggle('active', _ctxTagFilter !== 'all');
+      }
+      renderCtxView();
+    }
+
     async function refreshCtxView() {
       const fromKey = document.getElementById('ctx-view-from').value;
       const toKey = document.getElementById('ctx-view-to').value;
@@ -4371,7 +5553,7 @@
           out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'note', itemIndex: i, item: n, monthKey: monthOf(dayKey) });
         });
         ctx.links.forEach((l, i) => {
-          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'link', itemIndex: i, item: l, monthKey: monthOf(dayKey) });
+          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'link', itemIndex: i, item: resolveLink(l), isRepoLink: !!l.linkRepoId, monthKey: monthOf(dayKey) });
         });
         ctx.attachments.forEach((a, i) => {
           out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'att', itemIndex: i, item: a, monthKey: monthOf(dayKey) });
@@ -4392,6 +5574,8 @@
 
     // Unique key identifying an editable link row in the rendered table
     let _ctxViewEditKey = null; // 'dayKey|taskId|linkIndex' of currently open inline edit
+    let _ctxViewEditTags = [];  // topic tags being edited in the currently open inline edit form
+    let _ctxTagFilter = 'all';  // 'all' | 'tagged' | 'untagged' — filters link rows by topic presence
 
     function renderCtxView() {
       const fromKey = document.getElementById('ctx-view-from').value;
@@ -4414,7 +5598,12 @@
         collectCtxEntries(tasks, dayKey, [], allEntries);
       });
 
-      const filtered = q ? allEntries.filter(e => ctxEntryMatchesQuery(e, q)) : allEntries;
+      const searchFiltered = q ? allEntries.filter(e => ctxEntryMatchesQuery(e, q)) : allEntries;
+      const filtered = _ctxTagFilter === 'all' ? searchFiltered : searchFiltered.filter(e => {
+        if (e.itemType !== 'link') return _ctxTagFilter === 'untagged'; // notes/attachments shown only in untagged view
+        const hasTopics = (e.item.topics || []).length > 0;
+        return _ctxTagFilter === 'tagged' ? hasTopics : !hasTopics;
+      });
       const taskCount = new Set(filtered.map(e => e.dayKey + '|' + e.taskId)).size;
 
       meta.textContent = filtered.length
@@ -4449,8 +5638,10 @@
         const taskName = q ? highlightCtx(entry.taskPath[entry.taskPath.length - 1], q) : escHtml(entry.taskPath[entry.taskPath.length - 1]);
 
         // Type chip
+        const repoIndicator = (entry.itemType === 'link' && entry.isRepoLink)
+          ? ` <span title="Saved in Link Repository" style="font-size:10px;opacity:0.6;">🗂</span>` : '';
         const typeChip = entry.itemType === 'link'
-          ? `<span class="ctxv-type-chip ctxv-type-link">${linkIcon(entry.item.type)} ${escHtml(entry.item.type)}</span>`
+          ? `<span class="ctxv-type-chip ctxv-type-link">${linkIcon(entry.item.type)} ${escHtml(entry.item.type)}${repoIndicator}</span>`
           : entry.itemType === 'note'
             ? `<span class="ctxv-type-chip ctxv-type-note">📝 Note</span>`
             : `<span class="ctxv-type-chip ctxv-type-att">📎 File</span>`;
@@ -4460,17 +5651,31 @@
         if (entry.itemType === 'link') {
           if (isEditing) {
             const typeOpts = LINK_TYPES.map(t => `<option value="${t}"${t === entry.item.type ? ' selected' : ''}>${t}</option>`).join('');
+            const tagPillsHtml = `<span id="ctxve-tags-${editKey}"></span>`;
             contentHtml = `<div class="ctxv-edit-form">
           <select id="ctxe-type-${editKey}">${typeOpts}</select>
           <input id="ctxe-label-${editKey}" value="${escHtml(entry.item.label || '')}" placeholder="Label" />
+          <div style="position:relative;">
+            <div class="lr-topic-input-wrap" onclick="document.getElementById('ctxve-tag-input-${editKey}').focus()" style="min-height:28px;">
+              ${tagPillsHtml}
+              <input class="lr-topic-type-input" id="ctxve-tag-input-${editKey}" placeholder="Add topic…" />
+            </div>
+            <div class="lr-suggestions" id="ctxve-suggestions-${editKey}" style="display:none;"></div>
+          </div>
           <div class="ctxv-edit-btns">
-            <button class="btn btn-primary btn-sm" onclick="saveCtxLink('${escHtml(editKey)}')">Save</button>
+            <button class="btn btn-primary btn-sm" onclick="saveCtxLink(${sq(editKey)})">Save</button>
             <button class="btn btn-secondary btn-sm" onclick="cancelCtxEdit()">Cancel</button>
           </div>
         </div>`;
           } else {
             const hl = q ? highlightCtx(entry.item.label || entry.item.type, q) : escHtml(entry.item.label || entry.item.type);
-            contentHtml = `<span>${hl}</span><a class="ctxv-url" href="${escHtml(entry.item.url)}" target="_blank" rel="noopener">${escHtml(entry.item.url)}</a>`;
+            const topicPills = (entry.item.topics || []).map(t =>
+              `<span class="lr-card-topic" style="cursor:default;font-size:10px;">${escHtml(t)}</span>`
+            ).join('');
+            contentHtml = `<div style="display:flex;flex-direction:column;gap:3px;">
+          <div><span>${hl}</span><a class="ctxv-url" href="${escHtml(entry.item.url)}" target="_blank" rel="noopener">${escHtml(entry.item.url)}</a></div>
+          ${topicPills ? `<div style="display:flex;flex-wrap:wrap;gap:3px;">${topicPills}</div>` : ''}
+        </div>`;
           }
         } else if (entry.itemType === 'note') {
           const hl = q ? highlightCtx(entry.item.text || '', q) : escHtml(entry.item.text || '');
@@ -4495,6 +5700,52 @@
 
       html += '</tbody></table>';
       body.innerHTML = html;
+
+      // Wire tag input if an edit form is open
+      if (_ctxViewEditKey) ctxViewWireTagInput(_ctxViewEditKey);
+    }
+
+    function ctxViewRenderEditTags(editKey) {
+      const wrap = document.getElementById(`ctxve-tags-${editKey}`);
+      if (!wrap) return;
+      wrap.innerHTML = _ctxViewEditTags.map((t, i) =>
+        `<span class="lr-topic-tag">${escHtml(t)}<span onclick="ctxViewTagRemove(${sq(editKey)},${i})" style="cursor:pointer;margin-left:3px;">×</span></span>`
+      ).join('');
+    }
+
+    function ctxViewTagRemove(editKey, i) {
+      _ctxViewEditTags.splice(i, 1);
+      ctxViewRenderEditTags(editKey);
+    }
+
+    function ctxViewWireTagInput(editKey) {
+      ctxViewRenderEditTags(editKey);
+      const inp = document.getElementById(`ctxve-tag-input-${editKey}`);
+      if (!inp) return;
+      inp.addEventListener('input', () => {
+        lrShowSuggestions(`ctxve-suggestions-${editKey}`, inp.value, t => {
+          if (!_ctxViewEditTags.includes(t)) _ctxViewEditTags.push(t);
+          ctxViewRenderEditTags(editKey);
+          inp.value = '';
+          inp.focus();
+          document.getElementById(`ctxve-suggestions-${editKey}`).style.display = 'none';
+        });
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          const v = inp.value.trim().replace(/,$/, '');
+          if (v && !_ctxViewEditTags.includes(v)) _ctxViewEditTags.push(v);
+          inp.value = '';
+          ctxViewRenderEditTags(editKey);
+          document.getElementById(`ctxve-suggestions-${editKey}`).style.display = 'none';
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          lrMoveSuggestion(`ctxve-suggestions-${editKey}`, e.key === 'ArrowDown' ? 1 : -1);
+        } else if (e.key === 'Escape') {
+          document.getElementById(`ctxve-suggestions-${editKey}`).style.display = 'none';
+        }
+      });
     }
 
     function highlightCtx(text, q) {
@@ -4508,6 +5759,12 @@
 
     function openCtxLinkEdit(editKey) {
       _ctxViewEditKey = editKey;
+      // Initialize tags from the entry's current topics
+      const [dayKey, taskId, idxStr] = editKey.split('|');
+      const day = state.days[dayKey];
+      const task = day ? findTask(day.tasks, taskId) : null;
+      const stored = task?.context?.links?.[Number(idxStr)];
+      _ctxViewEditTags = [...(resolveLink(stored || {}).topics || [])];
       renderCtxView();
       // Focus the label input after render
       setTimeout(() => {
@@ -4518,6 +5775,7 @@
 
     function cancelCtxEdit() {
       _ctxViewEditKey = null;
+      _ctxViewEditTags = [];
       renderCtxView();
     }
 
@@ -4531,8 +5789,34 @@
 
       const type = document.getElementById(`ctxe-type-${editKey}`).value;
       const label = document.getElementById(`ctxe-label-${editKey}`).value.trim() || type;
-      task.context.links[idx] = { ...task.context.links[idx], type, label };
+      // Flush any uncommitted tag input text
+      const tagInp = document.getElementById(`ctxve-tag-input-${editKey}`);
+      if (tagInp) { const v = tagInp.value.trim(); if (v && !_ctxViewEditTags.includes(v)) _ctxViewEditTags.push(v); }
+      const topics = [..._ctxViewEditTags];
 
+      const stored = task.context.links[idx];
+      if (stored.linkRepoId) {
+        // Update the repo entry (type, label, topics); keep the reference
+        const entry = _lrLinks.find(l => l.id === stored.linkRepoId);
+        if (entry) { entry.type = type; entry.label = label; entry.topics = topics; }
+        await saveLinkRepo();
+      } else if (topics.length > 0) {
+        // Promote inline link to repo
+        const resolved = resolveLink(stored);
+        let entry = _lrLinks.find(l => l.url === resolved.url);
+        if (entry) {
+          topics.forEach(t => { if (!entry.topics.includes(t)) entry.topics.push(t); });
+          entry.type = type; entry.label = label;
+        } else {
+          entry = { id: uid(), type, label, url: resolved.url, topics };
+          _lrLinks.push(entry);
+        }
+        await saveLinkRepo();
+        task.context.links[idx] = { linkRepoId: entry.id };
+      } else {
+        task.context.links[idx] = { ...stored, type, label };
+      }
+      _ctxViewEditTags = [];
       await saveMonth(monthOf(dayKey));
 
       // If the context panel is open on this task, refresh it too
@@ -4761,7 +6045,8 @@
       }
       if (ctx.links && ctx.links.length) {
         html += `<div class="archive-ctx-section">Links</div>`;
-        ctx.links.forEach(l => {
+        ctx.links.forEach(stored => {
+          const l = resolveLink(stored);
           html += `<div class="archive-ctx-link">${linkIcon(l.type)} <a href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.label || l.type)}</a><span style="color:var(--text3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.url)}</span></div>`;
         });
       }

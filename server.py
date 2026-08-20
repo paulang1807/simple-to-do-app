@@ -56,6 +56,7 @@ def get_app_paths():
 
 BASE_DIR, DATA_DIR = get_app_paths()
 ARCHIVE_FILE = DATA_DIR / "archive.json"
+LINK_REPO_FILE = DATA_DIR / "link-repo.json"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -442,6 +443,13 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, [])
             return
 
+        if path == "/link-repo":
+            if LINK_REPO_FILE.exists():
+                self.send_json(200, json.loads(LINK_REPO_FILE.read_text()))
+            else:
+                self.send_json(200, [])
+            return
+
         if path == "/":
             path = "/index.html"
         file_path = (BASE_DIR / path.lstrip("/")).resolve()
@@ -500,6 +508,21 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_text(400, "Expected a JSON array")
                 return
             ARCHIVE_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+            self.send_json(200, {"ok": True})
+            return
+
+        if path == "/link-repo":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length)
+            try:
+                data = json.loads(body)
+            except json.JSONDecodeError as e:
+                self.send_text(400, f"Invalid JSON: {e}")
+                return
+            if not isinstance(data, list):
+                self.send_text(400, "Expected a JSON array")
+                return
+            LINK_REPO_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False))
             self.send_json(200, {"ok": True})
             return
 
