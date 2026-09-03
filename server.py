@@ -17,11 +17,14 @@ Run with:  uv run server.py
 """
 
 import argparse
+import email
+import email.policy
 import json
 import os
 import re
 import socket
 import sys
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -55,6 +58,8 @@ def get_app_paths():
     return base_dir, data_dir
 
 BASE_DIR, DATA_DIR = get_app_paths()
+ATTACHMENTS_DIR = DATA_DIR / "attachments"
+ATTACHMENTS_DIR.mkdir(exist_ok=True)
 ARCHIVE_FILE = DATA_DIR / "archive.json"
 LINK_REPO_FILE = DATA_DIR / "link-repo.json"
 
@@ -234,6 +239,13 @@ MIME = {
     ".json": "application/json",
     ".ico":  "image/x-icon",
     ".png":  "image/png",
+    ".jpg":  "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif":  "image/gif",
+    ".svg":  "image/svg+xml",
+    ".pdf":  "application/pdf",
+    ".txt":  "text/plain; charset=utf-8",
+    ".md":   "text/markdown; charset=utf-8",
 }
 
 
@@ -450,6 +462,36 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, [])
             return
 
+        # GET /attachments/<id>/<filename> — serve a stored attachment
+        if path.startswith("/attachments/"):
+            parts = path.split("/")  # ['', 'attachments', id, filename]
+            if len(parts) == 4:
+                att_id   = parts[2]
+                filename = parts[3]
+                # Sanitise: only allow simple alphanumeric IDs, reject path traversal
+                if re.match(r'^[a-f0-9\-]{8,64}$', att_id):
+                    att_dir  = ATTACHMENTS_DIR / att_id
+                    att_file = att_dir / filename
+                    try:
+                        att_file.resolve().relative_to(ATTACHMENTS_DIR.resolve())
+                    except ValueError:
+                        self.send_text(403, "Forbidden")
+                        return
+                    if att_file.exists() and att_file.is_file():
+                        mime = MIME.get(att_file.suffix.lower(), "application/octet-stream")
+                        body = att_file.read_bytes()
+                        self.send_response(200)
+                        self.send_header("Content-Type", mime)
+                        self.send_header("Content-Length", len(body))
+                        self.send_header("Content-Disposition",
+                                         f'attachment; filename="{filename}"')
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        self.wfile.write(body)
+                        return
+            self.send_text(404, "Not found")
+            return
+
         if path == "/":
             path = "/index.html"
         file_path = (BASE_DIR / path.lstrip("/")).resolve()
@@ -530,6 +572,59 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.split("?")[0]
+
+        # POST /attachments — upload a file; returns { id, name, size, type, path }
+        if path == "/attachments":
+            content_type = self.headers.get("Content-Type", "")
+            if "multipart/form-data" not in content_type:
+                self.send_json(400, {"error": "Expected multipart/form-data"})
+                return
+            length = int(self.headers.get("Content-Length", 0))
+            raw_body = self.rfile.read(length)
+            # Parse multipart using email module — wrap body in MIME message
+            mime_src = f"Content-Type: {content_type}\r\n\r\n".encode() + raw_body
+            msg = email.message_from_bytes(mime_src, policy=email.policy.compat32)
+            file_data = None
+            file_name = None
+            file_type = "application/octet-stream"
+            payload = msg.get_payload()
+            print(f"  [attach] content_type={content_type!r} body_len={len(raw_body)} payload_type={type(payload).__name__} payload_len={len(payload) if isinstance(payload, list) else 'n/a'}")
+            if isinstance(payload, list):
+                for part in payload:
+                    cd = part.get("Content-Disposition", "")
+                    print(f"  [attach] part CD={cd!r}")
+                    if 'name="file"' in cd or "name=file" in cd:
+                        fname = None
+                        for token in cd.split(";"):
+                            token = token.strip()
+                            if token.startswith("filename="):
+                                fname = token[9:].strip().strip('"')
+                        if fname:
+                            file_name = Path(fname).name
+                        file_data = part.get_payload(decode=True)
+                        ct = part.get_content_type()
+                        if ct:
+                            file_type = ct
+                        print(f"  [attach] found file: name={file_name!r} size={len(file_data) if file_data else None} type={file_type!r}")
+                        break
+            else:
+                print(f"  [attach] payload is not a list: {repr(payload)[:200]}")
+            if file_data is None or not file_name:
+                self.send_json(400, {"error": "No file uploaded"})
+                return
+            att_id  = str(uuid.uuid4())
+            att_dir = ATTACHMENTS_DIR / att_id
+            att_dir.mkdir(parents=True, exist_ok=True)
+            dest = att_dir / file_name
+            dest.write_bytes(file_data)
+            self.send_json(200, {
+                "id":   att_id,
+                "name": file_name,
+                "size": len(file_data),
+                "type": file_type,
+                "path": f"/attachments/{att_id}/{file_name}",
+            })
+            return
 
         if path == "/summarize":
             length = int(self.headers.get("Content-Length", 0))

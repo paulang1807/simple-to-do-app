@@ -393,7 +393,9 @@ To **delete a link from the context**, click **🗑** on the link card. This rem
 To **delete a link from the Link Repository entirely**, open the 🗂 Links modal and click 🗑 on the card there.
 
 #### Attachments
-Click **📎 Attach File** to attach one or more files. File name and size are recorded. The `📎 Context` badge appears on the task row whenever any context exists.
+Click **📎 Attach File** to attach one or more files. The file is uploaded to the server and saved under `data/attachments/<id>/<filename>`. A **⬇** download button appears next to each attachment in the context panel and in the Contexts View. The `📎 Context` badge appears on the task row whenever any context exists.
+
+> **Note:** attachments added before this change stored metadata only (no file content). Those entries will not have a ⬇ button — re-attach the file to enable downloading.
 
 Context (notes, links, attachments) is included in work summaries.
 
@@ -613,9 +615,23 @@ Click **🔗 Contexts** in the header to open a full-screen table of every note,
 | **Date** | The day the task belongs to |
 | **Task** | Breadcrumb path from the top-level task down to the task that owns the context item (bold = deepest task) |
 | **Type** | Type chip — 🔵 Jira, 💬 Slack, 📄 Google Docs, 📊 Google Sheets, 📽️ Google Slides, 🐙 GitHub, 🔗 Link, 📝 Note, 📎 Attachment |
-| **Content** | Label + URL (clickable) for links; text preview for notes; filename for attachments |
+| **Content** | Label + URL (clickable) for links; text preview for notes; filename + size + ⬇ download button for attachments |
 
-**Searching:** type in the search box to filter rows. Matches against task and subtask text (highlighted in the breadcrumb column), note content, and link labels. Matching text is highlighted in the results. The count in the header updates to show how many rows matched. A **✕** button appears inside the search box when there is text — click it to clear the search instantly.
+**Searching:** type in the search box to filter rows. Matches against task and subtask text (highlighted in the breadcrumb column), note content, and link labels/URLs. Matching text is highlighted in the results. The count in the header updates to show how many rows matched. A **✕** button appears inside the search box when there is text — click it to clear the search instantly.
+
+**Filtering by type:** use the **All Types** dropdown to limit rows to a single item kind:
+- **🔗 Links** — show only link rows
+- **📝 Notes** — show only note rows
+- **📎 Attachments** — show only attachment rows
+
+Resets to "All Types" each time the view is opened.
+
+**Filtering by tag:** the **🏷 All** chip cycles through three states:
+- **All** — all rows shown (default)
+- **Tagged** — only link rows that have at least one topic tag
+- **Untagged** — link rows with no tags, plus all notes and attachments
+
+The type filter and tag filter apply together, so you can combine them (e.g. "Links" + "Tagged" to see only tagged links).
 
 **Editing a link:** click the ✏️ pencil icon on any link row to open an inline edit form. You can change:
 - **Type** — dropdown with all supported link types

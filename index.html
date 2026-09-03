@@ -2010,6 +2010,21 @@
       font-size: 14px;
     }
 
+    #ctx-type-filter {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #ctx-type-filter:focus {
+      border-color: var(--accent);
+    }
+
     .ctx-tag-filter-chip {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -2711,6 +2726,12 @@
             <input type="text" id="ctx-view-search" placeholder="Search…" oninput="updateCtxSearch()" />
             <button id="ctx-view-search-clear" onclick="clearCtxSearch()" title="Clear search">✕</button>
           </div>
+          <select id="ctx-type-filter" onchange="setCtxTypeFilter(this.value)" title="Filter by context type">
+            <option value="all">All Types</option>
+            <option value="link">🔗 Links</option>
+            <option value="note">📝 Notes</option>
+            <option value="att">📎 Attachments</option>
+          </select>
           <div id="ctx-tag-filter-wrap">
             <button id="ctx-tag-filter-btn" class="ctx-tag-filter-chip" onclick="cycleCtxTagFilter()"
               title="Filter by topic tags">🏷 All</button>
@@ -4608,10 +4629,14 @@
       html += `<div class="cp-section">
     <div class="cp-section-title">Attachments</div>`;
       ctx.attachments.forEach((att, i) => {
+        const openBtn = att.path
+          ? `<a class="btn-icon" href="${escHtml(att.path)}" download="${escHtml(att.name)}" title="Download file">⬇</a>`
+          : '';
         html += `<div class="attach-card">
       <span class="attach-icon">${fileIcon(att.name)}</span>
       <span class="attach-name" title="${escHtml(att.name)}">${escHtml(att.name)}</span>
       <span class="attach-size">${fmtSize(att.size)}</span>
+      ${openBtn}
       <button class="btn-icon" onclick="deleteAttachment(${i})" title="Delete">🗑</button>
     </div>`;
       });
@@ -4936,14 +4961,22 @@
       renderContextPanel();
     }
 
-    function handleAttach(input) {
+    async function handleAttach(input) {
       const task = getCtxTask();
       if (!task) return;
-      Array.from(input.files).forEach(file => {
-        // Store metadata only (not binary data — would exceed localStorage)
-        task.context.attachments.push({ name: file.name, size: file.size, type: file.type, date: Date.now() });
-      });
-      saveData();
+      for (const file of Array.from(input.files)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+          const res = await fetch('/attachments', { method: 'POST', body: fd });
+          if (!res.ok) throw new Error(await res.text());
+          const meta = await res.json();
+          task.context.attachments.push({ name: meta.name, size: meta.size, type: meta.type, date: Date.now(), path: meta.path });
+        } catch (e) {
+          alert(`Failed to upload ${file.name}: ${e.message}`);
+        }
+      }
+      await saveData();
       renderContextPanel();
     }
 
@@ -5498,6 +5531,9 @@
       _ctxTagFilter = 'all';
       const filterBtn = document.getElementById('ctx-tag-filter-btn');
       if (filterBtn) { filterBtn.textContent = '🏷 All'; filterBtn.classList.remove('active'); }
+      _ctxTypeFilter = 'all';
+      const typeSel = document.getElementById('ctx-type-filter');
+      if (typeSel) typeSel.value = 'all';
       await loadMissingMonthsForRange(fromKey, toKey);
       renderCtxView();
     }
@@ -5575,7 +5611,13 @@
     // Unique key identifying an editable link row in the rendered table
     let _ctxViewEditKey = null; // 'dayKey|taskId|linkIndex' of currently open inline edit
     let _ctxViewEditTags = [];  // topic tags being edited in the currently open inline edit form
-    let _ctxTagFilter = 'all';  // 'all' | 'tagged' | 'untagged' — filters link rows by topic presence
+    let _ctxTagFilter = 'all'; // 'all' | 'tagged' | 'untagged' — filters link rows by topic presence
+    let _ctxTypeFilter = 'all'; // 'all' | 'link' | 'note' | 'att' — filters by item type
+
+    function setCtxTypeFilter(val) {
+      _ctxTypeFilter = val;
+      renderCtxView();
+    }
 
     function renderCtxView() {
       const fromKey = document.getElementById('ctx-view-from').value;
@@ -5599,7 +5641,8 @@
       });
 
       const searchFiltered = q ? allEntries.filter(e => ctxEntryMatchesQuery(e, q)) : allEntries;
-      const filtered = _ctxTagFilter === 'all' ? searchFiltered : searchFiltered.filter(e => {
+      const typeFiltered = _ctxTypeFilter === 'all' ? searchFiltered : searchFiltered.filter(e => e.itemType === _ctxTypeFilter);
+      const filtered = _ctxTagFilter === 'all' ? typeFiltered : typeFiltered.filter(e => {
         if (e.itemType !== 'link') return _ctxTagFilter === 'untagged'; // notes/attachments shown only in untagged view
         const hasTopics = (e.item.topics || []).length > 0;
         return _ctxTagFilter === 'tagged' ? hasTopics : !hasTopics;
@@ -5681,7 +5724,10 @@
           const hl = q ? highlightCtx(entry.item.text || '', q) : escHtml(entry.item.text || '');
           contentHtml = `<span class="ctxv-note-text">${hl}</span>`;
         } else {
-          contentHtml = `<span>${escHtml(entry.item.name || '')}</span> <span style="color:var(--text3);font-size:11px;">${fmtSize(entry.item.size)}</span>`;
+          const attOpen = entry.item.path
+            ? ` <a href="${escHtml(entry.item.path)}" download="${escHtml(entry.item.name)}" style="color:var(--accent);font-size:12px;" title="Download file">⬇</a>`
+            : '';
+          contentHtml = `<span>${escHtml(entry.item.name || '')}</span> <span style="color:var(--text3);font-size:11px;">${fmtSize(entry.item.size)}</span>${attOpen}`;
         }
 
         // Actions cell
