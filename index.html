@@ -1383,6 +1383,27 @@
       font-family: inherit;
     }
 
+    #search-include-archive-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text3);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #search-include-archive-wrap input {
+      cursor: pointer;
+    }
+
+    .search-badge.archived {
+      background: rgba(90, 97, 128, 0.2);
+      color: var(--text3);
+    }
+
     /* ── Calendar Popover ── */
     #cal-popover {
       position: fixed;
@@ -1844,6 +1865,26 @@
 
     #ctx-view-search-clear.visible {
       display: block;
+    }
+
+    #ctx-view-include-archive-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text3);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    #ctx-view-include-archive-wrap input {
+      cursor: pointer;
+    }
+
+    .ctxv-date-archived {
+      color: var(--text3);
+      font-style: italic;
     }
 
     #ctx-view-meta {
@@ -2726,6 +2767,10 @@
             <input type="text" id="ctx-view-search" placeholder="Search…" oninput="updateCtxSearch()" />
             <button id="ctx-view-search-clear" onclick="clearCtxSearch()" title="Clear search">✕</button>
           </div>
+          <label id="ctx-view-include-archive-wrap">
+            <input type="checkbox" id="ctx-view-include-archive" onchange="onCtxArchiveToggle()" />
+            Include archive
+          </label>
           <select id="ctx-type-filter" onchange="setCtxTypeFilter(this.value)" title="Filter by context type">
             <option value="all">All Types</option>
             <option value="link">🔗 Links</option>
@@ -2863,11 +2908,15 @@
           onkeydown="onSearchKey(event)" />
         <button class="search-close" onclick="closeSearchModal()" title="Close">✕</button>
       </div>
+      <label id="search-include-archive-wrap">
+        <input type="checkbox" id="search-include-archive" onchange="onSearchArchiveToggle()" />
+        Include archive
+      </label>
       <div id="search-meta" style="display:none"></div>
       <div id="search-results"></div>
       <div class="search-hint">
         <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-        <span><kbd>Enter</kbd> jump to day</span>
+        <span><kbd>Enter</kbd> jump to result</span>
         <span><kbd>Esc</kbd> close</span>
         <span><kbd>⌘K</kbd> open</span>
       </div>
@@ -5138,6 +5187,7 @@
       document.getElementById('search-overlay').classList.add('open');
       const inp = document.getElementById('search-input');
       inp.value = '';
+      document.getElementById('search-include-archive').checked = false;
       document.getElementById('search-results').innerHTML = '';
       document.getElementById('search-meta').style.display = 'none';
       _searchFocusIndex = -1;
@@ -5152,8 +5202,15 @@
       _searchFocusIndex = -1;
     }
 
+    async function onSearchArchiveToggle() {
+      if (document.getElementById('search-include-archive').checked) {
+        await loadArchive();
+      }
+      runSearch();
+    }
+
     // Collect all tasks across all loaded days as flat result objects
-    function searchAllTasks(query) {
+    function searchAllTasks(query, includeArchive) {
       const q = query.trim().toLowerCase();
       if (!q) return [];
       const results = [];
@@ -5163,10 +5220,15 @@
         const tasks = (state.days[dayKey] && state.days[dayKey].tasks) || [];
         collectMatchingTasks(tasks, dayKey, [], q, results);
       }
+
+      if (includeArchive) {
+        collectMatchingTasks(_archiveList, null, [], q, results, true);
+      }
+
       return results;
     }
 
-    function collectMatchingTasks(tasks, dayKey, ancestors, query, results) {
+    function collectMatchingTasks(tasks, dayKey, ancestors, query, results, archived) {
       for (const task of tasks) {
         const matchesText = task.text.toLowerCase().includes(query);
         const matchesNote = (task.context && task.context.notes || [])
@@ -5178,10 +5240,11 @@
             dayKey,
             ancestors: [...ancestors],
             matchesNote: !matchesText && matchesNote,
+            archived: !!archived,
           });
         }
         if (task.children && task.children.length) {
-          collectMatchingTasks(task.children, dayKey, [...ancestors, task.text], query, results);
+          collectMatchingTasks(task.children, dayKey, [...ancestors, task.text], query, results, archived);
         }
       }
     }
@@ -5217,7 +5280,8 @@
         return;
       }
 
-      const results = searchAllTasks(query);
+      const includeArchive = document.getElementById('search-include-archive').checked;
+      const results = searchAllTasks(query, includeArchive);
 
       if (results.length === 0) {
         resultsEl.innerHTML = `<div class="search-empty">No tasks matching "<strong>${escHtml(query)}</strong>"</div>`;
@@ -5230,27 +5294,35 @@
 
       const q = query.trim().toLowerCase();
       resultsEl.innerHTML = results.map((r, i) => {
-        const { task, dayKey, ancestors, matchesNote } = r;
+        const { task, dayKey, ancestors, matchesNote, archived } = r;
         const statusIcon = task.status === 'done' ? '✓' : task.status === 'partial' ? '◑' : '○';
         const badges = [];
         if (task.status === 'done') badges.push(`<span class="search-badge done">✓ Done</span>`);
         if (task.status === 'partial') badges.push(`<span class="search-badge partial">◑ Partial</span>`);
         if (task.important) badges.push(`<span class="search-badge important">⭐ Important</span>`);
         if (task.recurring && !task.closed) badges.push(`<span class="search-badge recurring">🔁 Recurring</span>`);
+        if (archived) badges.push(`<span class="search-badge archived">📦 Archived</span>`);
 
         const crumbHtml = ancestors.length
           ? `<span class="search-result-crumb">${ancestors.map(a => escHtml(a)).join(' › ')} › </span>`
           : '';
         const noteHint = matchesNote ? `<span style="color:var(--text3);font-style:italic;"> (matched in note)</span>` : '';
 
-        return `<div class="search-result" data-index="${i}" data-day="${escHtml(dayKey)}" data-id="${escHtml(task.id)}"
-                 onclick="jumpToSearchResult('${escHtml(dayKey)}','${escHtml(task.id)}')"
+        const dateHtml = archived
+          ? ''
+          : `<span class="search-result-date">${formatSearchDate(dayKey)}</span>`;
+        const clickHandler = archived
+          ? `jumpToArchivedSearchResult('${escHtml(task.id)}')`
+          : `jumpToSearchResult('${escHtml(dayKey)}','${escHtml(task.id)}')`;
+
+        return `<div class="search-result" data-index="${i}" data-day="${escHtml(dayKey || '')}" data-id="${escHtml(task.id)}" data-archived="${archived ? '1' : ''}"
+                 onclick="${clickHandler}"
                  onmouseenter="setSearchFocus(${i})">
       <div class="search-result-icon">${statusIcon}</div>
       <div class="search-result-body">
         <div class="search-result-text">${crumbHtml}${highlightMatch(task.text, query)}${noteHint}</div>
         <div class="search-result-meta">
-          <span class="search-result-date">${formatSearchDate(dayKey)}</span>
+          ${dateHtml}
           ${badges.join('')}
         </div>
       </div>
@@ -5280,12 +5352,12 @@
         setSearchFocus(prev);
         items[prev] && items[prev].scrollIntoView({ block: 'nearest' });
       } else if (e.key === 'Enter') {
-        if (_searchFocusIndex >= 0 && items[_searchFocusIndex]) {
-          const el = items[_searchFocusIndex];
-          jumpToSearchResult(el.dataset.day, el.dataset.id);
-        } else if (items.length === 1) {
-          const el = items[0];
-          jumpToSearchResult(el.dataset.day, el.dataset.id);
+        const el = (_searchFocusIndex >= 0 && items[_searchFocusIndex])
+          ? items[_searchFocusIndex]
+          : (items.length === 1 ? items[0] : null);
+        if (el) {
+          if (el.dataset.archived === '1') jumpToArchivedSearchResult(el.dataset.id);
+          else jumpToSearchResult(el.dataset.day, el.dataset.id);
         }
       }
     }
@@ -5311,6 +5383,19 @@
             setTimeout(() => el.classList.remove('search-highlight'), 1800);
           }
         }, 80);
+      }, 80);
+    }
+
+    async function jumpToArchivedSearchResult(taskId) {
+      closeSearchModal();
+      await openArchiveModal();
+      setTimeout(() => {
+        const el = document.getElementById(`arc-${taskId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('search-highlight');
+          setTimeout(() => el.classList.remove('search-highlight'), 1800);
+        }
       }, 80);
     }
 
@@ -5528,6 +5613,7 @@
       document.getElementById('ctx-view-search').value = '';
       const clearBtn = document.getElementById('ctx-view-search-clear');
       if (clearBtn) clearBtn.classList.remove('visible');
+      document.getElementById('ctx-view-include-archive').checked = false;
       _ctxTagFilter = 'all';
       const filterBtn = document.getElementById('ctx-tag-filter-btn');
       if (filterBtn) { filterBtn.textContent = '🏷 All'; filterBtn.classList.remove('active'); }
@@ -5558,6 +5644,13 @@
       refreshCtxView();
     }
 
+    async function onCtxArchiveToggle() {
+      if (document.getElementById('ctx-view-include-archive').checked) {
+        await loadArchive();
+      }
+      renderCtxView();
+    }
+
     function cycleCtxTagFilter() {
       _ctxTagFilter = _ctxTagFilter === 'all' ? 'tagged' : _ctxTagFilter === 'tagged' ? 'untagged' : 'all';
       const btn = document.getElementById('ctx-tag-filter-btn');
@@ -5579,22 +5672,22 @@
     }
 
     // Recursively collect context entries from a task tree.
-    // Each entry: { dayKey, taskId, taskPath (string), itemType, itemIndex, item, monthKey }
-    function collectCtxEntries(tasks, dayKey, ancestors, out) {
+    // Each entry: { dayKey, taskId, taskPath (string), itemType, itemIndex, item, monthKey, archived }
+    function collectCtxEntries(tasks, dayKey, ancestors, out, archived) {
       for (const task of tasks) {
-        if (!task.context) { if (task.children) collectCtxEntries(task.children, dayKey, [...ancestors, task.text], out); continue; }
+        if (!task.context) { if (task.children) collectCtxEntries(task.children, dayKey, [...ancestors, task.text], out, archived); continue; }
         const path = [...ancestors, task.text];
         const ctx = task.context;
         ctx.notes.forEach((n, i) => {
-          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'note', itemIndex: i, item: n, monthKey: monthOf(dayKey) });
+          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'note', itemIndex: i, item: n, monthKey: dayKey ? monthOf(dayKey) : null, archived: !!archived });
         });
         ctx.links.forEach((l, i) => {
-          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'link', itemIndex: i, item: resolveLink(l), isRepoLink: !!l.linkRepoId, monthKey: monthOf(dayKey) });
+          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'link', itemIndex: i, item: resolveLink(l), isRepoLink: !!l.linkRepoId, monthKey: dayKey ? monthOf(dayKey) : null, archived: !!archived });
         });
         ctx.attachments.forEach((a, i) => {
-          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'att', itemIndex: i, item: a, monthKey: monthOf(dayKey) });
+          out.push({ dayKey, taskId: task.id, taskPath: path, itemType: 'att', itemIndex: i, item: a, monthKey: dayKey ? monthOf(dayKey) : null, archived: !!archived });
         });
-        if (task.children && task.children.length) collectCtxEntries(task.children, dayKey, path, out);
+        if (task.children && task.children.length) collectCtxEntries(task.children, dayKey, path, out, archived);
       }
     }
 
@@ -5640,6 +5733,11 @@
         collectCtxEntries(tasks, dayKey, [], allEntries);
       });
 
+      const includeArchive = document.getElementById('ctx-view-include-archive').checked;
+      if (includeArchive) {
+        collectCtxEntries(_archiveList, null, [], allEntries, true);
+      }
+
       const searchFiltered = q ? allEntries.filter(e => ctxEntryMatchesQuery(e, q)) : allEntries;
       const typeFiltered = _ctxTypeFilter === 'all' ? searchFiltered : searchFiltered.filter(e => e.itemType === _ctxTypeFilter);
       const filtered = _ctxTagFilter === 'all' ? typeFiltered : typeFiltered.filter(e => {
@@ -5670,11 +5768,12 @@
 
       filtered.forEach(entry => {
         const editKey = `${entry.dayKey}|${entry.taskId}|${entry.itemIndex}`;
-        const isEditing = entry.itemType === 'link' && _ctxViewEditKey === editKey;
+        const isEditing = !entry.archived && entry.itemType === 'link' && _ctxViewEditKey === editKey;
 
         // Date cell
-        const d = new Date(entry.dayKey + 'T00:00:00');
-        const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        const dateStr = entry.archived
+          ? '<span class="ctxv-date-archived">📦 Archived</span>'
+          : new Date(entry.dayKey + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
         // Task breadcrumb
         const crumbParts = entry.taskPath.slice(0, -1).map(p => `<span class="ctxv-crumb">${q ? highlightCtx(p, q) : escHtml(p)} › </span>`).join('');
@@ -5731,13 +5830,17 @@
         }
 
         // Actions cell
-        const actionsHtml = entry.itemType === 'link' && !isEditing
+        const actionsHtml = entry.itemType === 'link' && !isEditing && !entry.archived
           ? `<button class="btn-icon btn-sm" onclick="openCtxLinkEdit('${escHtml(editKey)}')" title="Edit link">✏️</button>`
           : '';
 
+        const taskClickHandler = entry.archived
+          ? `jumpToArchivedSearchResult('${escHtml(entry.taskId)}')`
+          : `jumpToCtxTask('${escHtml(entry.dayKey)}','${escHtml(entry.taskId)}')`;
+
         html += `<tr data-edit-key="${escHtml(editKey)}">
       <td class="ctxv-date">${dateStr}</td>
-      <td class="ctxv-task"><span class="ctxv-task-link" onclick="jumpToCtxTask('${escHtml(entry.dayKey)}','${escHtml(entry.taskId)}')" title="Go to task">${crumbParts}${taskName}</span></td>
+      <td class="ctxv-task"><span class="ctxv-task-link" onclick="${taskClickHandler}" title="Go to task">${crumbParts}${taskName}</span></td>
       <td class="ctxv-type">${typeChip}</td>
       <td class="ctxv-content">${contentHtml}</td>
       <td class="ctxv-actions">${actionsHtml}</td>
@@ -6126,7 +6229,7 @@
       const ctxPanel = ctxCount > 0
         ? `<div id="actx-${task.id}" style="display:none;">${renderArchiveCtxPanel(task)}</div>`
         : '';
-      return `<div class="${containerClass}">
+      return `<div id="arc-${task.id}" class="${containerClass}">
       <span class="${textClass}">${escHtml(task.text)}</span>
       <div class="archive-item-badges">${badges}</div>
       ${ctxToggle}
@@ -6143,7 +6246,7 @@
       const ctxPanel = ctxCount > 0
         ? `<div id="actx-${task.id}" style="display:none;">${renderArchiveCtxPanel(task)}</div>`
         : '';
-      let html = `<div class="archive-child-item" style="margin-left:${ml}px;">
+      let html = `<div id="arc-${task.id}" class="archive-child-item" style="margin-left:${ml}px;">
     <span class="archive-child-text">${escHtml(task.text)}</span>
     <div class="archive-item-badges">${archiveBadges(task)}</div>
     ${ctxToggle}
