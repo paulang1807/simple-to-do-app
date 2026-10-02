@@ -673,6 +673,7 @@ Click **📊 Summarize** in the header to open the summary modal. The summary is
 |---|---|
 | This Week | Monday → today |
 | This Month | 1st of month → today |
+| Last Month | 1st → last day of the previous calendar month |
 | This Quarter | Start of current quarter → today |
 | This Year | Jan 1 → today |
 | Custom Range | Any date range you choose |

@@ -1128,6 +1128,9 @@
     }
 
     .summary-output {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
       background: var(--surface2);
       border-radius: var(--radius);
       padding: 16px;
@@ -1135,7 +1138,12 @@
       font-size: 14px;
       line-height: 1.7;
       min-height: 200px;
+      height: 320px;
       color: var(--text);
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      white-space: pre-wrap;
     }
 
     .summary-output.loading {
@@ -1143,47 +1151,8 @@
       font-style: italic;
     }
 
-    .summary-output p {
-      margin: 0 0 14px 0;
-    }
-
-    .summary-output p:last-child {
-      margin-bottom: 0;
-    }
-
-    .summary-output .sum-stats {
-      font-size: 12px;
-      color: var(--text3);
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    .summary-output .sum-error {
+    .summary-output.sum-error-text {
       color: var(--danger);
-    }
-
-    .summary-output .s-head {
-      color: var(--accent);
-      font-weight: 700;
-      font-size: 15px;
-    }
-
-    .summary-output .s-sub {
-      color: var(--accent2);
-      font-weight: 600;
-    }
-
-    .summary-output .s-done {
-      color: var(--success);
-    }
-
-    .summary-output .s-partial {
-      color: var(--warn);
-    }
-
-    .summary-output .s-pending {
-      color: var(--text3);
     }
 
 
@@ -2874,6 +2843,7 @@
           <select id="sum-period">
             <option value="week">This Week</option>
             <option value="month">This Month</option>
+            <option value="lastMonth">Last Month</option>
             <option value="quarter">This Quarter</option>
             <option value="year">This Year</option>
             <option value="custom">Custom Range</option>
@@ -2894,7 +2864,7 @@
           <textarea id="sum-topics" placeholder="e.g. Data quality&#10;Gen AI&#10;Deployment"
             style="width:100%;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-size:13px;resize:vertical;min-height:60px;outline:none;font-family:inherit;line-height:1.5;"></textarea>
         </div>
-        <div class="summary-output" id="sum-output">Select a period and click Generate.</div>
+        <textarea class="summary-output" id="sum-output" readonly>Select a period and click Generate.</textarea>
       </div>
     </div>
   </div>
@@ -5436,7 +5406,9 @@
 
     function closeSummaryModal() {
       document.getElementById('modal-overlay').classList.remove('open');
-      document.getElementById('sum-output').innerHTML = 'Select a period and click Generate.';
+      const outEl = document.getElementById('sum-output');
+      outEl.className = 'summary-output';
+      outEl.value = 'Select a period and click Generate.';
     }
 
     document.getElementById('sum-period').addEventListener('change', function () {
@@ -5457,6 +5429,10 @@
         fromKey = dateToKey(from); toKey = todayKey();
       } else if (period === 'month') {
         fromKey = `${todayKey().slice(0, 7)}-01`; toKey = todayKey();
+      } else if (period === 'lastMonth') {
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        fromKey = dateToKey(lastMonthStart); toKey = dateToKey(lastMonthEnd);
       } else if (period === 'quarter') {
         const m = today.getMonth();
         const qStart = Math.floor(m / 3) * 3;
@@ -5490,7 +5466,7 @@
       const period = document.getElementById('sum-period').value;
       const { fromKey, toKey } = summaryDateRange(period);
       if (!fromKey || !toKey) {
-        document.getElementById('sum-output').textContent = 'Please set a date range.';
+        document.getElementById('sum-output').value = 'Please set a date range.';
         return;
       }
 
@@ -5503,7 +5479,7 @@
         .sort();
 
       if (!daysInRange.length) {
-        document.getElementById('sum-output').innerHTML = '<span style="color:var(--text3)">No tasks found in this period.</span>';
+        document.getElementById('sum-output').value = 'No tasks found in this period.';
         return;
       }
 
@@ -5531,7 +5507,7 @@
       // Show loading state
       const el = document.getElementById('sum-output');
       el.className = 'summary-output loading';
-      el.textContent = '✦ Generating summary…';
+      el.value = '✦ Generating summary…';
       document.getElementById('sum-generate-btn').disabled = true;
 
       try {
@@ -5542,22 +5518,24 @@
         });
         const data = await resp.json();
 
-        el.className = 'summary-output';
         if (data.error) {
-          el.innerHTML = `<span class="sum-error">⚠ ${escHtml(data.error)}</span>`;
+          el.className = 'summary-output sum-error-text';
+          el.value = `⚠ ${data.error}`;
         } else {
+          el.className = 'summary-output';
           renderSummaryText(el, data.summary || 'No summary generated.');
         }
       } catch (err) {
-        el.className = 'summary-output';
-        el.innerHTML = `<span class="sum-error">⚠ Could not reach server: ${escHtml(String(err))}</span>`;
+        el.className = 'summary-output sum-error-text';
+        el.value = `⚠ Could not reach server: ${String(err)}`;
       } finally {
         document.getElementById('sum-generate-btn').disabled = false;
       }
     }
 
     function renderSummaryText(el, text) {
-      // Split on the stats line (starts with "Period:") and render as paragraphs
+      // Split on the stats line (starts with "Period:") and lay it out as
+      // paragraphs separated by a blank line, with the stats line at the end.
       const statsMatch = text.match(/\n?(Period:.+)$/s);
       let prose = text;
       let statsLine = '';
@@ -5566,17 +5544,13 @@
         statsLine = statsMatch[1].trim();
       }
 
-      // Split prose into paragraphs and escape HTML
       const paragraphs = prose.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
-      let html = paragraphs.map(p =>
-        `<p>${escHtml(p).replace(/\n/g, '<br>')}</p>`
-      ).join('');
-
+      let out = paragraphs.join('\n\n');
       if (statsLine) {
-        html += `<div class="sum-stats">${escHtml(statsLine)}</div>`;
+        out += `\n\n${statsLine}`;
       }
 
-      el.innerHTML = html;
+      el.value = out;
     }
 
     // Keep gatherStats for backwards compatibility (used by countDescendants etc.)

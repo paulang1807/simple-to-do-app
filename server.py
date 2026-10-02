@@ -312,6 +312,7 @@ def build_prompt(payload: dict) -> tuple[str, dict]:
 
     period_label = {
         "week": "this week", "month": "this month",
+        "lastMonth": "last month",
         "quarter": "this quarter", "year": "this year",
         "custom": "the selected period",
     }.get(period, "the selected period")
