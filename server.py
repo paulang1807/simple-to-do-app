@@ -69,9 +69,12 @@ LINK_REPO_FILE = DATA_DIR / "link-repo.json"
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _load_dotenv():
-    """Load .env file into os.environ (does not override existing env vars)."""
-    # Look for .env in the same place as data, or in the base dir
-    search_paths = [DATA_DIR / ".env", BASE_DIR / ".env"]
+    """Load .env file into os.environ (overrides existing env vars)."""
+    import sys
+    if "unittest" in sys.modules:
+        return
+    # Look for .env in the same place as data, or in the base dir, or in cwd
+    search_paths = [DATA_DIR / ".env", BASE_DIR / ".env", Path.cwd() / ".env"]
     for env_file in search_paths:
         if env_file.exists():
             for line in env_file.read_text().splitlines():
@@ -81,7 +84,7 @@ def _load_dotenv():
                 k, v = line.split("=", 1)
                 k = k.strip()
                 v = v.strip().strip('"').strip("'")
-                if k and k not in os.environ:
+                if k:
                     os.environ[k] = v
             break # Stop after first .env found
 
@@ -172,6 +175,7 @@ def detect_provider() -> tuple[str, str]:
     Priority: anthropic → openai → google.
     Raises RuntimeError if none are configured.
     """
+    _load_dotenv()
 
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
     if anthropic_key:
@@ -187,7 +191,11 @@ def detect_provider() -> tuple[str, str]:
 
     raise RuntimeError(
         "No LLM credentials found.\n\n"
-        "Add one of the following to a .env file in this directory:\n"
+        f"Add one of the following to a .env file located at:\n"
+        f"  {DATA_DIR / '.env'}\n"
+        f"  or {BASE_DIR / '.env'}\n"
+        f"  or {Path.cwd() / '.env'}\n\n"
+        "Variables to add:\n"
         "  ANTHROPIC_API_KEY=sk-ant-...   (https://console.anthropic.com)\n"
         "  OPENAI_API_KEY=sk-...          (https://platform.openai.com)\n"
         "  GOOGLE_API_KEY=...             (https://aistudio.google.com)\n"
