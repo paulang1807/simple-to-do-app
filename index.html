@@ -790,12 +790,48 @@
       gap: 8px;
     }
 
+    .cp-section-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
     .cp-section-title {
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text3);
+      flex: 1;
+    }
+
+    .cp-section-count {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+    }
+
+    .cp-section-chevron {
+      font-size: 10px;
+      color: var(--text3);
+      transition: transform 0.15s;
+      display: inline-block;
+    }
+
+    .cp-section.collapsed .cp-section-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .cp-section-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cp-section.collapsed .cp-section-body {
+      display: none;
     }
 
     .note-card {
@@ -807,25 +843,65 @@
       border: 1px solid var(--border);
     }
 
-    .note-card textarea {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      font-size: 13px;
-      resize: vertical;
-      outline: none;
-      min-height: 60px;
-      font-family: inherit;
-      line-height: 1.5;
-      box-sizing: border-box;
-    }
-
     .note-card .note-actions {
       display: flex;
       justify-content: flex-end;
       gap: 4px;
       margin-top: 6px;
+    }
+
+    .note-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .note-toolbar-btn {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      line-height: 1.4;
+      min-width: 24px;
+    }
+
+    .note-toolbar-btn:hover {
+      color: var(--text);
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .note-rte {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      min-height: 60px;
+      font-family: inherit;
+      line-height: 1.5;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    .note-rte:empty::before {
+      content: attr(data-placeholder);
+      color: var(--text3);
+    }
+
+    .note-rte ul,
+    .note-rte ol {
+      margin: 4px 0;
+      padding-left: 22px;
+    }
+
+    .note-rte a {
+      color: var(--accent);
     }
 
     .note-expand-btn {
@@ -915,7 +991,6 @@
       line-height: 1.65;
       padding: 12px;
       outline: none;
-      resize: none;
       min-height: 300px;
       box-sizing: border-box;
     }
@@ -972,6 +1047,14 @@
       text-decoration: underline;
     }
 
+    .link-details {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 4px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     .attach-card {
       background: var(--surface2);
       border-radius: var(--radius);
@@ -1012,7 +1095,8 @@
       border: 1px solid var(--border);
     }
 
-    .add-link-form input {
+    .add-link-form input,
+    .add-link-form textarea {
       background: var(--surface3);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -1020,9 +1104,11 @@
       color: var(--text);
       font-size: 13px;
       outline: none;
+      font-family: inherit;
     }
 
-    .add-link-form input:focus {
+    .add-link-form input:focus,
+    .add-link-form textarea:focus {
       border-color: var(--accent);
     }
 
@@ -1048,7 +1134,8 @@
     }
 
     .link-edit-form input,
-    .link-edit-form select {
+    .link-edit-form select,
+    .link-edit-form textarea {
       background: var(--surface3);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -1056,11 +1143,18 @@
       color: var(--text);
       font-size: 13px;
       outline: none;
+      font-family: inherit;
     }
 
     .link-edit-form input:focus,
-    .link-edit-form select:focus {
+    .link-edit-form select:focus,
+    .link-edit-form textarea:focus {
       border-color: var(--accent);
+    }
+
+    .link-details-textarea {
+      resize: vertical;
+      min-height: 44px;
     }
 
     /* ── Summary Modal ── */
@@ -2246,7 +2340,8 @@
 
     .lr-add-form select,
     .lr-add-form input[type="text"],
-    .lr-add-form input[type="url"] {
+    .lr-add-form input[type="url"],
+    .lr-add-form textarea {
       background: var(--surface3);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -2254,10 +2349,12 @@
       color: var(--text);
       font-size: 13px;
       outline: none;
+      font-family: inherit;
     }
 
     .lr-add-form select:focus,
-    .lr-add-form input:focus {
+    .lr-add-form input:focus,
+    .lr-add-form textarea:focus {
       border-color: var(--accent);
     }
 
@@ -2273,6 +2370,13 @@
     .lr-add-form input[type="url"] {
       flex: 2;
       min-width: 160px;
+    }
+
+    .lr-add-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      resize: vertical;
+      min-height: 44px;
     }
 
     .lr-topic-input-wrap {
@@ -2410,6 +2514,14 @@
       text-decoration: underline;
     }
 
+    .lr-card-details {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 5px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     .lr-card-topics {
       display: flex;
       flex-wrap: wrap;
@@ -2455,7 +2567,8 @@
     }
 
     .lr-edit-form select,
-    .lr-edit-form input {
+    .lr-edit-form input,
+    .lr-edit-form textarea {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -2463,10 +2576,12 @@
       color: var(--text);
       font-size: 12px;
       outline: none;
+      font-family: inherit;
     }
 
     .lr-edit-form select:focus,
-    .lr-edit-form input:focus {
+    .lr-edit-form input:focus,
+    .lr-edit-form textarea:focus {
       border-color: var(--accent);
     }
 
@@ -2482,6 +2597,13 @@
     .lr-edit-form input[type="url"] {
       flex: 2;
       min-width: 140px;
+    }
+
+    .lr-edit-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      resize: vertical;
+      min-height: 40px;
     }
 
     .lr-edit-form-actions {
@@ -2787,7 +2909,8 @@
         <button class="btn-icon" onclick="closeNoteModal()">✕</button>
       </div>
       <div id="note-modal-body">
-        <textarea id="note-modal-textarea" placeholder="Note…"></textarea>
+        <div id="note-modal-toolbar"></div>
+        <div id="note-modal-textarea" class="note-rte" contenteditable="true" data-placeholder="Note…"></div>
       </div>
       <div id="note-modal-foot">
         <button class="btn btn-secondary btn-sm" onclick="closeNoteModal()">Close</button>
@@ -3001,6 +3124,7 @@
       contextTaskId: null,
       contextDayKey: null,
       taskFilters: new Set(), // active filter chips
+      cpCollapsed: { notes: false, links: false, attachments: false }, // context panel section collapse state
     };
 
     // Clipboard: holds a copied task (with subtasks) until pasted or overwritten
@@ -3231,7 +3355,7 @@
     let _lrAddTags = [];
     let _lrEditTags = [];
 
-    const LINK_REPO_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Link'];
+    const LINK_REPO_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'Google Drive', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Langfuse', 'Plotly Dash', 'AWS', 'JavaScript', 'Link'];
 
     async function loadLinkRepo() {
       try {
@@ -3321,6 +3445,7 @@
           (l.label || '').toLowerCase().includes(q) ||
           (l.url || '').toLowerCase().includes(q) ||
           (l.type || '').toLowerCase().includes(q) ||
+          (l.details || '').toLowerCase().includes(q) ||
           (l.topics || []).some(t => t.toLowerCase().includes(q))
         );
       });
@@ -3403,6 +3528,7 @@
       <div class="lr-card-body">
         <div class="lr-card-label">${escHtml(l.label || l.type)}</div>
         <a class="lr-card-url" href="${escHtml(l.url)}" target="_blank" rel="noopener">${escHtml(l.url)}</a>
+        ${l.details ? `<div class="lr-card-details">${escHtml(l.details)}</div>` : ''}
         ${topicTags ? `<div class="lr-card-topics">${topicTags}</div>` : ''}
         ${isEditing ? lrEditFormHtml(l, typeOpts) : ''}
       </div>
@@ -3439,6 +3565,7 @@
       <input type="text" id="lr-edit-label-${l.id}" placeholder="Label (optional)" value="${escHtml(l.label || '')}" />
       <input type="url" id="lr-edit-url-${l.id}" placeholder="URL" value="${escHtml(l.url || '')}" />
     </div>
+    <textarea id="lr-edit-details-${l.id}" class="link-details-textarea" placeholder="Details (optional) — included in AI summaries">${escHtml(l.details || '')}</textarea>
     <div style="position:relative;">
       <div class="lr-topic-input-wrap" id="lr-edit-tags-wrap-${l.id}" onclick="document.getElementById('lr-edit-tag-input-${l.id}').focus()">
         <span id="lr-edit-tags-${l.id}"></span>
@@ -3483,6 +3610,7 @@
       <input type="text" id="lr-add-label" placeholder="Label (optional)" />
       <input type="url" id="lr-add-url" placeholder="https://…" />
     </div>
+    <textarea id="lr-add-details" class="link-details-textarea" placeholder="Details (optional) — included in AI summaries"></textarea>
     <div style="position:relative;">
       <div class="lr-topic-input-wrap" onclick="document.getElementById('lr-add-tag-input').focus()">
         <span id="lr-add-tags"></span>
@@ -3559,10 +3687,11 @@
       const type = document.getElementById('lr-add-type')?.value || 'Link';
       const label = document.getElementById('lr-add-label')?.value.trim() || '';
       const url = document.getElementById('lr-add-url')?.value.trim() || '';
+      const details = document.getElementById('lr-add-details')?.value.trim() || '';
       const tagInput = document.getElementById('lr-add-tag-input')?.value.trim();
       if (tagInput && !_lrAddTags_arr.includes(tagInput)) _lrAddTags_arr.push(tagInput);
       if (!url) { document.getElementById('lr-add-url')?.focus(); return; }
-      _lrLinks.push({ id: uid(), type, label, url, topics: [..._lrAddTags_arr] });
+      _lrLinks.push({ id: uid(), type, label, url, details, topics: [..._lrAddTags_arr] });
       _lrAddFormVisible = false;
       _lrAddTags_arr = [];
       await saveLinkRepo();
@@ -3641,6 +3770,7 @@
       l.type = document.getElementById(`lr-edit-type-${id}`)?.value || l.type;
       l.label = document.getElementById(`lr-edit-label-${id}`)?.value.trim() ?? l.label;
       l.url = document.getElementById(`lr-edit-url-${id}`)?.value.trim() || l.url;
+      l.details = document.getElementById(`lr-edit-details-${id}`)?.value.trim() || '';
       l.topics = [..._lrEditTags];
       _lrEditId = null;
       await saveLinkRepo();
@@ -4123,6 +4253,52 @@
     function escHtml(s) {
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    // Allow-list of tags/attributes permitted in a formatted note. Anything else
+    // (scripts, event handlers, iframes, etc.) is stripped before it is stored.
+    const NOTE_ALLOWED_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'A', 'BR', 'DIV', 'SPAN', 'P']);
+
+    function sanitizeNoteHtml(html) {
+      const container = document.createElement('div');
+      container.innerHTML = String(html || '');
+
+      const walk = (node) => {
+        // Iterate over a static copy since we may remove/replace nodes as we go.
+        Array.from(node.childNodes).forEach((child) => {
+          if (child.nodeType === Node.ELEMENT_NODE) {
+            if (!NOTE_ALLOWED_TAGS.has(child.tagName)) {
+              // Unwrap disallowed elements, keeping their text/children.
+              while (child.firstChild) node.insertBefore(child.firstChild, child);
+              node.removeChild(child);
+              return;
+            }
+            Array.from(child.attributes).forEach((attr) => {
+              if (child.tagName === 'A' && attr.name === 'href') {
+                if (/^\s*javascript:/i.test(attr.value)) child.removeAttribute(attr.name);
+                return;
+              }
+              child.removeAttribute(attr.name);
+            });
+            if (child.tagName === 'A') {
+              child.setAttribute('target', '_blank');
+              child.setAttribute('rel', 'noopener noreferrer');
+            }
+            walk(child);
+          } else if (child.nodeType !== Node.TEXT_NODE) {
+            node.removeChild(child);
+          }
+        });
+      };
+      walk(container);
+      return container.innerHTML;
+    }
+
+    // Plain-text version of a note's HTML, used for search matching.
+    function stripHtml(html) {
+      const div = document.createElement('div');
+      div.innerHTML = String(html || '');
+      return div.textContent || div.innerText || '';
+    }
     // Produce a single-quoted JS string literal safe for use inside a double-quoted HTML attribute
     function sq(v) { return "'" + String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"; }
 
@@ -4487,7 +4663,7 @@
       if (ctx.notes && ctx.notes.length) {
         html += '<div class="ctx-tooltip-section"><div class="ctx-tooltip-label">Notes</div>';
         ctx.notes.slice(0, MAX_NOTES).forEach(n => {
-          const text = (n.text || '').trim();
+          const text = stripHtml(n.text || '').trim();
           if (text) html += `<div class="ctx-tooltip-note">${escHtml(text)}</div>`;
         });
         if (ctx.notes.length > MAX_NOTES)
@@ -4500,6 +4676,7 @@
         ctx.links.slice(0, MAX_LINKS).forEach(lnk => {
           const rl = resolveLink(lnk);
           html += `<div class="ctx-tooltip-link">${linkIcon(rl.type)} <span>${escHtml(rl.label || rl.type || rl.url || '')}</span></div>`;
+          if (rl.details) html += `<div class="ctx-tooltip-note" style="margin-left:21px;">${escHtml(rl.details)}</div>`;
         });
         if (ctx.links.length > MAX_LINKS)
           html += `<div class="ctx-tooltip-more">+${ctx.links.length - MAX_LINKS} more…</div>`;
@@ -4555,6 +4732,11 @@
       renderTaskArea();
     }
 
+    function toggleCpSection(name) {
+      state.cpCollapsed[name] = !state.cpCollapsed[name];
+      renderContextPanel();
+    }
+
     function renderContextPanel() {
       const dayKey = state.contextDayKey;
       const taskId = state.contextTaskId;
@@ -4570,24 +4752,35 @@
       let html = '';
 
       // Notes
-      html += `<div class="cp-section">
-    <div class="cp-section-title">Notes</div>`;
+      html += `<div class="cp-section${state.cpCollapsed.notes ? ' collapsed' : ''}">
+    <div class="cp-section-header" onclick="toggleCpSection('notes')">
+      <span class="cp-section-chevron">▾</span>
+      <span class="cp-section-title">Notes</span>
+      <span class="cp-section-count">${ctx.notes.length}</span>
+    </div>
+    <div class="cp-section-body">`;
       ctx.notes.forEach((note, i) => {
         html += `<div class="note-card">
       <button class="note-expand-btn" onclick="openNoteModal(${i})" title="Expand note">⛶ Expand</button>
-      <textarea id="note-ta-${i}" onblur="updateNote('${i}',this.value)">${escHtml(note.text)}</textarea>
+      ${noteToolbarHtml(`note-rte-${i}`)}
+      <div id="note-rte-${i}" class="note-rte" contenteditable="true" data-placeholder="Note…" onblur="updateNote('${i}',this.innerHTML)">${note.text}</div>
       <div class="note-actions">
         <button class="btn btn-danger btn-sm" onclick="deleteNote(${i})">Delete</button>
       </div>
     </div>`;
       });
       html += `<button class="btn btn-secondary btn-sm" onclick="addNote()">+ Add Note</button>
-  </div>`;
+  </div></div>`;
 
       // Links
-      html += `<div class="cp-section">
-    <div class="cp-section-title">Links</div>`;
-      const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Link'];
+      html += `<div class="cp-section${state.cpCollapsed.links ? ' collapsed' : ''}">
+    <div class="cp-section-header" onclick="toggleCpSection('links')">
+      <span class="cp-section-chevron">▾</span>
+      <span class="cp-section-title">Links</span>
+      <span class="cp-section-count">${ctx.links.length}</span>
+    </div>
+    <div class="cp-section-body">`;
+      const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'Google Drive', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Langfuse', 'Plotly Dash', 'AWS', 'JavaScript', 'Link'];
       const typeOptsAll = LINK_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
       ctx.links.forEach((stored, i) => {
         const link = resolveLink(stored);
@@ -4602,6 +4795,7 @@
       <div class="link-info">
         <div class="link-label">${escHtml(link.label || link.type)}${isRepoLink ? ' <span title="Saved in Link Repository" style="font-size:10px;opacity:0.6;">🗂</span>' : ''}</div>
         <a class="link-url" href="${escHtml(link.url)}" target="_blank" rel="noopener">${escHtml(link.url)}</a>
+        ${link.details ? `<div class="link-details">${escHtml(link.details)}</div>` : ''}
         ${topicPills ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${topicPills}</div>` : ''}
       </div>
       <button class="btn-icon" id="copy-link-btn-${i}" onclick="copyLinkUrl(${sq(link.url)}, ${i})" title="Copy URL">📋</button>
@@ -4612,6 +4806,7 @@
       <select id="edit-link-type-${i}">${typeOpts}</select>
       <input id="edit-link-label-${i}" placeholder="Label (optional)" value="${escHtml(link.label || '')}" />
       <input id="edit-link-url-${i}" placeholder="URL" value="${escHtml(link.url)}" />
+      <textarea id="edit-link-details-${i}" class="link-details-textarea" placeholder="Details (optional) — included in AI summaries">${escHtml(link.details || '')}</textarea>
       <div style="position:relative;">
         <div class="lr-topic-input-wrap" onclick="document.getElementById('ctx-edit-tag-input-${i}').focus()" style="min-height:28px;">
           <span id="ctx-edit-tags-${i}"></span>
@@ -4629,6 +4824,7 @@
     <select id="link-type">${typeOptsAll}</select>
     <input id="link-label" placeholder="Label (optional)" />
     <input id="link-url" placeholder="URL" />
+    <textarea id="link-details" class="link-details-textarea" placeholder="Details (optional) — included in AI summaries"></textarea>
     <div style="position:relative;">
       <div class="lr-topic-input-wrap" onclick="document.getElementById('ctx-add-tag-input').focus()" style="min-height:28px;">
         <span id="ctx-add-tags"></span>
@@ -4642,11 +4838,16 @@
     </div>
   </div>
   <button class="btn btn-secondary btn-sm" onclick="ctxShowAddLink()">+ Add Link</button>
-  </div>`;
+  </div></div>`;
 
       // Attachments
-      html += `<div class="cp-section">
-    <div class="cp-section-title">Attachments</div>`;
+      html += `<div class="cp-section${state.cpCollapsed.attachments ? ' collapsed' : ''}">
+    <div class="cp-section-header" onclick="toggleCpSection('attachments')">
+      <span class="cp-section-chevron">▾</span>
+      <span class="cp-section-title">Attachments</span>
+      <span class="cp-section-count">${ctx.attachments.length}</span>
+    </div>
+    <div class="cp-section-body">`;
       ctx.attachments.forEach((att, i) => {
         const openBtn = att.path
           ? `<a class="btn-icon" href="${escHtml(att.path)}" download="${escHtml(att.name)}" title="Download file">⬇</a>`
@@ -4663,7 +4864,7 @@
     📎 Attach File
     <input type="file" multiple style="display:none;" onchange="handleAttach(this)" />
   </label>
-  </div>`;
+  </div></div>`;
 
       document.getElementById('cp-body').innerHTML = html;
 
@@ -4777,7 +4978,7 @@
         'NotebookLM': `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect x="3" y="1" width="10" height="14" rx="1.5" fill="#4285F4"/><rect x="5" y="1" width="2" height="14" fill="#1A73E8"/><rect x="5.5" y="4" width="5" height="1.2" rx="0.6" fill="white"/><rect x="5.5" y="6.5" width="5" height="1.2" rx="0.6" fill="white"/><rect x="5.5" y="9" width="3.5" height="1.2" rx="0.6" fill="white"/></svg>`,
       };
       if (svgMap[type]) return svgMap[type];
-      const emojiMap = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'GitHub': '🐙', 'Local File': '📁', 'Wiki': '📖', 'GitHub Pages': '🌐', 'Link': '🔗' };
+      const emojiMap = { 'Jira': '🔵', 'Slack': '💬', 'Google Docs': '📄', 'Google Sheets': '📊', 'Google Slides': '📽️', 'Google Drive': '🗃️', 'GitHub': '🐙', 'Local File': '📁', 'Wiki': '📖', 'GitHub Pages': '🌐', 'Langfuse': '🪢', 'Plotly Dash': '📈', 'AWS': '☁️', 'JavaScript': '📜', 'Link': '🔗' };
       return emojiMap[type] || '🔗';
     }
 
@@ -4800,23 +5001,55 @@
       return findTask(day.tasks, state.contextTaskId);
     }
 
+    // Toolbar buttons for the rich-text note editor. `targetId` is the id of the
+    // contenteditable element this toolbar controls.
+    const NOTE_TOOLBAR_BUTTONS = [
+      { cmd: 'bold', label: '<b>B</b>', title: 'Bold' },
+      { cmd: 'italic', label: '<i>I</i>', title: 'Italic' },
+      { cmd: 'underline', label: '<u>U</u>', title: 'Underline' },
+      { cmd: 'insertUnorderedList', label: '&#8226; List', title: 'Bullet list' },
+      { cmd: 'insertOrderedList', label: '1. List', title: 'Numbered list' },
+      { cmd: 'createLink', label: '&#128279;', title: 'Insert link' },
+    ];
+
+    function noteToolbarHtml(targetId) {
+      const buttons = NOTE_TOOLBAR_BUTTONS.map(b =>
+        `<button type="button" class="note-toolbar-btn" title="${escHtml(b.title)}" onmousedown="event.preventDefault()" onclick="execNoteCommand('${targetId}','${b.cmd}')">${b.label}</button>`
+      ).join('');
+      return `<div class="note-toolbar">${buttons}</div>`;
+    }
+
+    function execNoteCommand(targetId, cmd) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      el.focus();
+      if (cmd === 'createLink') {
+        const url = prompt('Link URL:', 'https://');
+        if (!url) return;
+        document.execCommand('createLink', false, url);
+      } else {
+        document.execCommand(cmd, false, null);
+      }
+      el.dispatchEvent(new Event('blur'));
+    }
+
     function addNote() {
       const task = getCtxTask();
       if (!task) return;
       task.context.notes.push({ text: '' });
       saveData();
       renderContextPanel();
-      // focus the new textarea
+      // focus the new editor
       setTimeout(() => {
-        const tas = document.querySelectorAll('#cp-body textarea');
-        if (tas.length) tas[tas.length - 1].focus();
+        const editors = document.querySelectorAll('#cp-body .note-rte');
+        if (editors.length) editors[editors.length - 1].focus();
       }, 50);
     }
 
-    function updateNote(index, text) {
+    function updateNote(index, html) {
       const task = getCtxTask();
       if (!task) return;
-      task.context.notes[index].text = text;
+      task.context.notes[index].text = sanitizeNoteHtml(html);
       saveData();
     }
 
@@ -4831,9 +5064,9 @@
     let _noteModalIndex = null;
 
     function openNoteModal(index) {
-      // Flush any unsaved edits from the inline textarea first
-      const ta = document.getElementById(`note-ta-${index}`);
-      if (ta) updateNote(index, ta.value);
+      // Flush any unsaved edits from the inline editor first
+      const rte = document.getElementById(`note-rte-${index}`);
+      if (rte) updateNote(index, rte.innerHTML);
 
       const task = getCtxTask();
       if (!task) return;
@@ -4842,22 +5075,21 @@
 
       _noteModalIndex = index;
       document.getElementById('note-modal-title').textContent = task.text;
-      document.getElementById('note-modal-textarea').value = note.text;
+      document.getElementById('note-modal-toolbar').innerHTML = noteToolbarHtml('note-modal-textarea');
+      document.getElementById('note-modal-textarea').innerHTML = note.text;
       document.getElementById('note-modal-overlay').classList.add('open');
       setTimeout(() => {
-        const mta = document.getElementById('note-modal-textarea');
-        mta.focus();
-        mta.setSelectionRange(mta.value.length, mta.value.length);
+        document.getElementById('note-modal-textarea').focus();
       }, 50);
     }
 
     function closeNoteModal() {
       const mta = document.getElementById('note-modal-textarea');
       if (_noteModalIndex !== null && mta) {
-        updateNote(_noteModalIndex, mta.value);
-        // Sync the inline textarea so the panel reflects edits without a full re-render
-        const inlineTa = document.getElementById(`note-ta-${_noteModalIndex}`);
-        if (inlineTa) inlineTa.value = mta.value;
+        updateNote(_noteModalIndex, mta.innerHTML);
+        // Sync the inline editor so the panel reflects edits without a full re-render
+        const inlineRte = document.getElementById(`note-rte-${_noteModalIndex}`);
+        if (inlineRte) inlineRte.innerHTML = mta.innerHTML;
       }
       _noteModalIndex = null;
       document.getElementById('note-modal-overlay').classList.remove('open');
@@ -4870,6 +5102,7 @@
       if (!url) return;
       const type = document.getElementById('link-type').value;
       const label = document.getElementById('link-label').value.trim() || type;
+      const details = document.getElementById('link-details').value.trim();
       // Flush any uncommitted text in the tag input
       const tagInp = document.getElementById('ctx-add-tag-input');
       if (tagInp) { const v = tagInp.value.trim(); if (v && !_ctxAddTags.includes(v)) _ctxAddTags.push(v); }
@@ -4883,15 +5116,15 @@
         if (entry) {
           // Merge topics
           topics.forEach(t => { if (!entry.topics.includes(t)) entry.topics.push(t); });
-          entry.type = type; entry.label = label;
+          entry.type = type; entry.label = label; entry.details = details;
         } else {
-          entry = { id: uid(), type, label, url, topics };
+          entry = { id: uid(), type, label, url, details, topics };
           _lrLinks.push(entry);
         }
         await saveLinkRepo();
         task.context.links.push({ linkRepoId: entry.id });
       } else {
-        task.context.links.push({ type, label, url });
+        task.context.links.push({ type, label, url, details });
       }
       await saveData();
       renderContextPanel();
@@ -4945,6 +5178,7 @@
       if (!url) return;
       const type = document.getElementById(`edit-link-type-${index}`).value;
       const label = document.getElementById(`edit-link-label-${index}`).value.trim() || type;
+      const details = document.getElementById(`edit-link-details-${index}`).value.trim();
       // Flush uncommitted tag input text
       const tagInp = document.getElementById(`ctx-edit-tag-input-${index}`);
       if (tagInp) { const v = tagInp.value.trim(); if (v && !_ctxEditTags.includes(v)) _ctxEditTags.push(v); }
@@ -4954,7 +5188,7 @@
       if (stored.linkRepoId) {
         // Update the repo entry directly
         const entry = _lrLinks.find(l => l.id === stored.linkRepoId);
-        if (entry) { entry.type = type; entry.label = label; entry.url = url; entry.topics = topics; }
+        if (entry) { entry.type = type; entry.label = label; entry.url = url; entry.details = details; entry.topics = topics; }
         await saveLinkRepo();
         // stored reference stays the same
       } else if (topics.length > 0) {
@@ -4963,16 +5197,16 @@
         let entry = _lrLinks.find(l => l.url === url);
         if (entry) {
           topics.forEach(t => { if (!entry.topics.includes(t)) entry.topics.push(t); });
-          entry.type = type; entry.label = label;
+          entry.type = type; entry.label = label; entry.details = details;
         } else {
-          entry = { id: uid(), type, label, url, topics };
+          entry = { id: uid(), type, label, url, details, topics };
           _lrLinks.push(entry);
         }
         await saveLinkRepo();
         task.context.links[index] = { linkRepoId: entry.id };
       } else {
         // Stay inline
-        task.context.links[index] = { type, label, url };
+        task.context.links[index] = { type, label, url, details };
       }
       _ctxEditTagIndex = -1;
       _ctxEditTags = [];
@@ -5202,7 +5436,7 @@
       for (const task of tasks) {
         const matchesText = task.text.toLowerCase().includes(query);
         const matchesNote = (task.context && task.context.notes || [])
-          .some(n => n.text && n.text.toLowerCase().includes(query));
+          .some(n => n.text && stripHtml(n.text).toLowerCase().includes(query));
 
         if (matchesText || matchesNote) {
           results.push({
@@ -5573,7 +5807,7 @@
     // Contexts View
     // ─────────────────────────────────────────
 
-    const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Link'];
+    const LINK_TYPES = ['Jira', 'Slack', 'Google Docs', 'Google Sheets', 'Google Slides', 'Google Drive', 'GitHub', 'Cursor Canvas', 'Claude AI', 'Local File', 'Qlik Sense', 'Tableau', 'Wiki', 'NotebookLM', 'GitHub Pages', 'Langfuse', 'Plotly Dash', 'AWS', 'JavaScript', 'Link'];
 
     async function openCtxView() {
       document.getElementById('ctx-view-overlay').classList.add('open');
@@ -5669,8 +5903,8 @@
       if (!q) return true;
       const taskText = entry.taskPath.join(' › ').toLowerCase();
       if (taskText.includes(q)) return true;
-      if (entry.itemType === 'note') return (entry.item.text || '').toLowerCase().includes(q);
-      if (entry.itemType === 'link') return (entry.item.label || '').toLowerCase().includes(q) || (entry.item.url || '').toLowerCase().includes(q);
+      if (entry.itemType === 'note') return stripHtml(entry.item.text || '').toLowerCase().includes(q);
+      if (entry.itemType === 'link') return (entry.item.label || '').toLowerCase().includes(q) || (entry.item.url || '').toLowerCase().includes(q) || (entry.item.details || '').toLowerCase().includes(q);
       if (entry.itemType === 'att') return (entry.item.name || '').toLowerCase().includes(q);
       return false;
     }
@@ -5790,11 +6024,13 @@
             ).join('');
             contentHtml = `<div style="display:flex;flex-direction:column;gap:3px;">
           <div><span>${hl}</span><a class="ctxv-url" href="${escHtml(entry.item.url)}" target="_blank" rel="noopener">${escHtml(entry.item.url)}</a></div>
+          ${entry.item.details ? `<div class="link-details">${q ? highlightCtx(entry.item.details, q) : escHtml(entry.item.details)}</div>` : ''}
           ${topicPills ? `<div style="display:flex;flex-wrap:wrap;gap:3px;">${topicPills}</div>` : ''}
         </div>`;
           }
         } else if (entry.itemType === 'note') {
-          const hl = q ? highlightCtx(entry.item.text || '', q) : escHtml(entry.item.text || '');
+          const noteText = stripHtml(entry.item.text || '');
+          const hl = q ? highlightCtx(noteText, q) : escHtml(noteText);
           contentHtml = `<span class="ctxv-note-text">${hl}</span>`;
         } else {
           const attOpen = entry.item.path
@@ -6163,7 +6399,7 @@
       if (ctx.notes && ctx.notes.length) {
         html += `<div class="archive-ctx-section">Notes</div>`;
         ctx.notes.forEach(n => {
-          html += `<div class="archive-ctx-note">${escHtml(n.text || '')}</div>`;
+          html += `<div class="archive-ctx-note">${n.text || ''}</div>`;
         });
       }
       if (ctx.links && ctx.links.length) {

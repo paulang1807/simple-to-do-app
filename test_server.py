@@ -455,6 +455,98 @@ class TestCountTaskStats(unittest.TestCase):
         self.assertEqual(stats["done"], 2)
         self.assertEqual(stats["pending"], 1)
 
+class TestStripNoteHtml(unittest.TestCase):
+    """Context notes are authored via a rich-text toolbar and stored as HTML
+    (e.g. "<b>bold</b>"). strip_note_html must remove the markup so the
+    summary prompt sees plain, readable text."""
+
+    def setUp(self):
+        if "server" in sys.modules:
+            del sys.modules["server"]
+        with patch.dict(os.environ, {}, clear=True):
+            import server as srv
+            self.srv = srv
+
+    def test_strips_simple_tags(self):
+        self.assertEqual(self.srv.strip_note_html("<b>bold</b> and <i>italic</i>"), "bold and italic")
+
+    def test_strips_list_markup(self):
+        self.assertEqual(
+            self.srv.strip_note_html("<ul><li>one</li><li>two</li></ul>"),
+            "onetwo",
+        )
+
+    def test_strips_link_markup_keeping_visible_text(self):
+        self.assertEqual(
+            self.srv.strip_note_html('<a href="http://x" target="_blank">click here</a>'),
+            "click here",
+        )
+
+    def test_plain_text_without_tags_is_unchanged(self):
+        self.assertEqual(self.srv.strip_note_html("just plain text"), "just plain text")
+
+    def test_empty_or_none_returns_empty_string(self):
+        self.assertEqual(self.srv.strip_note_html(""), "")
+        self.assertEqual(self.srv.strip_note_html(None), "")
+
+
+class TestBuildTaskText(unittest.TestCase):
+    """build_task_text renders each task's notes and links; link details
+    (free-text notes attached to a link) must render as their own line
+    directly under the link so they feed into the summary like notes do."""
+
+    def setUp(self):
+        if "server" in sys.modules:
+            del sys.modules["server"]
+        with patch.dict(os.environ, {}, clear=True):
+            import server as srv
+            self.srv = srv
+
+    def test_note_html_formatting_is_stripped_in_summary_text(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {
+                "notes": [{"text": "<b>Root cause</b>: a <i>race condition</i> in the retry loop"}],
+                "links": [],
+                "attachments": [],
+            },
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertIn("Note: Root cause: a race condition in the retry loop", text)
+        self.assertNotIn("<b>", text)
+        self.assertNotIn("<i>", text)
+
+    def test_link_with_details_renders_details_line(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {
+                "notes": [],
+                "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x", "details": "Root cause was a race condition in the retry loop"}],
+                "attachments": [],
+            },
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertIn("Link details: Root cause was a race condition in the retry loop", text)
+
+    def test_link_without_details_has_no_details_line(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {"notes": [], "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x"}], "attachments": []},
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertNotIn("Link details:", text)
+
+    def test_link_with_blank_details_has_no_details_line(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {"notes": [], "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x", "details": "   "}], "attachments": []},
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertNotIn("Link details:", text)
 
 class TestBuildPrompt(unittest.TestCase):
 

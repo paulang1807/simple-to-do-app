@@ -261,6 +261,20 @@ MIME = {
 # Summary prompt builder
 # ──────────────────────────────────────────────────────────────────────────────
 
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def strip_note_html(text: str) -> str:
+    """Strip HTML tags from a context note so the summary prompt sees plain text.
+
+    Notes are authored via a rich-text toolbar in the UI and stored as HTML
+    (e.g. "<b>bold</b>"); the LLM prompt should see the readable text, not markup.
+    """
+    if not text:
+        return ""
+    return _HTML_TAG_RE.sub("", text)
+
+
 def build_task_text(tasks: list, depth: int = 0) -> str:
     lines = []
     indent = "  " * depth
@@ -278,12 +292,15 @@ def build_task_text(tasks: list, depth: int = 0) -> str:
         lines.append(f"{indent}{status_label} {t['text']}{flag_str}")
 
         ctx = t.get("context", {})
-        notes = [n["text"] for n in ctx.get("notes", []) if n.get("text", "").strip()]
+        notes = [strip_note_html(n["text"]) for n in ctx.get("notes", []) if n.get("text", "").strip()]
         for note in notes:
             lines.append(f"{indent}  Note: {note}")
         for lnk in ctx.get("links", []):
             label = lnk.get("label") or lnk.get("type", "")
             lines.append(f"{indent}  Link ({lnk.get('type','')}: {label}) — {lnk.get('url','')}")
+            details = (lnk.get("details") or "").strip()
+            if details:
+                lines.append(f"{indent}    Link details: {details}")
         for att in ctx.get("attachments", []):
             lines.append(f"{indent}  Attachment: {att.get('name','')}")
 
@@ -361,7 +378,7 @@ No specific topics were requested. Identify logical groupings from the tasks (by
 
 The raw task data is below. Status symbols: ✓ = done, ◑ = partial/in-progress, ○ = pending/incomplete.
 IMPORTANT and RECURRING flags indicate priority or repeating tasks.
-Context includes notes, links (with type and label), and attachments.
+Context may include notes, links, and attachments — use notes and any "Link details" for relevant detail, but do not reference URLs, filenames, or attachments directly.
 
 TASK DATA:
 {task_dump}

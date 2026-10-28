@@ -350,10 +350,25 @@ Every task has a context panel for capturing supporting information. Open it by 
 
 The panel slides in from the right and shows:
 
-#### Notes
-Free-form text notes. Click **+ Add Note** to create one. Notes auto-save on blur. Click **Delete** to remove a note.
+**Collapsible sections:** each of the three sections (Notes, Links, Attachments) has a clickable header with a chevron (▾) and an item count. Click a section header to collapse or expand it — useful for skipping past a long list of notes or attachments to get to the section you need. Collapse state is kept per-section while the panel is open.
 
-For long notes, click the **⛶ Expand** button in the top-right corner of the note card to open the note in a large modal. The modal is fully editable and saves automatically when closed.
+#### Notes
+Rich-text notes with basic HTML formatting. Click **+ Add Note** to create one. Notes auto-save on blur. Click **Delete** to remove a note.
+
+**Formatting toolbar:** each note has a small toolbar above it with:
+
+| Button | Formatting |
+|---|---|
+| **B** | Bold |
+| *I* | Italic |
+| <u>U</u> | Underline |
+| • List | Bullet list |
+| 1. List | Numbered list |
+| 🔗 | Insert a hyperlink (prompts for a URL) |
+
+Select text in the note, then click a toolbar button to apply formatting to the selection. Formatting is stored as sanitized HTML — disallowed tags/attributes (scripts, event handlers, etc.) are stripped automatically, so pasted content is always safe to save. Search, the Contexts View table, and summary generation all see the note's plain text (formatting tags are stripped for matching/summarizing); the formatted view (inline card, expanded modal, and archive view) renders the actual formatting.
+
+For long notes, click the **⛶ Expand** button in the top-right corner of the note card to open the note in a large modal with the same toolbar. The modal is fully editable and saves automatically when closed.
 
 #### Links
 Attach URLs categorised by type:
@@ -365,6 +380,7 @@ Attach URLs categorised by type:
 | Google Docs | 📄 |
 | Google Sheets | 📊 |
 | Google Slides | 📽️ |
+| Google Drive | 🗃️ |
 | GitHub | 🐙 |
 | Cursor Canvas | *(Cursor logo)* |
 | Claude AI | *(Anthropic logo)* |
@@ -374,9 +390,15 @@ Attach URLs categorised by type:
 | Wiki | 📖 |
 | NotebookLM | *(NotebookLM logo)* |
 | GitHub Pages | 🌐 |
+| Langfuse | 🪢 |
+| Plotly Dash | 📈 |
+| AWS | ☁️ |
+| JavaScript | 📜 |
 | Other Link | 🔗 |
 
-Click **+ Add Link**, select the type, enter an optional label and the URL, and optionally add one or more **topics** to tag the link. Then click **Save**.
+Click **+ Add Link**, select the type, enter an optional label, the URL, and optionally some free-text **details** about the link, and optionally add one or more **topics** to tag the link. Then click **Save**.
+
+**Details:** the optional details textarea holds free-text notes about the link (why it matters, what to check, current status, etc.). Details are shown under the URL on the link card and in the hover tooltip, and — like task notes — are included in AI-generated work summaries. URLs and filenames themselves are never referenced in summaries.
 
 **Adding topics (tags):** type in the topic field inside the add or edit form and press **Enter** or **,** to confirm each tag. Existing topics from the Link Repository appear as autocomplete suggestions as you type — the same tag vocabulary is shared across task context links and the Link Repository. Click **×** on a tag pill to remove it.
 
@@ -386,7 +408,7 @@ A **🗂** indicator appears on link cards that are stored in the Link Repositor
 
 To **copy a link's URL** to the clipboard, click **📋** on the link card. The button briefly shows ✓ to confirm.
 
-To **edit an existing link**, hover the link card and click **✏️** — an inline form opens pre-filled with the current type, label, URL, and topics. Make changes and click **Save**, or **Cancel** to discard.
+To **edit an existing link**, hover the link card and click **✏️** — an inline form opens pre-filled with the current type, label, URL, details, and topics. Make changes and click **Save**, or **Cancel** to discard.
 
 To **delete a link from the context**, click **🗑** on the link card. This removes the link from the task's context only — if the link was promoted to the Link Repository, it remains there and can be managed from the **🗂 Links** modal.
 
@@ -441,13 +463,14 @@ Click **+ Add Link** in the top-right of the modal:
 1. Select the **link type** from the dropdown (same types as context links: Jira, Slack, Google Docs, GitHub, etc.)
 2. Enter an optional **label** — the display name for the link
 3. Enter the **URL**
-4. Add one or more **topics** to categorise the link:
+4. Optionally enter **details** — free-text notes about the link; shown on the card and fed into AI summaries wherever the link is referenced from a task context
+5. Add one or more **topics** to categorise the link:
    - Click inside the topic field and type a topic name
    - Press **Enter** or **,** to confirm the topic as a tag pill
    - Type the beginning of an existing topic to get autocomplete suggestions — click a suggestion or press **↑ / ↓ + Enter** to select
    - Click **×** on any pill to remove it
    - A link can belong to multiple topics at once
-5. Click **Save Link**
+6. Click **Save Link**
 
 #### Browsing Links
 
@@ -463,6 +486,7 @@ Click a topic in the sidebar to filter to just that topic's links. Click **All L
 Each link card shows:
 - The type icon and label (or the URL if no label is set)
 - The URL as a clickable link
+- Details text, if any, shown below the URL
 - Topic pills showing which topics the link belongs to
 - A **📋 Copy URL** button to copy the link address to the clipboard
 
@@ -471,6 +495,7 @@ Each link card shows:
 Type in the **Search links, labels, topics…** box to filter links across all topics. Matches against:
 - Link labels
 - URLs
+- Details text
 - Topic names
 
 Search applies on top of the active topic filter — so you can search within a specific topic by selecting it first, then typing.
@@ -479,7 +504,7 @@ Click **✕** inside the search box to clear the search.
 
 #### Editing a Link
 
-Click **✏️** on any link card to expand an inline edit form pre-filled with the current type, label, URL, and topics. Make changes and click **Save** to persist, or **Cancel** to discard. Topics can be added and removed the same way as when adding a new link.
+Click **✏️** on any link card to expand an inline edit form pre-filled with the current type, label, URL, details, and topics. Make changes and click **Save** to persist, or **Cancel** to discard. Topics can be added and removed the same way as when adding a new link.
 
 #### Deleting a Link
 
@@ -683,9 +708,10 @@ Click **📊 Summarize** in the header to open the summary modal. The summary is
 If no topics are provided, the model groups your work logically by project or theme and writes one paragraph per group.
 
 Click **Generate** to produce the summary. The AI:
-- Reads all tasks, subtasks, notes, and link labels for the selected period
+- Reads all tasks, subtasks, notes, and link details for the selected period (URLs, filenames, and attachments themselves are not referenced directly in the write-up — only the free-text notes and link details attached to them)
 - Focuses on what was **actually accomplished** — done and partial work
-- Uses the specific task names and context details — avoids vague generalisations
+- Uses the specific task names, note details, and link details — avoids vague generalisations
+- Writes a fully developed, multi-sentence paragraph per topic/group rather than a one-line summary, drawing on note detail where available
 - Never invents or infers details not present in your task data
 - Appends a stat line: `Period: … · ✓ N done · ◑ N partial · ○ N pending`
 
@@ -798,7 +824,7 @@ Each monthly file contains a map of date strings to day objects:
 ]
 ```
 
-`link-repo.json` is a flat array of link objects. Each entry has an `id`, `type`, `label`, `url`, and a `topics` array (strings):
+`link-repo.json` is a flat array of link objects. Each entry has an `id`, `type`, `label`, `url`, an optional `details` string (free-text notes about the link, fed into AI summaries), and a `topics` array (strings):
 
 ```json
 [
@@ -807,10 +833,13 @@ Each monthly file contains a map of date strings to day objects:
     "type": "Jira",
     "label": "OIFD-6264",
     "url": "https://jira.cloud.intuit.com/browse/OIFD-6264",
+    "details": "Tracks the Q3 data-quality remediation; blocked on schema review.",
     "topics": ["Governance", "Data Quality"]
   }
 ]
 ```
+
+Inline context links (not promoted to the Link Repository) carry the same `details` field alongside `type`, `label`, and `url`.
 
 The `data/` directory is excluded from git (via `.gitignore`), so your personal tasks are never committed. Each person who clones the repo starts with a blank slate.
 
