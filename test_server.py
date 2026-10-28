@@ -4,9 +4,14 @@
 # ///
 """Unit tests for server.py — multi-provider LLM factory and prompt-building logic."""
 
+import email.message
 import importlib
+import io
+import json
 import os
+import socket
 import sys
+import tempfile
 import threading
 import time
 import types
@@ -410,6 +415,53 @@ class TestBuildTaskText(unittest.TestCase):
         self.assertIn("jira", result)
         self.assertIn("https://jira.example.com/PROJ-1", result)
 
+    def test_note_html_formatting_is_stripped_in_summary_text(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {
+                "notes": [{"text": "<b>Root cause</b>: a <i>race condition</i> in the retry loop"}],
+                "links": [],
+                "attachments": [],
+            },
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertIn("Note: Root cause: a race condition in the retry loop", text)
+        self.assertNotIn("<b>", text)
+        self.assertNotIn("<i>", text)
+
+    def test_link_with_details_renders_details_line(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {
+                "notes": [],
+                "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x", "details": "Root cause was a race condition in the retry loop"}],
+                "attachments": [],
+            },
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertIn("Link details: Root cause was a race condition in the retry loop", text)
+
+    def test_link_without_details_has_no_details_line(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {"notes": [], "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x"}], "attachments": []},
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertNotIn("Link details:", text)
+
+    def test_link_with_blank_details_has_no_details_line(self):
+        tasks = [{
+            "text": "Fixed flaky test",
+            "status": "done",
+            "context": {"notes": [], "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x", "details": "   "}], "attachments": []},
+        }]
+        text = self.srv.build_task_text(tasks)
+        self.assertNotIn("Link details:", text)
+
+
 
 class TestCountTaskStats(unittest.TestCase):
 
@@ -490,63 +542,6 @@ class TestStripNoteHtml(unittest.TestCase):
         self.assertEqual(self.srv.strip_note_html(None), "")
 
 
-class TestBuildTaskText(unittest.TestCase):
-    """build_task_text renders each task's notes and links; link details
-    (free-text notes attached to a link) must render as their own line
-    directly under the link so they feed into the summary like notes do."""
-
-    def setUp(self):
-        if "server" in sys.modules:
-            del sys.modules["server"]
-        with patch.dict(os.environ, {}, clear=True):
-            import server as srv
-            self.srv = srv
-
-    def test_note_html_formatting_is_stripped_in_summary_text(self):
-        tasks = [{
-            "text": "Fixed flaky test",
-            "status": "done",
-            "context": {
-                "notes": [{"text": "<b>Root cause</b>: a <i>race condition</i> in the retry loop"}],
-                "links": [],
-                "attachments": [],
-            },
-        }]
-        text = self.srv.build_task_text(tasks)
-        self.assertIn("Note: Root cause: a race condition in the retry loop", text)
-        self.assertNotIn("<b>", text)
-        self.assertNotIn("<i>", text)
-
-    def test_link_with_details_renders_details_line(self):
-        tasks = [{
-            "text": "Fixed flaky test",
-            "status": "done",
-            "context": {
-                "notes": [],
-                "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x", "details": "Root cause was a race condition in the retry loop"}],
-                "attachments": [],
-            },
-        }]
-        text = self.srv.build_task_text(tasks)
-        self.assertIn("Link details: Root cause was a race condition in the retry loop", text)
-
-    def test_link_without_details_has_no_details_line(self):
-        tasks = [{
-            "text": "Fixed flaky test",
-            "status": "done",
-            "context": {"notes": [], "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x"}], "attachments": []},
-        }]
-        text = self.srv.build_task_text(tasks)
-        self.assertNotIn("Link details:", text)
-
-    def test_link_with_blank_details_has_no_details_line(self):
-        tasks = [{
-            "text": "Fixed flaky test",
-            "status": "done",
-            "context": {"notes": [], "links": [{"type": "GitHub", "label": "PR #7", "url": "http://x", "details": "   "}], "attachments": []},
-        }]
-        text = self.srv.build_task_text(tasks)
-        self.assertNotIn("Link details:", text)
 
 class TestBuildPrompt(unittest.TestCase):
 
@@ -706,6 +701,21 @@ class TestBuildStatsLine(unittest.TestCase):
         self.assertEqual(max_tok, 4096)
 
 
+def _can_connect_loopback():
+    import socket as _sock
+    try:
+        with _sock.socket(_sock.AF_INET, _sock.SOCK_STREAM) as s:
+            s.bind(("127.0.0.1", 0))
+            port = s.getsockname()[1]
+            s.listen(1)
+            with _sock.socket(_sock.AF_INET, _sock.SOCK_STREAM) as client:
+                client.settimeout(0.5)
+                client.connect(("127.0.0.1", port))
+        return True
+    except Exception:
+        return False
+
+
 class TestThreadingServer(unittest.TestCase):
     """Verify that a slow /summarize request does not block a concurrent
     /months request.  With the old single-threaded HTTPServer, the second
@@ -713,6 +723,10 @@ class TestThreadingServer(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.loopback_available = _can_connect_loopback()
+        if not cls.loopback_available:
+            return
+
         import socket as _sock
         # Find a free port for the test server
         with _sock.socket(_sock.AF_INET, _sock.SOCK_STREAM) as s:
@@ -739,8 +753,9 @@ class TestThreadingServer(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls._llm_patch.stop()
-        cls.server.shutdown()
+        if getattr(cls, "loopback_available", False):
+            cls._llm_patch.stop()
+            cls.server.shutdown()
 
     def _get(self, path, timeout=5):
         url = f"http://127.0.0.1:{self.port}{path}"
@@ -763,6 +778,8 @@ class TestThreadingServer(unittest.TestCase):
 
     def test_concurrent_requests_do_not_block(self):
         """A slow /summarize must not prevent /months from responding promptly."""
+        if not getattr(self, "loopback_available", False):
+            self.skipTest("TCP loopback connection not permitted in current environment")
         results = {}
 
         def run_summarize():
@@ -807,5 +824,420 @@ class TestThreadingServer(unittest.TestCase):
         self.assertEqual(bare, [], f"Found bare HTTPServer() instantiation: {bare}")
 
 
+# ---------------------------------------------------------------------------
+# Port helper — find_free_port
+# ---------------------------------------------------------------------------
+
+class TestFindFreePort(unittest.TestCase):
+
+    def test_find_free_port_finds_open_port(self):
+        import server as srv
+        port = srv.find_free_port(3456, attempts=10)
+        self.assertIsInstance(port, int)
+        self.assertGreaterEqual(port, 3456)
+
+    def test_find_free_port_exhaustion_raises(self):
+        import server as srv
+        with patch("socket.socket.bind", side_effect=OSError("Address in use")):
+            with self.assertRaises(OSError) as ctx:
+                srv.find_free_port(5000, attempts=3)
+            self.assertIn("No free port found in range 5000–5002", str(ctx.exception))
+
+    def test_find_free_port_skips_occupied_port(self):
+        import server as srv
+
+        def fake_bind(addr):
+            port = addr[1]
+            if port == 4000:
+                raise OSError("Address in use")
+            return None
+
+        with patch.object(socket.socket, "bind", side_effect=fake_bind):
+            port = srv.find_free_port(4000, attempts=3)
+            self.assertEqual(port, 4001)
+
+
+# ---------------------------------------------------------------------------
+# HTTP Handler endpoints — tests for Handler request/response cycle
+# ---------------------------------------------------------------------------
+
+class HandlerTestCase(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.test_dir = Path(self.temp_dir.name).resolve()
+        self.data_dir = self.test_dir / "data"
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.attachments_dir = self.data_dir / "attachments"
+        self.attachments_dir.mkdir(parents=True, exist_ok=True)
+        self.archive_file = self.data_dir / "archive.json"
+        self.link_repo_file = self.data_dir / "link-repo.json"
+
+        if "server" in sys.modules:
+            del sys.modules["server"]
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-test"}, clear=True):
+            import server as srv
+            self.srv = srv
+
+        self.patches = [
+            patch.object(self.srv, "DATA_DIR", self.data_dir),
+            patch.object(self.srv, "ATTACHMENTS_DIR", self.attachments_dir),
+            patch.object(self.srv, "ARCHIVE_FILE", self.archive_file),
+            patch.object(self.srv, "LINK_REPO_FILE", self.link_repo_file),
+            patch.object(self.srv, "BASE_DIR", self.test_dir),
+            patch("builtins.print"),
+        ]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in reversed(self.patches):
+            p.stop()
+        self.temp_dir.cleanup()
+        if "server" in sys.modules:
+            del sys.modules["server"]
+
+    def request(self, method: str, path: str, headers: dict | None = None, body: bytes | str = b""):
+        if isinstance(body, str):
+            body = body.encode("utf-8")
+        h = self.srv.Handler.__new__(self.srv.Handler)
+        h.rfile = io.BytesIO(body)
+        h.wfile = io.BytesIO()
+        h.path = path
+        h.command = method
+        h.request_version = "HTTP/1.1"
+        h.requestline = f"{method} {path} HTTP/1.1"
+        h.close_connection = True
+        h.client_address = ("127.0.0.1", 12345)
+        h.log_message = lambda fmt, *args: None
+
+        msg = email.message.EmailMessage()
+        if headers:
+            for k, v in headers.items():
+                msg[k] = v
+        if body and "Content-Length" not in msg:
+            msg["Content-Length"] = str(len(body))
+        h.headers = msg
+
+        handler_method = getattr(h, f"do_{method}", None)
+        if not handler_method:
+            h.send_text(405, "Method Not Allowed")
+        else:
+            handler_method()
+
+        raw = h.wfile.getvalue()
+        header_bytes, _, body_bytes = raw.partition(b"\r\n\r\n")
+        lines = header_bytes.decode("iso-8859-1").split("\r\n")
+        status_code = int(lines[0].split(" ")[1]) if lines[0] else 0
+        resp_headers = {}
+        for line in lines[1:]:
+            if ":" in line:
+                k, v = line.split(":", 1)
+                resp_headers[k.strip().lower()] = v.strip()
+        return status_code, resp_headers, body_bytes
+
+
+class TestHandlerCORS(HandlerTestCase):
+
+    def test_options_cors_headers(self):
+        code, headers, _ = self.request("OPTIONS", "/")
+        self.assertEqual(code, 204)
+        self.assertEqual(headers.get("access-control-allow-origin"), "*")
+        self.assertIn("GET", headers.get("access-control-allow-methods", ""))
+        self.assertIn("Content-Type", headers.get("access-control-allow-headers", ""))
+
+
+class TestHandlerDataEndpoints(HandlerTestCase):
+
+    def test_get_months_returns_sorted_list(self):
+        (self.data_dir / "2026-05.json").write_text("{}")
+        (self.data_dir / "2026-04.json").write_text("{}")
+        (self.data_dir / "archive.json").write_text("[]")
+        (self.data_dir / "other.json").write_text("{}")
+
+        code, _, body = self.request("GET", "/months")
+        self.assertEqual(code, 200)
+        months = json.loads(body.decode("utf-8"))
+        self.assertEqual(months, ["2026-04", "2026-05"])
+
+    def test_get_data_invalid_format(self):
+        code, _, body = self.request("GET", "/data/not-a-month")
+        self.assertEqual(code, 400)
+        self.assertEqual(body.decode("utf-8"), "Bad month format")
+
+    def test_get_data_nonexistent_returns_empty_dict(self):
+        code, _, body = self.request("GET", "/data/2026-06")
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), {})
+
+    def test_get_data_existing_returns_content(self):
+        payload = {"2026-06-01": {"tasks": [{"text": "Hello"}]}}
+        (self.data_dir / "2026-06.json").write_text(json.dumps(payload))
+        code, _, body = self.request("GET", "/data/2026-06")
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), payload)
+
+    def test_put_data_invalid_format(self):
+        code, _, body = self.request("PUT", "/data/invalid", body=b"{}")
+        self.assertEqual(code, 400)
+        self.assertEqual(body.decode("utf-8"), "Bad month format")
+
+    def test_put_data_invalid_json(self):
+        code, _, body = self.request("PUT", "/data/2026-07", body=b"not valid json")
+        self.assertEqual(code, 400)
+        self.assertIn("Invalid JSON", body.decode("utf-8"))
+
+    def test_put_data_valid_json_saves_file(self):
+        payload = {"2026-07-01": {"tasks": [{"text": "Save me"}]}}
+        raw = json.dumps(payload).encode("utf-8")
+        code, _, body = self.request("PUT", "/data/2026-07", body=raw)
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), {"ok": True})
+        self.assertTrue((self.data_dir / "2026-07.json").exists())
+        saved = json.loads((self.data_dir / "2026-07.json").read_text())
+        self.assertEqual(saved, payload)
+
+    def test_put_unknown_path_returns_404(self):
+        code, _, body = self.request("PUT", "/unknown", body=b"{}")
+        self.assertEqual(code, 404)
+        self.assertEqual(body.decode("utf-8"), "Not found")
+
+
+class TestHandlerArchiveAndLinkRepo(HandlerTestCase):
+
+    def test_get_archive_empty_when_missing(self):
+        code, _, body = self.request("GET", "/archive")
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), [])
+
+    def test_get_archive_existing(self):
+        items = [{"text": "Archived task"}]
+        self.archive_file.write_text(json.dumps(items))
+        code, _, body = self.request("GET", "/archive")
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), items)
+
+    def test_put_archive_invalid_json(self):
+        code, _, body = self.request("PUT", "/archive", body=b"{bad")
+        self.assertEqual(code, 400)
+        self.assertIn("Invalid JSON", body.decode("utf-8"))
+
+    def test_put_archive_requires_json_array(self):
+        code, _, body = self.request("PUT", "/archive", body=b'{"not": "a list"}')
+        self.assertEqual(code, 400)
+        self.assertEqual(body.decode("utf-8"), "Expected a JSON array")
+
+    def test_put_archive_saves_array(self):
+        items = [{"id": "1", "text": "Task"}]
+        raw = json.dumps(items).encode("utf-8")
+        code, _, body = self.request("PUT", "/archive", body=raw)
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), {"ok": True})
+        saved = json.loads(self.archive_file.read_text())
+        self.assertEqual(saved, items)
+
+    def test_get_link_repo_empty_when_missing(self):
+        code, _, body = self.request("GET", "/link-repo")
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), [])
+
+    def test_get_link_repo_existing(self):
+        items = [{"url": "https://example.com"}]
+        self.link_repo_file.write_text(json.dumps(items))
+        code, _, body = self.request("GET", "/link-repo")
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), items)
+
+    def test_put_link_repo_invalid_json(self):
+        code, _, body = self.request("PUT", "/link-repo", body=b'bad json')
+        self.assertEqual(code, 400)
+        self.assertIn("Invalid JSON", body.decode("utf-8"))
+
+    def test_put_link_repo_requires_json_array(self):
+        code, _, body = self.request("PUT", "/link-repo", body=b'{"a": 1}')
+        self.assertEqual(code, 400)
+        self.assertEqual(body.decode("utf-8"), "Expected a JSON array")
+
+    def test_put_link_repo_saves_array(self):
+        items = [{"type": "jira", "url": "https://jira"}]
+        raw = json.dumps(items).encode("utf-8")
+        code, _, body = self.request("PUT", "/link-repo", body=raw)
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), {"ok": True})
+        saved = json.loads(self.link_repo_file.read_text())
+        self.assertEqual(saved, items)
+
+
+class TestHandlerAttachments(HandlerTestCase):
+
+    def test_post_attachments_requires_multipart(self):
+        code, _, body = self.request(
+            "POST", "/attachments",
+            headers={"Content-Type": "application/json"},
+            body=b"{}",
+        )
+        self.assertEqual(code, 400)
+        self.assertEqual(json.loads(body.decode("utf-8")), {"error": "Expected multipart/form-data"})
+
+    def test_post_attachments_missing_file_part(self):
+        boundary = "Boundary123"
+        multipart_body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="not_file"\r\n\r\n'
+            "some-text\r\n"
+            f"--{boundary}--\r\n"
+        ).encode("utf-8")
+        code, _, body = self.request(
+            "POST", "/attachments",
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            body=multipart_body,
+        )
+        self.assertEqual(code, 400)
+        self.assertEqual(json.loads(body.decode("utf-8")), {"error": "No file uploaded"})
+
+    def test_post_attachments_success(self):
+        boundary = "BoundaryXYZ"
+        file_bytes = b"Hello attachment content"
+        multipart_body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="file"; filename="sample.txt"\r\n'
+            "Content-Type: text/plain\r\n\r\n"
+        ).encode("utf-8") + file_bytes + f"\r\n--{boundary}--\r\n".encode("utf-8")
+
+        code, _, body = self.request(
+            "POST", "/attachments",
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            body=multipart_body,
+        )
+        self.assertEqual(code, 200)
+        resp_json = json.loads(body.decode("utf-8"))
+        att_id = resp_json["id"]
+        self.assertEqual(resp_json["name"], "sample.txt")
+        self.assertEqual(resp_json["size"], len(file_bytes))
+        self.assertEqual(resp_json["type"], "text/plain")
+        self.assertEqual(resp_json["path"], f"/attachments/{att_id}/sample.txt")
+
+        saved_file = self.attachments_dir / att_id / "sample.txt"
+        self.assertTrue(saved_file.exists())
+        self.assertEqual(saved_file.read_bytes(), file_bytes)
+
+    def test_get_attachment_invalid_id_format(self):
+        code, _, body = self.request("GET", "/attachments/invalid_id/test.txt")
+        self.assertEqual(code, 404)
+        self.assertEqual(body.decode("utf-8"), "Not found")
+
+    def test_get_attachment_not_found(self):
+        code, _, body = self.request("GET", "/attachments/12345678-1234-1234-1234-123456789abc/test.txt")
+        self.assertEqual(code, 404)
+        self.assertEqual(body.decode("utf-8"), "Not found")
+
+    def test_get_attachment_path_traversal_blocked(self):
+        code, _, body = self.request("GET", "/attachments/12345678-1234-1234-1234-123456789abc/../../secret.txt")
+        self.assertIn(code, (403, 404))
+
+    def test_get_attachment_success(self):
+        att_id = "12345678-1234-1234-1234-123456789abc"
+        folder = self.attachments_dir / att_id
+        folder.mkdir(parents=True, exist_ok=True)
+        target = folder / "doc.pdf"
+        target.write_bytes(b"%PDF-1.4 mock")
+
+        code, headers, body = self.request("GET", f"/attachments/{att_id}/doc.pdf")
+        self.assertEqual(code, 200)
+        self.assertEqual(headers.get("content-type"), "application/pdf")
+        self.assertEqual(headers.get("content-disposition"), 'attachment; filename="doc.pdf"')
+        self.assertEqual(body, b"%PDF-1.4 mock")
+
+
+class TestHandlerStaticFiles(HandlerTestCase):
+
+    def test_get_root_serves_index_html(self):
+        (self.test_dir / "index.html").write_text("<!DOCTYPE html><html><body>Test</body></html>")
+        code, headers, body = self.request("GET", "/")
+        self.assertEqual(code, 200)
+        self.assertIn("text/html", headers.get("content-type", ""))
+        self.assertIn("<!DOCTYPE html>", body.decode("utf-8"))
+
+    def test_get_static_file_path_traversal_forbidden(self):
+        code, _, body = self.request("GET", "/../../etc/passwd")
+        self.assertEqual(code, 403)
+        self.assertIn("Forbidden", body.decode("utf-8"))
+
+    def test_get_static_file_not_found(self):
+        code, _, body = self.request("GET", "/nonexistent.png")
+        self.assertEqual(code, 404)
+        self.assertEqual(body.decode("utf-8"), "Not found")
+
+    def test_get_static_file_success(self):
+        (self.test_dir / "styles.css").write_text("body { margin: 0; }")
+        code, headers, body = self.request("GET", "/styles.css")
+        self.assertEqual(code, 200)
+        self.assertEqual(headers.get("content-type"), "text/css")
+        self.assertEqual(body.decode("utf-8"), "body { margin: 0; }")
+
+
+class TestHandlerSummarize(HandlerTestCase):
+
+    def test_summarize_invalid_json(self):
+        code, _, body = self.request("POST", "/summarize", body=b"invalid json")
+        self.assertEqual(code, 400)
+        self.assertIn("Invalid JSON", body.decode("utf-8"))
+
+    def test_summarize_empty_prompt_returns_no_tasks(self):
+        payload = {
+            "fromKey": "2026-04-01",
+            "toKey": "2026-04-07",
+            "period": "week",
+            "days": {},
+        }
+        code, _, body = self.request("POST", "/summarize", body=json.dumps(payload))
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body.decode("utf-8")), {"summary": "No tasks found in this period."})
+
+    def test_summarize_runtime_error_returns_503(self):
+        payload = {
+            "fromKey": "2026-04-01",
+            "toKey": "2026-04-07",
+            "period": "week",
+            "days": {"2026-04-01": {"tasks": [{"text": "Task A", "status": "done"}]}},
+        }
+        with patch.object(self.srv, "call_llm", side_effect=RuntimeError("No LLM credentials found")):
+            code, _, body = self.request("POST", "/summarize", body=json.dumps(payload))
+            self.assertEqual(code, 503)
+            self.assertIn("No LLM credentials found", body.decode("utf-8"))
+
+    def test_summarize_generic_exception_returns_500(self):
+        payload = {
+            "fromKey": "2026-04-01",
+            "toKey": "2026-04-07",
+            "period": "week",
+            "days": {"2026-04-01": {"tasks": [{"text": "Task A", "status": "done"}]}},
+        }
+        with patch.object(self.srv, "call_llm", side_effect=Exception("API connection timeout")):
+            code, _, body = self.request("POST", "/summarize", body=json.dumps(payload))
+            self.assertEqual(code, 500)
+            self.assertIn("LLM call failed: API connection timeout", body.decode("utf-8"))
+
+    def test_summarize_success_appends_stats_line(self):
+        payload = {
+            "fromKey": "2026-04-01",
+            "toKey": "2026-04-07",
+            "period": "week",
+            "days": {"2026-04-01": {"tasks": [{"text": "Task A", "status": "done"}]}},
+        }
+        with patch.object(self.srv, "call_llm", return_value="Accomplished task A successfully."):
+            code, _, body = self.request("POST", "/summarize", body=json.dumps(payload))
+            self.assertEqual(code, 200)
+            resp = json.loads(body.decode("utf-8"))
+            summary = resp["summary"]
+            self.assertIn("Accomplished task A successfully.", summary)
+            self.assertIn("Period: 2026-04-01 to 2026-04-07 · ✓ 1 done · ◑ 0 partial · ○ 0 pending", summary)
+
+    def test_post_unknown_path_returns_404(self):
+        code, _, body = self.request("POST", "/unknown", body=b"{}")
+        self.assertEqual(code, 404)
+        self.assertEqual(body.decode("utf-8"), "Not found")
+
+
 if __name__ == "__main__":
     unittest.main()
+
