@@ -3082,7 +3082,68 @@
 
     // saveData saves only the currently active month (where edits happen)
     async function saveData() {
+      recordUndoSnapshot();
       await saveMonth(state.activeMonth);
+    }
+
+    // ─────────────────────────────────────────
+    // Undo / redo — task edits
+    //
+    // Every saveData() call is a committed task mutation (add/delete/toggle/
+    // reorder/note/link/etc.). Before persisting the new state we snapshot the
+    // state as it was *before* this mutation, so Ctrl/Cmd+Z can restore it.
+    // Snapshots are plain JSON strings of state.days, scoped to the whole app
+    // (not per-day) since drag/paste can move tasks across days.
+    // ─────────────────────────────────────────
+    const MAX_UNDO_STEPS = 50;
+    const _undoStack = [];
+    const _redoStack = [];
+    let _lastSnapshot = null; // JSON string of state.days as of the last committed save
+
+    function recordUndoSnapshot() {
+      const current = JSON.stringify(state.days);
+      if (_lastSnapshot !== null && _lastSnapshot !== current) {
+        _undoStack.push(_lastSnapshot);
+        if (_undoStack.length > MAX_UNDO_STEPS) _undoStack.shift();
+        _redoStack.length = 0; // new edit invalidates redo history
+      }
+      _lastSnapshot = current;
+    }
+
+    function restoreSnapshot(json) {
+      // Merge (not replace) so days loaded from other months since this snapshot
+      // was taken aren't dropped from state.
+      const snapshotDays = JSON.parse(json);
+      const affectedMonths = new Set();
+      Object.keys(state.days).forEach(k => affectedMonths.add(k.slice(0, 7)));
+      Object.keys(snapshotDays).forEach(k => affectedMonths.add(k.slice(0, 7)));
+      Object.assign(state.days, snapshotDays);
+      _lastSnapshot = json;
+      if (state.activeDay && !state.days[state.activeDay]) state.contextTaskId = null;
+      renderTaskArea();
+      renderDayList();
+      if (state.contextTaskId) renderContextPanel();
+      return affectedMonths;
+    }
+
+    async function undo() {
+      if (!_undoStack.length) return;
+      const current = _lastSnapshot !== null ? _lastSnapshot : JSON.stringify(state.days);
+      const previous = _undoStack.pop();
+      _redoStack.push(current);
+      const affectedMonths = restoreSnapshot(previous);
+      await Promise.all([...affectedMonths].map(saveMonth));
+      showToast('Undo');
+    }
+
+    async function redo() {
+      if (!_redoStack.length) return;
+      const current = _lastSnapshot !== null ? _lastSnapshot : JSON.stringify(state.days);
+      const next = _redoStack.pop();
+      _undoStack.push(current);
+      const affectedMonths = restoreSnapshot(next);
+      await Promise.all([...affectedMonths].map(saveMonth));
+      showToast('Redo');
     }
 
     function exportData() {
@@ -5631,6 +5692,18 @@
         hideCtxMenu();
         closePasteConfirm();
         if (document.getElementById('link-repo-overlay')?.classList.contains('open')) closeLinkRepo();
+      }
+      // Undo/redo task edits — skip while typing in a text field or note editor,
+      // where Ctrl/Cmd+Z should perform native text-undo instead.
+      const isEditableTarget = e.target.isContentEditable ||
+        e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+      if (!isEditableTarget && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo(); else undo();
+      }
+      if (!isEditableTarget && (e.ctrlKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
       }
     });
 

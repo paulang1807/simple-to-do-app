@@ -28,6 +28,7 @@ A personal daily task tracker with nested subtasks, rich context, recurring task
    - [Searching Tasks](#searching-tasks)
    - [Archiving Tasks](#archiving-tasks)
    - [Deleting Tasks](#deleting-tasks)
+   - [Undo / Redo](#undo--redo)
    - [Filtering Tasks](#filtering-tasks)
    - [Contexts View](#contexts-view)
    - [Excluding Tasks from Summaries](#excluding-tasks-from-summaries)
@@ -600,9 +601,21 @@ The restored item is removed from the archive and saved to disk. If today is in 
 
 ### Deleting Tasks
 
-Hover a task row and click **🗑** to permanently delete it along with all its subtasks and context. Unlike archiving, deletion cannot be undone.
+Hover a task row and click **🗑** to delete it along with all its subtasks and context. Press **⌘Z / Ctrl+Z** right after to undo the deletion (see [Undo / Redo](#undo--redo) below) — but undo history is lost on page reload, so don't rely on it as long-term storage.
+
 
 Use 🗑 only for tasks you are certain you no longer need. For tasks you want to keep out of the active view, use **📦 Archive** instead — archived tasks can be restored at any time.
+
+---
+
+### Undo / Redo
+
+Press **⌘Z / Ctrl+Z** to undo the most recent task edit — adding, deleting, completing, reordering, or editing a task's text, notes, links, or attachments. Press **⌘⇧Z / Ctrl+Shift+Z** (or **Ctrl+Y**) to redo.
+
+- Undo history is kept in memory for the current browser session only — it resets when you reload the page or close the tab.
+- Up to the last 50 edits are kept; older history is dropped.
+- While typing in a task's text field or a note editor, **⌘Z / Ctrl+Z** performs normal text undo instead — it only triggers task-level undo when focus isn't in a text field.
+- Undo/redo does not cover Link Repository or Archive changes, which are saved separately.
 
 ---
 
@@ -917,6 +930,8 @@ You will see these files and folders appear based on your actions:
 | `Esc` | Close Link Repository modal |
 | `Esc` | Dismiss context copy/cut/paste menu |
 | `Enter` / `,` (in topic field) | Confirm a topic tag |
+| `⌘Z` / `Ctrl+Z` | Undo last task edit |
+| `⌘⇧Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Redo |
 
 ---
 
